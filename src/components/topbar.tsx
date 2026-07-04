@@ -1,9 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { Sun, Moon } from 'lucide-react'
+import { useTheme } from './theme-provider'
 
 export default function Topbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const [showNotifications, setShowNotifications] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const { theme, toggle: toggleTheme } = useTheme()
 
   useEffect(() => {
     async function loadUser() {
@@ -73,8 +76,8 @@ export default function Topbar({ toggleSidebar }: { toggleSidebar: () => void })
             <p className="text-xs text-gray-500">{isSuperAdmin ? 'Super Admin' : user?.role === 'ADMIN' ? 'Admin' : 'Kullanici'}</p>
           </div>
         </button>
-        <button className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-white/5 rounded-lg transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+        <button onClick={toggleTheme} className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-white/5 rounded-lg transition-colors" title={theme === 'dark' ? 'Açık Tema' : 'Koyu Tema'}>
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
     </header>

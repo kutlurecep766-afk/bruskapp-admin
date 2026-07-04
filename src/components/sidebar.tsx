@@ -6,8 +6,9 @@ import {
   LayoutDashboard, Users, Bot, Headphones, QrCode, Puzzle,
   MessageSquare, Bell, ShoppingCart, CalendarCheck, CreditCard,
   BarChart3, Settings2, Cog, Shield, MessageCircle,
-  Package, Wallet, Store, Truck, FileText
+  Package, Wallet, Store, Truck, FileText, Sun, Moon
 } from 'lucide-react'
+import { useTheme } from './theme-provider'
 
 const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/', perm: 'dashboard' },
