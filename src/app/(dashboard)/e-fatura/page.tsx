@@ -99,18 +99,24 @@ export default function EFaturaPage() {
     { key: 'apiKey', label: 'API Anahtarı', type: 'password', placeholder: 'Nilvera API Key' },
     { key: 'testMode', label: 'Test Modu', type: 'select', options: [{ value: 'true', label: 'Test (apitest.nilvera.com)' }, { value: 'false', label: 'Canlı (api.nilvera.com)' }] },
     { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'EFT (varsayılan)' },
+    { key: 'archiveSerie', label: 'e-Arşiv Serisi', type: 'text', placeholder: 'EAF (varsayılan)' },
     { key: 'templateUuid', label: 'Şablon UUID (opsiyonel)', type: 'text', placeholder: 'Şablon UUID' },
   ] : selectedProvider === 'izibiz' ? [
     { key: 'username', label: 'Kullanıcı Adı', type: 'text', placeholder: 'İzibiz kullanıcı adı' },
     { key: 'password', label: 'Şifre', type: 'password', placeholder: 'İzibiz şifre' },
+    { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'IZI (varsayılan)' },
+    { key: 'archiveSerie', label: 'e-Arşiv Serisi', type: 'text', placeholder: 'EAR (varsayılan)' },
   ] : selectedProvider === 'edm' ? [
     { key: 'username', label: 'Kullanıcı Adı', type: 'text', placeholder: 'EDM kullanıcı adı' },
     { key: 'password', label: 'Şifre', type: 'password', placeholder: 'EDM şifre' },
+    { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'EDM (varsayılan)' },
+    { key: 'archiveSerie', label: 'e-Arşiv Serisi', type: 'text', placeholder: 'EDM (varsayılan)' },
   ] : [
     { key: 'username', label: 'Kullanıcı Adı', type: 'text', placeholder: 'QNB kullanıcı adı' },
     { key: 'password', label: 'Şifre', type: 'password', placeholder: 'QNB şifre' },
     { key: 'testMode', label: 'Test Modu', type: 'select', options: [{ value: 'true', label: 'Test' }, { value: 'false', label: 'Canlı' }] },
     { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'TRA (varsayılan)' },
+    { key: 'archiveSerie', label: 'e-Arşiv Serisi', type: 'text', placeholder: 'EA (varsayılan)' },
     { key: 'sube', label: 'Şube Kodu', type: 'text', placeholder: 'DFLT' },
     { key: 'kasa', label: 'Kasa Kodu', type: 'text', placeholder: 'DFLT' },
   ]
@@ -244,6 +250,7 @@ export default function EFaturaPage() {
 
 function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
   const [type, setType] = useState<'invoice' | 'archive'>('archive')
+  const [profileId, setProfileId] = useState<'TICARIFATURA' | 'TEMELFATURA'>('TICARIFATURA')
   const [customerName, setCustomerName] = useState('')
   const [vkn, setVkn] = useState('')
   const [tckn, setTckn] = useState('')
@@ -265,6 +272,7 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
   const handleSend = () => {
     onSend({
       type,
+      profileId: type === 'invoice' ? profileId : undefined,
       customer: { name: customerName, vkn: vkn || undefined, tckn: tckn || undefined, email: email || undefined, phone: phone || undefined, address: address || undefined, taxOffice: taxOffice || undefined },
       lines: lines.map(l => ({ name: l.name, quantity: l.quantity, unitPrice: l.unitPrice, vatRate: l.vatRate })),
       description: description || undefined,
@@ -285,6 +293,22 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
             e-Arşiv (B2C)
           </button>
         </div>
+        {type === 'invoice' && (
+          <div className="mt-3">
+            <label className="text-xs text-gray-500 mb-1 block">Fatura Senaryosu</label>
+            <div className="flex gap-2">
+              <button onClick={() => setProfileId('TICARIFATURA')}
+                className={'px-5 py-2 rounded-xl text-sm font-medium transition-all ' + (profileId === 'TICARIFATURA' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-[#1a2332]/50 text-gray-400')}>
+                Ticari (Kabul/Red)
+              </button>
+              <button onClick={() => setProfileId('TEMELFATURA')}
+                className={'px-5 py-2 rounded-xl text-sm font-medium transition-all ' + (profileId === 'TEMELFATURA' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-[#1a2332]/50 text-gray-400')}>
+                Temel (Reddedilemez)
+              </button>
+            </div>
+          </div>
+        )}
+        <p className="text-xs text-gray-500 mt-2">VKN girildiğinde otomatik e-Fatura, TCKN girildiğinde otomatik e-Arşiv seçilir</p>
       </div>
 
       <div>
