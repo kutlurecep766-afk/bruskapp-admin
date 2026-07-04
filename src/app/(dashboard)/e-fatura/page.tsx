@@ -259,7 +259,30 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
   const [address, setAddress] = useState('')
   const [taxOffice, setTaxOffice] = useState('')
   const [description, setDescription] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [checkResult, setCheckResult] = useState('')
   const [lines, setLines] = useState([{ name: '', quantity: 1, unitPrice: 0, vatRate: 20 }])
+
+  const checkTaxpayer = async (id: string) => {
+    if (!id || id.length < 10) { setCheckResult(''); return }
+    setChecking(true)
+    try {
+      const res = await fetch('/api/einvoice/check-taxpayer', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taxNumber: id }),
+      })
+      const data = await res.json()
+      if (data.registered) {
+        setType('invoice')
+        setCheckResult('e-Fatura mükellefi')
+      } else {
+        setType('archive')
+        setCheckResult('e-Arşiv (e-Fatura mükellefi değil)')
+      }
+    } catch { setCheckResult('Sorgulanamadı') }
+    finally { setChecking(false) }
+  }
 
   const addLine = () => setLines([...lines, { name: '', quantity: 1, unitPrice: 0, vatRate: 20 }])
   const removeLine = (i: number) => setLines(lines.filter((_, idx) => idx !== i))
@@ -308,7 +331,11 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
             </div>
           </div>
         )}
-        <p className="text-xs text-gray-500 mt-2">VKN girildiğinde otomatik e-Fatura, TCKN girildiğinde otomatik e-Arşiv seçilir</p>
+        {checkResult && (
+          <p className={'text-xs mt-1 ' + (checkResult.includes('mükellefi') ? 'text-green-400' : 'text-yellow-400')}>
+            {checking ? 'Sorgulanıyor...' : checkResult}
+          </p>
+        )}
       </div>
 
       <div>
@@ -316,9 +343,9 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
         <div className="grid grid-cols-2 gap-3">
           <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Ad Soyad / Ünvan"
             className="col-span-2 w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600" />
-          <input type="text" value={vkn} onChange={e => setVkn(e.target.value)} placeholder="VKN (Vergi No)"
+          <input type="text" value={vkn} onChange={e => setVkn(e.target.value)} onBlur={e => checkTaxpayer(e.target.value)} placeholder="VKN (Vergi No)"
             className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 font-mono" />
-          <input type="text" value={tckn} onChange={e => setTckn(e.target.value)} placeholder="TCKN"
+          <input type="text" value={tckn} onChange={e => setTckn(e.target.value)} onBlur={e => checkTaxpayer(e.target.value)} placeholder="TCKN"
             className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 font-mono" />
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="E-posta"
             className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600" />
