@@ -1,13 +1,14 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 
-type Platform = 'trendyol' | 'hepsiburada'
+type Platform = 'trendyol' | 'hepsiburada' | 'yemeksepeti'
 type Tab = 'ayarlar' | 'urunler' | 'siparisler' | 'mesajlar'
 type Filter = 'all' | Platform
 
 const platforms = [
   { key: 'trendyol' as Platform, label: 'Trendyol', color: 'orange', gradient: 'from-orange-600 to-orange-500' },
   { key: 'hepsiburada' as Platform, label: 'Hepsiburada', color: 'purple', gradient: 'from-purple-600 to-purple-500' },
+  { key: 'yemeksepeti' as Platform, label: 'Yemeksepeti', color: 'red', gradient: 'from-red-600 to-red-500' },
 ]
 
 const tabs = [
@@ -29,6 +30,7 @@ export default function PazaryeriPage() {
   const [apiSecret, setApiSecret] = useState('')
   const [supplierId, setSupplierId] = useState('')
   const [merchantId, setMerchantId] = useState('')
+  const [restaurantId, setRestaurantId] = useState('')
 
   const [products, setProducts] = useState<any[]>([])
   const [productPage, setProductPage] = useState(0)
@@ -268,9 +270,9 @@ export default function PazaryeriPage() {
             <div className="flex gap-2 overflow-x-auto pb-3 border-b border-[#1a2332]">
               {platforms.map(p => {
                 const active = platform === p.key
-                const color = p.key === 'trendyol' ? 'orange' : 'purple'
+                const color = p.key === 'trendyol' ? 'orange' : p.key === 'yemeksepeti' ? 'red' : 'purple'
                 return (
-                  <button key={p.key} onClick={() => { setPlatform(p.key); setApiKey(''); setApiSecret(''); setSupplierId(''); setMerchantId(''); setResult('') }}
+                  <button key={p.key} onClick={() => { setPlatform(p.key); setApiKey(''); setApiSecret(''); setSupplierId(''); setMerchantId(''); setRestaurantId(''); setResult('') }}
                     className={'relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ' + (active ? 'bg-' + color + '-500 text-white shadow-lg shadow-' + color + '-500/25' : 'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white hover:border-gray-600')}>
                     {p.label} {status[p.key]?.connected ? '✅' : ''}
                   </button>
@@ -285,6 +287,8 @@ export default function PazaryeriPage() {
             <p className="text-sm text-gray-400 leading-relaxed">
               {platform === 'trendyol'
                 ? 'Trendyol satıcı panelinden (Satıcı > Entegrasyon > API) aldığınız API anahtarı, API Secret ve Satıcı ID bilgilerini girin.'
+                : platform === 'yemeksepeti'
+                ? 'Yemeksepeti partner portalından (integration.yemeksepeti.com) Client ID, Client Secret ve Restoran ID bilgilerini girin.'
                 : 'Hepsiburada satıcı panelinden aldığınız API anahtarı, API Secret ve Mağaza (Merchant) ID bilgilerini girin.'}
             </p>
             <div className="grid gap-4">
@@ -304,6 +308,12 @@ export default function PazaryeriPage() {
                   <input type="text" value={supplierId} onChange={e => setSupplierId(e.target.value)} placeholder="123456"
                     className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 focus:ring-1 focus:ring-' + pf.color + '-500/20 transition-all font-mono'} />
                 </div>
+              ) : platform === 'yemeksepeti' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Restoran ID</label>
+                  <input type="text" value={restaurantId} onChange={e => setRestaurantId(e.target.value)} placeholder="123456"
+                    className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 transition-all font-mono'} />
+                </div>
               ) : (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">Mağaza ID (Merchant ID)</label>
@@ -313,13 +323,13 @@ export default function PazaryeriPage() {
               )}
             </div>
             <div className="flex flex-wrap gap-3 pt-2">
-              <button onClick={() => callApi('/api/marketplace/' + platform + '/connect', platform === 'trendyol' ? { apiKey, apiSecret, supplierId } : { apiKey, apiSecret, merchantId })}
-                disabled={loading || !apiKey || !apiSecret || (platform === 'trendyol' ? !supplierId : !merchantId)}
+              <button onClick={() => callApi('/api/marketplace/' + platform + '/connect', platform === 'yemeksepeti' ? { clientId: apiKey, clientSecret: apiSecret, restaurantId } : platform === 'trendyol' ? { apiKey, apiSecret, supplierId } : { apiKey, apiSecret, merchantId })}
+                disabled={loading || !apiKey || !apiSecret || (platform === 'yemeksepeti' ? !restaurantId : platform === 'trendyol' ? !supplierId : !merchantId)}
                 className={'px-6 py-2.5 bg-gradient-to-r ' + pf.gradient + ' text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-' + pf.color + '-500/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]'}>
                 {loading ? 'Bağlantı Kuruluyor...' : pf.label + "'a Bağlan"}
               </button>
-              <button onClick={() => makePublicCall('/api/marketplace/' + platform + '/test', platform === 'trendyol' ? { apiKey, apiSecret, supplierId } : { apiKey, apiSecret, merchantId })}
-                disabled={!apiKey || !apiSecret || (platform === 'trendyol' ? !supplierId : !merchantId)}
+              <button onClick={() => makePublicCall('/api/marketplace/' + platform + '/test', platform === 'yemeksepeti' ? { clientId: apiKey, clientSecret: apiSecret, restaurantId } : platform === 'trendyol' ? { apiKey, apiSecret, supplierId } : { apiKey, apiSecret, merchantId })}
+                disabled={!apiKey || !apiSecret || (platform === 'yemeksepeti' ? !restaurantId : platform === 'trendyol' ? !supplierId : !merchantId)}
                 className="px-6 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#1f2a3a] border border-[#2a3a4a] transition-all disabled:opacity-40 active:scale-[0.98]">
                 Bağlantıyı Test Et
               </button>
