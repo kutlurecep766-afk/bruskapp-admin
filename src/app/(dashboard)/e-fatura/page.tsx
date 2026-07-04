@@ -109,6 +109,8 @@ export default function EFaturaPage() {
   ] : [
     { key: 'username', label: 'Kullanici Adi', type: 'text', placeholder: 'QNB kullanici adi' },
     { key: 'password', label: 'Sifre', type: 'password', placeholder: 'QNB sifre' },
+    { key: 'testMode', label: 'Test Modu', type: 'select', options: [{ value: 'true', label: 'Test' }, { value: 'false', label: 'Canli' }] },
+    { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'TRA (varsayilan)' },
     { key: 'sube', label: 'Sube Kodu', type: 'text', placeholder: 'DFLT' },
     { key: 'kasa', label: 'Kasa Kodu', type: 'text', placeholder: 'DFLT' },
   ]
@@ -190,15 +192,17 @@ export default function EFaturaPage() {
             <div className="pt-2">
               <p className="text-xs text-gray-500 mb-2">Sirket Bilgileri (faturada gorunecek)</p>
               <div className="grid grid-cols-2 gap-3">
-                {['companyTaxNumber', 'companyName', 'companyTaxOffice', 'companyCity', 'companyAddress'].map(k => (
-                  <input key={k} type="text" value={creds[k] || ''} onChange={e => setCreds({ ...creds, [k]: e.target.value })}
+                {['companyTaxNumber', 'companyName', 'companyTaxOffice', 'companyCity', 'companyAddress', 'phone', 'email'].map(k => (
+                  <input key={k} type={k === 'email' ? 'email' : 'text'} value={creds[k] || ''} onChange={e => setCreds({ ...creds, [k]: e.target.value })}
                     placeholder={
                       k === 'companyTaxNumber' ? 'Vergi No' :
                       k === 'companyName' ? 'Unvan' :
                       k === 'companyTaxOffice' ? 'Vergi Dairesi' :
-                      k === 'companyCity' ? 'Sehir' : 'Adres'
+                      k === 'companyCity' ? 'Sehir' :
+                      k === 'companyAddress' ? 'Adres' :
+                      k === 'phone' ? 'Telefon' : 'E-posta'
                     }
-                    className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 font-mono ' + (k === 'companyAddress' ? 'col-span-2' : '')} />
+                    className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 font-mono ' + (k === 'companyAddress' || k === 'phone' || k === 'email' ? 'col-span-2' : '')} />
                 ))}
               </div>
             </div>
