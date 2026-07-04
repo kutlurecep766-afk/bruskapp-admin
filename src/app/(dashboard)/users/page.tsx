@@ -11,7 +11,6 @@ const ALL_MODULES = [
   { key: 'qr-menu', label: 'QR Menu' },
   { key: 'messages', label: 'Mesajlar' },
   { key: 'notifications', label: 'Bildirimler' },
-  { key: 'discover', label: 'İşletme Bul' },
   { key: 'orders', label: 'Siparişler' },
   { key: 'reservations', label: 'Rezervasyonlar' },
   { key: 'virtual-pos', label: 'Sanal POS' },
