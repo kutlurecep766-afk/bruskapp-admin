@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Bot, Headphones, QrCode, Puzzle,
   MessageSquare, Bell, ShoppingCart, CalendarCheck, CreditCard,
-  BarChart3, Settings2, Cog, Shield, MessageCircle, Search, Package, Wallet, Store, Truck
+  BarChart3, Settings2, Cog, Shield, MessageCircle, Search, Package, Wallet, Store, Truck, FileText
 } from 'lucide-react'
 
 const ALL_MODULES = [
@@ -16,6 +16,7 @@ const ALL_MODULES = [
   { key: 'voice-assistants', label: 'Sesli AI Asistanlar', icon: Headphones, href: '/voice-assistants', perm: 'voice-assistants' },
   { key: 'qr-menu', label: 'QR Menu', icon: QrCode, href: '/qr-menu', perm: 'qr-menu' },
   { key: 'integrations', label: 'Entegrasyonlar', icon: Puzzle, href: '/integrations', perm: 'integrations' },
+  { key: 'e-fatura', label: 'e-Fatura', icon: FileText, href: '/e-fatura', perm: 'integrations' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
   { key: 'notifications', label: 'Bildirimler', icon: Bell, href: '/notifications', perm: 'notifications' },
   { key: 'discover', label: 'İşletme Bul', icon: Search, href: '/discover', perm: 'discover' },
