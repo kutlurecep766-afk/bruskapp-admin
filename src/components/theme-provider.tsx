@@ -42,6 +42,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 [data-theme="light"] [class*="border-"] { border-color: #e5e7eb !important }
 [data-theme="light"] [class*="bg-[#1a2332]"] { background: #e5e7eb !important }
 [data-theme="light"] [class*="bg-[#1f2a3a]"] { background: #e5e7eb !important }
+[data-theme="light"] .hover\\:bg-white\\/5:hover { background: rgba(0,0,0,0.05) !important }
+[data-theme="light"] .hover\\:text-white:hover { color: #1f2937 !important }
 [data-theme="light"] input, [data-theme="light"] textarea, [data-theme="light"] select { color: #1f2937 !important; background: #fff !important; border-color: #e5e7eb !important }
 ` }} />
       {children}
