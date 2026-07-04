@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Puzzle, Check, X as XIcon, Loader2, Save } from 'lucide-react'
+import { Check, X as XIcon, Loader2, Save } from 'lucide-react'
 
 const ALL_MODULES = [
   { key: 'qr-menu', label: 'QR Menü', desc: 'Masa QR kodları ile sipariş alma', emoji: '📱' },
@@ -12,7 +12,6 @@ const ALL_MODULES = [
   { key: 'ai-chatbots', label: 'AI Chatbotlar', desc: 'Yapay zeka destekli sohbet botları', emoji: '🤖' },
   { key: 'analytics', label: 'Analitik & Raporlar', desc: 'Satış, müşteri ve stok raporları', emoji: '📊' },
   { key: 'kargo', label: 'Kargo Entegrasyonu', desc: 'Kargo takibi ve gönderi yönetimi', emoji: '🚚' },
-  { key: 'integrations', label: 'Entegrasyonlar', desc: 'Üçüncü parti servis bağlantıları', emoji: '🔗' },
   { key: 'messages', label: 'Mesajlaşma', desc: 'Müşteri mesajları ve bildirimler', emoji: '💬' },
   { key: 'settings', label: 'Ayarlar', desc: 'Mağaza ve sistem ayarları', emoji: '⚙️' },
 ]

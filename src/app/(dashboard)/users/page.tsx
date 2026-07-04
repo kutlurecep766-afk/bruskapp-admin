@@ -9,7 +9,6 @@ const ALL_MODULES = [
   { key: 'ai-chatbots', label: 'AI Chatbotlar' },
   { key: 'voice-assistants', label: 'Sesli AI Asistanlar' },
   { key: 'qr-menu', label: 'QR Menu' },
-  { key: 'integrations', label: 'Entegrasyonlar' },
   { key: 'messages', label: 'Mesajlar' },
   { key: 'notifications', label: 'Bildirimler' },
   { key: 'discover', label: 'İşletme Bul' },
