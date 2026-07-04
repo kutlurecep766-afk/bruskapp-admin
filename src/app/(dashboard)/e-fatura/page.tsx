@@ -50,7 +50,7 @@ export default function EFaturaPage() {
       setConfig(data)
       setResult(JSON.stringify({ success: true, message: 'Ayarlar kaydedildi' }, null, 2))
     } catch {
-      setResult(JSON.stringify({ error: 'Kaydetme hatasi' }, null, 2))
+      setResult(JSON.stringify({ error: 'Kaydetme hatası' }, null, 2))
     } finally { setSaving(false) }
   }
 
@@ -60,10 +60,10 @@ export default function EFaturaPage() {
       const res = await fetch('/api/einvoice/test', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: selectedProvider }),
+        body: JSON.stringify({ provider: selectedProvider, credentials: creds }),
       })
       setResult(JSON.stringify(await res.json(), null, 2))
-    } catch { setResult('Baglanti hatasi') }
+    } catch { setResult('Bağlantı hatası') }
     finally { setLoading(false) }
   }
 
@@ -96,22 +96,22 @@ export default function EFaturaPage() {
   }
 
   const credFields = selectedProvider === 'nilvera' ? [
-    { key: 'apiKey', label: 'API Anahtari', type: 'password', placeholder: 'Nilvera API Key' },
-    { key: 'testMode', label: 'Test Modu', type: 'select', options: [{ value: 'true', label: 'Test (apitest.nilvera.com)' }, { value: 'false', label: 'Canli (api.nilvera.com)' }] },
-    { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'EFT (varsayilan)' },
-    { key: 'templateUuid', label: 'Sablon UUID (opsiyonel)', type: 'text', placeholder: 'Sablon UUID' },
+    { key: 'apiKey', label: 'API Anahtarı', type: 'password', placeholder: 'Nilvera API Key' },
+    { key: 'testMode', label: 'Test Modu', type: 'select', options: [{ value: 'true', label: 'Test (apitest.nilvera.com)' }, { value: 'false', label: 'Canlı (api.nilvera.com)' }] },
+    { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'EFT (varsayılan)' },
+    { key: 'templateUuid', label: 'Şablon UUID (opsiyonel)', type: 'text', placeholder: 'Şablon UUID' },
   ] : selectedProvider === 'izibiz' ? [
-    { key: 'username', label: 'Kullanici Adi', type: 'text', placeholder: 'İzibiz kullanici adi' },
-    { key: 'password', label: 'Sifre', type: 'password', placeholder: 'İzibiz sifre' },
+    { key: 'username', label: 'Kullanıcı Adı', type: 'text', placeholder: 'İzibiz kullanıcı adı' },
+    { key: 'password', label: 'Şifre', type: 'password', placeholder: 'İzibiz şifre' },
   ] : selectedProvider === 'edm' ? [
-    { key: 'username', label: 'Kullanici Adi', type: 'text', placeholder: 'EDM kullanici adi' },
-    { key: 'password', label: 'Sifre', type: 'password', placeholder: 'EDM sifre' },
+    { key: 'username', label: 'Kullanıcı Adı', type: 'text', placeholder: 'EDM kullanıcı adı' },
+    { key: 'password', label: 'Şifre', type: 'password', placeholder: 'EDM şifre' },
   ] : [
-    { key: 'username', label: 'Kullanici Adi', type: 'text', placeholder: 'QNB kullanici adi' },
-    { key: 'password', label: 'Sifre', type: 'password', placeholder: 'QNB sifre' },
-    { key: 'testMode', label: 'Test Modu', type: 'select', options: [{ value: 'true', label: 'Test' }, { value: 'false', label: 'Canli' }] },
-    { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'TRA (varsayilan)' },
-    { key: 'sube', label: 'Sube Kodu', type: 'text', placeholder: 'DFLT' },
+    { key: 'username', label: 'Kullanıcı Adı', type: 'text', placeholder: 'QNB kullanıcı adı' },
+    { key: 'password', label: 'Şifre', type: 'password', placeholder: 'QNB şifre' },
+    { key: 'testMode', label: 'Test Modu', type: 'select', options: [{ value: 'true', label: 'Test' }, { value: 'false', label: 'Canlı' }] },
+    { key: 'invoiceSerie', label: 'Fatura Serisi', type: 'text', placeholder: 'TRA (varsayılan)' },
+    { key: 'sube', label: 'Şube Kodu', type: 'text', placeholder: 'DFLT' },
     { key: 'kasa', label: 'Kasa Kodu', type: 'text', placeholder: 'DFLT' },
   ]
 
@@ -119,7 +119,7 @@ export default function EFaturaPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-white">e-Fatura / e-Arşiv</h1>
-        <p className="text-sm text-gray-500 mt-1">Entegrator ayarlarinizi yapin ve faturalarinizi gonderin</p>
+        <p className="text-sm text-gray-500 mt-1">Entegratör ayarlarınızı yapın ve faturalarınızı gönderin</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -190,15 +190,15 @@ export default function EFaturaPage() {
             ))}
 
             <div className="pt-2">
-              <p className="text-xs text-gray-500 mb-2">Sirket Bilgileri (faturada gorunecek)</p>
+              <p className="text-xs text-gray-500 mb-2">Şirket Bilgileri (faturada görünecek)</p>
               <div className="grid grid-cols-2 gap-3">
                 {['companyTaxNumber', 'companyName', 'companyTaxOffice', 'companyCity', 'companyAddress', 'phone', 'email'].map(k => (
                   <input key={k} type={k === 'email' ? 'email' : 'text'} value={creds[k] || ''} onChange={e => setCreds({ ...creds, [k]: e.target.value })}
                     placeholder={
                       k === 'companyTaxNumber' ? 'Vergi No' :
-                      k === 'companyName' ? 'Unvan' :
+                      k === 'companyName' ? 'Ünvan' :
                       k === 'companyTaxOffice' ? 'Vergi Dairesi' :
-                      k === 'companyCity' ? 'Sehir' :
+                      k === 'companyCity' ? 'Şehir' :
                       k === 'companyAddress' ? 'Adres' :
                       k === 'phone' ? 'Telefon' : 'E-posta'
                     }
@@ -210,12 +210,12 @@ export default function EFaturaPage() {
             <div className="flex gap-3 flex-wrap pt-2">
               <button onClick={saveConfig} disabled={saving}
                 className="px-6 py-2 rounded-xl text-sm font-medium text-white disabled:opacity-50" style={{ background: provider.color }}>
-                {saving ? 'Kaydediliyor...' : 'Ayarlari Kaydet'}
+                {saving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
               </button>
               <button onClick={testConnection} disabled={loading}
                 className="px-6 py-2 rounded-xl text-sm font-medium border border-[#1a2332] text-gray-300 hover:bg-white/5 disabled:opacity-50 flex items-center gap-2">
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                {loading ? 'Test ediliyor...' : 'Baglanti Test'}
+                {loading ? 'Test ediliyor...' : 'Bağlantı Testi'}
               </button>
               {selectedProvider === 'nilvera' && (
                 <button onClick={fetchTemplates} disabled={loading}
@@ -274,7 +274,7 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-xs text-gray-500 mb-1 block">Fatura Turu</label>
+        <label className="text-xs text-gray-500 mb-1 block">Fatura Türü</label>
         <div className="flex gap-2">
           <button onClick={() => setType('invoice')}
             className={'px-5 py-2 rounded-xl text-sm font-medium transition-all ' + (type === 'invoice' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-[#1a2332]/50 text-gray-400')}>
@@ -288,9 +288,9 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
       </div>
 
       <div>
-        <p className="text-xs text-gray-500 mb-2">Musteri Bilgileri</p>
+        <p className="text-xs text-gray-500 mb-2">Müşteri Bilgileri</p>
         <div className="grid grid-cols-2 gap-3">
-          <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Ad Soyad / Unvan"
+          <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Ad Soyad / Ünvan"
             className="col-span-2 w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600" />
           <input type="text" value={vkn} onChange={e => setVkn(e.target.value)} placeholder="VKN (Vergi No)"
             className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 font-mono" />
@@ -316,7 +316,7 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
           {lines.map((line, i) => (
             <div key={i} className="flex gap-2 items-start bg-[#080b12] rounded-xl p-3 border border-[#1a2332]">
               <div className="flex-1 grid grid-cols-5 gap-2">
-                <input type="text" value={line.name} onChange={e => updateLine(i, 'name', e.target.value)} placeholder="Urun adi"
+                <input type="text" value={line.name} onChange={e => updateLine(i, 'name', e.target.value)} placeholder="Ürün adı"
                   className="col-span-2 w-full bg-transparent border border-[#1a2332] rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600" />
                 <input type="number" value={line.quantity} onChange={e => updateLine(i, 'quantity', Number(e.target.value))} placeholder="Adet"
                   className="w-full bg-transparent border border-[#1a2332] rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600" />
@@ -344,13 +344,13 @@ function SendInvoiceTab({ provider, creds, onSend, loading, result }: any) {
         </div>
       </div>
 
-      <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} placeholder="Aciklama (opsiyonel)"
+      <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} placeholder="Açıklama (opsiyonel)"
         className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 resize-none" />
 
       <button onClick={handleSend} disabled={loading || !customerName || lines.every(l => !l.name)}
         className="px-6 py-2.5 rounded-xl text-sm font-medium text-white disabled:opacity-50 flex items-center gap-2" style={{ background: '#6366f1' }}>
         <Send size={14} className={loading ? 'animate-pulse' : ''} />
-        {loading ? 'Gonderiliyor...' : 'Faturayi Gonder'}
+        {loading ? 'Gönderiliyor...' : 'Faturayı Gönder'}
       </button>
 
       {result && <pre className="bg-[#080b12] rounded-xl p-4 text-sm text-gray-300 font-mono border border-[#1a2332] whitespace-pre-wrap break-all max-h-96 overflow-auto">{result}</pre>}
