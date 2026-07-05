@@ -67,7 +67,7 @@ export default function PazaryeriPage() {
   const loadAllStatus = async () => {
     for (const p of platforms) {
       try {
-        const res = await fetch(apiBase(p.key) + '/' + p.key + '/status', { credentials: 'include' })
+        const res = await fetch('/api/marketplace/' + p.key + '/status', { credentials: 'include' })
         if (res.ok) {
           const data = await res.json()
           setStatus(s => ({ ...s, [p.key]: data }))
@@ -111,7 +111,7 @@ export default function PazaryeriPage() {
     let total = 0
     for (const p of platforms) {
       try {
-        const res = await fetchWithAuth(apiBase(p.key) + '/' + p.key + '/products?page=0&size=100')
+        const res = await fetchWithAuth('/api/marketplace/' + p.key + '/products?page=0&size=100')
         if (res) {
           const data = await res.json()
           if (!res.ok) { setResult(p.key + ' ürünler yüklenemedi: ' + (data.message || JSON.stringify(data))); continue }
@@ -135,7 +135,7 @@ export default function PazaryeriPage() {
     let total = 0
     for (const p of platforms) {
       try {
-        const res = await fetchWithAuth(apiBase(p.key) + '/' + p.key + '/orders?page=0&size=50')
+        const res = await fetchWithAuth('/api/marketplace/' + p.key + '/orders?page=0&size=50')
         if (res) {
           const data = await res.json()
           if (!res.ok) { setResult(p.key + ' siparişler yüklenemedi: ' + (data.message || JSON.stringify(data))); continue }
@@ -158,7 +158,7 @@ export default function PazaryeriPage() {
     let all: any[] = []
     for (const p of platforms) {
       try {
-        const res = await fetchWithAuth(apiBase(p.key) + '/' + p.key + '/messages')
+        const res = await fetchWithAuth('/api/marketplace/' + p.key + '/messages')
         if (res) {
           const data = await res.json()
           if (!res.ok) { setResult(p.key + ' mesajlar yüklenemedi: ' + (data.message || JSON.stringify(data))); continue }
@@ -177,7 +177,7 @@ export default function PazaryeriPage() {
     if (!replyText.trim()) return
     setSendingReply(true)
     try {
-      const res = await fetchWithAuth(apiBase(msgPlatform) + '/' + msgPlatform + '/messages/' + messageId + '/reply', {
+      const res = await fetchWithAuth('/api/marketplace/' + msgPlatform + '/messages/' + messageId + '/reply', {
         method: 'POST', body: JSON.stringify({ message: replyText }),
       })
       if (res) {
@@ -195,7 +195,7 @@ export default function PazaryeriPage() {
     for (const p of platforms) {
       const platformUpdates = entries.filter(([, v]) => v.platform === p.key).map(([barcode, v]) => ({ barcode, quantity: v.quantity }))
       if (platformUpdates.length) {
-        await callApi(apiBase(p.key) + '/' + p.key + '/stock', { updates: platformUpdates })
+        await callApi('/api/marketplace/' + p.key + '/stock', { updates: platformUpdates })
       }
     }
     setStockUpdates({})
@@ -218,9 +218,6 @@ export default function PazaryeriPage() {
       {platformShort(p)}
     </span>
   )
-
-  const oldPlatforms = ['trendyol', 'hepsiburada', 'yemeksepeti']
-  const apiBase = (p: string) => oldPlatforms.includes(p) ? '/api/marketplace' : '/api/marketplace2'
 
   const buildCredentials = () => {
     const body: Record<string, string> = {}
@@ -306,18 +303,18 @@ export default function PazaryeriPage() {
     }
     return (
       <>
-        <button onClick={() => callApi(apiBase(platform) + '/' + platform + '/connect', buildCredentials())}
+        <button onClick={() => callApi('/api/marketplace/' + platform + '/connect', buildCredentials())}
           disabled={loading || !requiredFields()}
           className={'px-6 py-2.5 bg-gradient-to-r ' + pf.gradient + ' text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-' + pf.color + '-500/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]'}>
           {loading ? 'Bağlantı Kuruluyor...' : pf.label + "'a Bağlan"}
         </button>
-        <button onClick={() => makePublicCall(apiBase(platform) + '/' + platform + '/test', buildCredentials())}
+        <button onClick={() => makePublicCall('/api/marketplace/' + platform + '/test', buildCredentials())}
           disabled={!requiredFields()}
           className="px-6 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#1f2a3a] border border-[#2a3a4a] transition-all disabled:opacity-40 active:scale-[0.98]">
           Bağlantıyı Test Et
         </button>
         {status[platform]?.connected && (
-          <button onClick={() => callApi(apiBase(platform) + '/' + platform + '/disconnect', {})} disabled={loading}
+          <button onClick={() => callApi('/api/marketplace/' + platform + '/disconnect', {})} disabled={loading}
             className="px-6 py-2.5 bg-red-500/10 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 border border-red-500/20 transition-all active:scale-[0.98]">
             Bağlantıyı Kes
           </button>
@@ -429,9 +426,9 @@ export default function PazaryeriPage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <code className={'flex-1 text-sm text-' + pf.color + '-400 bg-[#080b12] rounded-lg px-3 py-2 border border-[#1a2332] font-mono truncate'}>
-                    {typeof window !== 'undefined' ? window.location.origin + apiBase(platform) + '/' + platform + '/webhook/callback/unknown' : ''}
+                    {typeof window !== 'undefined' ? window.location.origin + '/api/marketplace/' + platform + '/webhook/callback/unknown' : ''}
                   </code>
-                  <button onClick={() => navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.origin + apiBase(platform) + '/' + platform + '/webhook/callback/unknown' : '')}
+                  <button onClick={() => navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.origin + '/api/marketplace/' + platform + '/webhook/callback/unknown' : '')}
                     className={'px-4 py-2 bg-' + pf.color + '-500/10 text-' + pf.color + '-400 rounded-lg text-xs font-medium hover:bg-' + pf.color + '-500/20 border border-' + pf.color + '-500/20 transition-all shrink-0'}>Kopyala</button>
                 </div>
               </div>
