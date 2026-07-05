@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 
-type Platform = 'trendyol' | 'hepsiburada' | 'yemeksepeti'
+type Platform = 'trendyol' | 'hepsiburada' | 'yemeksepeti' | 'trendyolgo' | 'amazon' | 'n11' | 'ciceksepeti' | 'pazarama' | 'pttavm'
 type Tab = 'ayarlar' | 'urunler' | 'siparisler' | 'mesajlar'
 type Filter = 'all' | Platform
 
@@ -9,6 +9,12 @@ const platforms = [
   { key: 'trendyol' as Platform, label: 'Trendyol', color: 'orange', gradient: 'from-orange-600 to-orange-500' },
   { key: 'hepsiburada' as Platform, label: 'Hepsiburada', color: 'purple', gradient: 'from-purple-600 to-purple-500' },
   { key: 'yemeksepeti' as Platform, label: 'Yemeksepeti', color: 'red', gradient: 'from-red-600 to-red-500' },
+  { key: 'trendyolgo' as Platform, label: 'Trendyol Go', color: 'emerald', gradient: 'from-emerald-600 to-emerald-500' },
+  { key: 'amazon' as Platform, label: 'Amazon Turkey', color: 'amber', gradient: 'from-amber-600 to-amber-500' },
+  { key: 'n11' as Platform, label: 'n11', color: 'purple', gradient: 'from-purple-600 to-purple-500' },
+  { key: 'ciceksepeti' as Platform, label: 'ÇiçekSepeti', color: 'pink', gradient: 'from-pink-600 to-pink-500' },
+  { key: 'pazarama' as Platform, label: 'Pazarama', color: 'blue', gradient: 'from-blue-600 to-blue-500' },
+  { key: 'pttavm' as Platform, label: 'PTTAVM', color: 'yellow', gradient: 'from-yellow-600 to-yellow-500' },
 ]
 
 const tabs = [
@@ -31,6 +37,11 @@ export default function PazaryeriPage() {
   const [supplierId, setSupplierId] = useState('')
   const [merchantId, setMerchantId] = useState('')
   const [restaurantId, setRestaurantId] = useState('')
+  const [storeId, setStoreId] = useState('')
+  const [refreshToken, setRefreshToken] = useState('')
+  const [sellerId, setSellerId] = useState('')
+  const [username, setUsername] = useState('')
+  const [shopId, setShopId] = useState('')
 
   const [products, setProducts] = useState<any[]>([])
   const [productPage, setProductPage] = useState(0)
@@ -56,7 +67,7 @@ export default function PazaryeriPage() {
   const loadAllStatus = async () => {
     for (const p of platforms) {
       try {
-        const res = await fetch('/api/marketplace/' + p.key + '/status', { credentials: 'include' })
+        const res = await fetch(apiBase(p.key) + '/' + p.key + '/status', { credentials: 'include' })
         if (res.ok) {
           const data = await res.json()
           setStatus(s => ({ ...s, [p.key]: data }))
@@ -100,7 +111,7 @@ export default function PazaryeriPage() {
     let total = 0
     for (const p of platforms) {
       try {
-        const res = await fetchWithAuth('/api/marketplace/' + p.key + '/products?page=0&size=100')
+        const res = await fetchWithAuth(apiBase(p.key) + '/' + p.key + '/products?page=0&size=100')
         if (res) {
           const data = await res.json()
           if (!res.ok) { setResult(p.key + ' ürünler yüklenemedi: ' + (data.message || JSON.stringify(data))); continue }
@@ -124,7 +135,7 @@ export default function PazaryeriPage() {
     let total = 0
     for (const p of platforms) {
       try {
-        const res = await fetchWithAuth('/api/marketplace/' + p.key + '/orders?page=0&size=50')
+        const res = await fetchWithAuth(apiBase(p.key) + '/' + p.key + '/orders?page=0&size=50')
         if (res) {
           const data = await res.json()
           if (!res.ok) { setResult(p.key + ' siparişler yüklenemedi: ' + (data.message || JSON.stringify(data))); continue }
@@ -147,7 +158,7 @@ export default function PazaryeriPage() {
     let all: any[] = []
     for (const p of platforms) {
       try {
-        const res = await fetchWithAuth('/api/marketplace/' + p.key + '/messages')
+        const res = await fetchWithAuth(apiBase(p.key) + '/' + p.key + '/messages')
         if (res) {
           const data = await res.json()
           if (!res.ok) { setResult(p.key + ' mesajlar yüklenemedi: ' + (data.message || JSON.stringify(data))); continue }
@@ -166,7 +177,7 @@ export default function PazaryeriPage() {
     if (!replyText.trim()) return
     setSendingReply(true)
     try {
-      const res = await fetchWithAuth('/api/marketplace/' + msgPlatform + '/messages/' + messageId + '/reply', {
+      const res = await fetchWithAuth(apiBase(msgPlatform) + '/' + msgPlatform + '/messages/' + messageId + '/reply', {
         method: 'POST', body: JSON.stringify({ message: replyText }),
       })
       if (res) {
@@ -184,7 +195,7 @@ export default function PazaryeriPage() {
     for (const p of platforms) {
       const platformUpdates = entries.filter(([, v]) => v.platform === p.key).map(([barcode, v]) => ({ barcode, quantity: v.quantity }))
       if (platformUpdates.length) {
-        await callApi('/api/marketplace/' + p.key + '/stock', { updates: platformUpdates })
+        await callApi(apiBase(p.key) + '/' + p.key + '/stock', { updates: platformUpdates })
       }
     }
     setStockUpdates({})
@@ -194,25 +205,143 @@ export default function PazaryeriPage() {
   const filteredOrders = filter === 'all' ? orders : orders.filter(o => o._platform === filter)
   const filteredMessages = filter === 'all' ? messages : messages.filter(m => m._platform === filter)
 
+  const platformBadgeClass = (p: string) => {
+    const map: Record<string, string> = { trendyol: 'bg-orange-500/10 text-orange-400', hepsiburada: 'bg-purple-500/10 text-purple-400', yemeksepeti: 'bg-red-500/10 text-red-400', trendyolgo: 'bg-emerald-500/10 text-emerald-400', amazon: 'bg-amber-500/10 text-amber-400', n11: 'bg-violet-500/10 text-violet-400', ciceksepeti: 'bg-pink-500/10 text-pink-400', pazarama: 'bg-blue-500/10 text-blue-400', pttavm: 'bg-yellow-500/10 text-yellow-400' }
+    return map[p] || 'bg-gray-500/10 text-gray-400'
+  }
+  const platformShort = (p: string) => {
+    const map: Record<string, string> = { trendyol: 'TY', hepsiburada: 'HB', yemeksepeti: 'YS', trendyolgo: 'TG', amazon: 'AM', n11: 'N11', ciceksepeti: 'CS', pazarama: 'PZ', pttavm: 'PT' }
+    return map[p] || p.slice(0, 2).toUpperCase()
+  }
   const PlatformBadge = ({ platform: p }: { platform: string }) => (
-    <span className={'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ' + (p === 'trendyol' ? 'bg-orange-500/10 text-orange-400' : 'bg-purple-500/10 text-purple-400')}>
-      {p === 'trendyol' ? 'TY' : 'HB'}
+    <span className={'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ' + platformBadgeClass(p)}>
+      {platformShort(p)}
     </span>
   )
 
+  const oldPlatforms = ['trendyol', 'hepsiburada', 'yemeksepeti']
+  const apiBase = (p: string) => oldPlatforms.includes(p) ? '/api/marketplace' : '/api/marketplace2'
+
+  const buildCredentials = () => {
+    const body: Record<string, string> = {}
+    if (apiKey) body.apiKey = apiKey
+    if (apiSecret) body.apiSecret = apiSecret
+    if (supplierId) body.supplierId = supplierId
+    if (merchantId) body.merchantId = merchantId
+    if (restaurantId) body.restaurantId = restaurantId
+    if (storeId) body.storeId = storeId
+    if (refreshToken) body.refreshToken = refreshToken
+    if (sellerId) body.sellerId = sellerId
+    if (username) body.username = username
+    if (shopId) body.shopId = shopId
+    if (platform === 'yemeksepeti') { body.clientId = apiKey; body.clientSecret = apiSecret }
+    return body
+  }
+
+  const platformDescriptions = (p: string) => {
+    const map: Record<string, string> = {
+      trendyol: 'Trendyol satıcı panelinden (Satıcı > Entegrasyon > API) aldığınız API anahtarı, API Secret ve Satıcı ID bilgilerini girin.',
+      hepsiburada: 'Hepsiburada satıcı panelinden aldığınız API anahtarı, API Secret ve Mağaza (Merchant) ID bilgilerini girin.',
+      yemeksepeti: 'Yemeksepeti partner portalından (integration.yemeksepeti.com) Client ID, Client Secret ve Restoran ID bilgilerini girin.',
+      trendyolgo: 'Trendyol Go partner portalından (developers.tgoapps.com) Client ID, Client Secret ve Mağaza ID bilgilerini girin.',
+      amazon: 'Amazon Seller Central > Appstore > Geliştirici hesabınızdan SP-API OAuth bilgilerini girin.',
+      n11: 'n11 satıcı panelinden (so.n11.com) API Key ve API Secret bilgilerini girin.',
+      ciceksepeti: 'ÇiçekSepeti satıcı panelinden (bayi.ciceksepeti.com) API bilgilerini girin.',
+      pazarama: 'Pazarama satıcı panelinden (isortagim.pazarama.com) Client ID ve Client Secret bilgilerini girin.',
+      pttavm: 'PTTAVM satıcı panelinden (tedarikci.pttavm.com) API bilgilerini girin.',
+    }
+    return map[p] || ''
+  }
+
+  const fieldRow = (label: string, value: string, onChange: (v: string) => void, placeholder: string, type = 'text', extra?: React.ReactNode) => (
+    <div key={label}>
+      <label className="block text-sm font-medium text-gray-300 mb-1.5">{label}</label>
+      <div className="flex gap-2">
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+          className={'flex-1 bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 focus:ring-1 focus:ring-' + pf.color + '-500/20 transition-all font-mono'} />
+        {extra}
+      </div>
+    </div>
+  )
+
+  const renderFields = () => {
+    switch (platform) {
+      case 'trendyol':
+        return <>{fieldRow('API Anahtarı (API Key)', apiKey, setApiKey, 'api-key')}{fieldRow('API Secret', apiSecret, setApiSecret, 'api-secret', 'password')}{fieldRow('Satıcı ID (Supplier ID)', supplierId, setSupplierId, '123456')}</>
+      case 'hepsiburada':
+        return <>{fieldRow('API Anahtarı (API Key)', apiKey, setApiKey, 'api-key')}{fieldRow('API Secret', apiSecret, setApiSecret, 'api-secret', 'password')}{fieldRow('Mağaza ID (Merchant ID)', merchantId, setMerchantId, '123456')}</>
+      case 'yemeksepeti':
+        return <>{fieldRow('Client ID', apiKey, setApiKey, 'client-id')}{fieldRow('Client Secret', apiSecret, setApiSecret, 'client-secret', 'password')}{fieldRow('Restoran ID', restaurantId, setRestaurantId, '123456')}</>
+      case 'trendyolgo':
+        return <>{fieldRow('Client ID', apiKey, setApiKey, 'client-id')}{fieldRow('Client Secret', apiSecret, setApiSecret, 'client-secret', 'password')}{fieldRow('Mağaza ID (Store ID)', storeId, setStoreId, '123456')}</>
+      case 'amazon':
+        return <>{fieldRow('Client ID', apiKey, setApiKey, 'amzn1.application-oa2-...')}{fieldRow('Client Secret', apiSecret, setApiSecret, 'amzn1.oa2-cs-...', 'password')}{fieldRow('Refresh Token', refreshToken, setRefreshToken, 'Atzr|...', 'password')}{fieldRow('Satıcı ID (Seller ID)', sellerId, setSellerId, 'A123456789X')}</>
+      case 'n11':
+        return <>{fieldRow('API Key (AppKey)', apiKey, setApiKey, 'app-key')}{fieldRow('API Secret (AppSecret)', apiSecret, setApiSecret, 'app-secret', 'password')}</>
+      case 'ciceksepeti':
+        return <>{fieldRow('API Key', apiKey, setApiKey, 'api-key')}{fieldRow('API Secret', apiSecret, setApiSecret, 'api-secret', 'password')}{fieldRow('Satıcı ID', sellerId, setSellerId, '123456')}</>
+      case 'pazarama':
+        return <>{fieldRow('Client ID (API Key)', apiKey, setApiKey, 'client-id')}{fieldRow('Client Secret (API Şifre)', apiSecret, setApiSecret, 'client-secret', 'password')}</>
+      case 'pttavm':
+        return <>{fieldRow('Kullanıcı Adı', username, setUsername, 'kullanici-adi')}{fieldRow('API Şifre', apiSecret, setApiSecret, 'sifre', 'password')}{fieldRow('Mağaza ID (Shop ID)', shopId, setShopId, '123456')}</>
+      default:
+        return <>{fieldRow('API Key', apiKey, setApiKey, 'api-key')}{fieldRow('API Secret', apiSecret, setApiSecret, 'api-secret', 'password')}</>
+    }
+  }
+
+  const renderButtons = () => {
+    const requiredFields = (): boolean => {
+      const checks: Record<string, boolean> = {
+        trendyol: !!apiKey && !!apiSecret && !!supplierId,
+        hepsiburada: !!apiKey && !!apiSecret && !!merchantId,
+        yemeksepeti: !!apiKey && !!apiSecret && !!restaurantId,
+        trendyolgo: !!apiKey && !!apiSecret && !!storeId,
+        amazon: !!apiKey && !!apiSecret && !!refreshToken && !!sellerId,
+        n11: !!apiKey && !!apiSecret,
+        ciceksepeti: !!apiKey && !!apiSecret && !!sellerId,
+        pazarama: !!apiKey && !!apiSecret,
+        pttavm: !!username && !!apiSecret && !!shopId,
+      }
+      return checks[platform] || false
+    }
+    return (
+      <>
+        <button onClick={() => callApi(apiBase(platform) + '/' + platform + '/connect', buildCredentials())}
+          disabled={loading || !requiredFields()}
+          className={'px-6 py-2.5 bg-gradient-to-r ' + pf.gradient + ' text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-' + pf.color + '-500/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]'}>
+          {loading ? 'Bağlantı Kuruluyor...' : pf.label + "'a Bağlan"}
+        </button>
+        <button onClick={() => makePublicCall(apiBase(platform) + '/' + platform + '/test', buildCredentials())}
+          disabled={!requiredFields()}
+          className="px-6 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#1f2a3a] border border-[#2a3a4a] transition-all disabled:opacity-40 active:scale-[0.98]">
+          Bağlantıyı Test Et
+        </button>
+        {status[platform]?.connected && (
+          <button onClick={() => callApi(apiBase(platform) + '/' + platform + '/disconnect', {})} disabled={loading}
+            className="px-6 py-2.5 bg-red-500/10 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 border border-red-500/20 transition-all active:scale-[0.98]">
+            Bağlantıyı Kes
+          </button>
+        )}
+      </>
+    )
+  }
+
   const FilterBar = () => {
-    const f = platforms.find(p => p.key === filter)
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-500 mr-1">Filtre:</span>
-        {[{ key: 'all' as Filter, label: 'Tümü' }, ...platforms].map(item => (
-          <button key={item.key} onClick={() => setFilter(item.key as Filter)}
-            className={'px-3 py-1 rounded-lg text-xs font-medium transition-all ' + (filter === item.key
-              ? (item.key === 'all' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : (item.key === 'trendyol' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'))
-              : 'bg-[#1a2332] text-gray-400 hover:text-white border border-transparent')}>
-            {item.label}
-          </button>
-        ))}
+        {[{ key: 'all' as Filter, label: 'Tümü' }, ...platforms].map(item => {
+          const active = filter === item.key
+          const plat = item.key !== 'all' ? platforms.find(p => p.key === item.key) : null
+          return (
+            <button key={item.key} onClick={() => setFilter(item.key as Filter)}
+              className={'px-3 py-1 rounded-lg text-xs font-medium transition-all ' + (active
+                ? (item.key === 'all' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-' + (plat?.color || 'gray') + '-500/10 text-' + (plat?.color || 'gray') + '-400 border border-' + (plat?.color || 'gray') + '-500/20')
+                : 'bg-[#1a2332] text-gray-400 hover:text-white border border-transparent')}>
+              {item.label}
+            </button>
+          )
+        })}
       </div>
     )
   }
@@ -270,10 +399,9 @@ export default function PazaryeriPage() {
             <div className="flex gap-2 overflow-x-auto pb-3 border-b border-[#1a2332]">
               {platforms.map(p => {
                 const active = platform === p.key
-                const color = p.key === 'trendyol' ? 'orange' : p.key === 'yemeksepeti' ? 'red' : 'purple'
                 return (
-                  <button key={p.key} onClick={() => { setPlatform(p.key); setApiKey(''); setApiSecret(''); setSupplierId(''); setMerchantId(''); setRestaurantId(''); setResult('') }}
-                    className={'relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ' + (active ? 'bg-' + color + '-500 text-white shadow-lg shadow-' + color + '-500/25' : 'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white hover:border-gray-600')}>
+                  <button key={p.key} onClick={() => { setPlatform(p.key); setApiKey(''); setApiSecret(''); setSupplierId(''); setMerchantId(''); setRestaurantId(''); setStoreId(''); setRefreshToken(''); setSellerId(''); setUsername(''); setShopId(''); setResult('') }}
+                    className={'relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ' + (active ? 'bg-gradient-to-r ' + p.gradient + ' text-white shadow-lg shadow-' + p.color + '-500/25' : 'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white hover:border-gray-600')}>
                     {p.label} {status[p.key]?.connected ? '✅' : ''}
                   </button>
                 )
@@ -284,82 +412,27 @@ export default function PazaryeriPage() {
               <div className={'w-1 h-6 rounded-full bg-' + pf.color + '-500'} />
               <h3 className="text-white font-semibold">{pf.label} API Bilgileri</h3>
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              {platform === 'trendyol'
-                ? 'Trendyol satıcı panelinden (Satıcı > Entegrasyon > API) aldığınız API anahtarı, API Secret ve Satıcı ID bilgilerini girin.'
-                : platform === 'yemeksepeti'
-                ? 'Yemeksepeti partner portalından (integration.yemeksepeti.com) Client ID, Client Secret ve Restoran ID bilgilerini girin.'
-                : 'Hepsiburada satıcı panelinden aldığınız API anahtarı, API Secret ve Mağaza (Merchant) ID bilgilerini girin.'}
-            </p>
-            <div className="grid gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">API Anahtarı (API Key)</label>
-                <input type="text" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="api-key"
-                  className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 focus:ring-1 focus:ring-' + pf.color + '-500/20 transition-all font-mono'} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">API Secret</label>
-                <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="api-secret"
-                  className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 focus:ring-1 focus:ring-' + pf.color + '-500/20 transition-all font-mono'} />
-              </div>
-              {platform === 'trendyol' ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Satıcı ID (Supplier ID)</label>
-                  <input type="text" value={supplierId} onChange={e => setSupplierId(e.target.value)} placeholder="123456"
-                    className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 focus:ring-1 focus:ring-' + pf.color + '-500/20 transition-all font-mono'} />
-                </div>
-              ) : platform === 'yemeksepeti' ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Restoran ID</label>
-                  <input type="text" value={restaurantId} onChange={e => setRestaurantId(e.target.value)} placeholder="123456"
-                    className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 transition-all font-mono'} />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Mağaza ID (Merchant ID)</label>
-                  <input type="text" value={merchantId} onChange={e => setMerchantId(e.target.value)} placeholder="123456"
-                    className={'w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-' + pf.color + '-500/60 focus:ring-1 focus:ring-' + pf.color + '-500/20 transition-all font-mono'} />
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button onClick={() => callApi('/api/marketplace/' + platform + '/connect', platform === 'yemeksepeti' ? { clientId: apiKey, clientSecret: apiSecret, restaurantId } : platform === 'trendyol' ? { apiKey, apiSecret, supplierId } : { apiKey, apiSecret, merchantId })}
-                disabled={loading || !apiKey || !apiSecret || (platform === 'yemeksepeti' ? !restaurantId : platform === 'trendyol' ? !supplierId : !merchantId)}
-                className={'px-6 py-2.5 bg-gradient-to-r ' + pf.gradient + ' text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-' + pf.color + '-500/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]'}>
-                {loading ? 'Bağlantı Kuruluyor...' : pf.label + "'a Bağlan"}
-              </button>
-              <button onClick={() => makePublicCall('/api/marketplace/' + platform + '/test', platform === 'yemeksepeti' ? { clientId: apiKey, clientSecret: apiSecret, restaurantId } : platform === 'trendyol' ? { apiKey, apiSecret, supplierId } : { apiKey, apiSecret, merchantId })}
-                disabled={!apiKey || !apiSecret || (platform === 'yemeksepeti' ? !restaurantId : platform === 'trendyol' ? !supplierId : !merchantId)}
-                className="px-6 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#1f2a3a] border border-[#2a3a4a] transition-all disabled:opacity-40 active:scale-[0.98]">
-                Bağlantıyı Test Et
-              </button>
-              {status[platform]?.connected && (
-                <button onClick={() => callApi('/api/marketplace/' + platform + '/disconnect', {})} disabled={loading}
-                  className="px-6 py-2.5 bg-red-500/10 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 border border-red-500/20 transition-all active:scale-[0.98]">
-                  Bağlantıyı Kes
-                </button>
-              )}
-            </div>
+            <p className="text-sm text-gray-400 leading-relaxed">{platformDescriptions(platform)}</p>
+            <div className="grid gap-4">{renderFields()}</div>
+            <div className="flex flex-wrap gap-3 pt-2">{renderButtons()}</div>
             {result && <pre className="bg-[#080b12] rounded-xl p-4 text-sm text-gray-300 font-mono overflow-x-auto border border-[#1a2332]">{result}</pre>}
             {status[platform]?.connected && (
               <div className="mt-4 p-5 bg-gradient-to-br from-' + pf.color + '-500/5 to-transparent rounded-xl border border-' + pf.color + '-500/10">
                 <h4 className="text-white font-medium text-sm mb-2 flex items-center gap-2">
-                  <svg className={'w-4 h-4 ' + (platform === 'trendyol' ? 'text-orange-400' : 'text-purple-400')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className={'w-4 h-4 text-' + pf.color + '-400'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
-                  Webhook URL {platform === 'trendyol' ? '(Trendyol Paneli > Webhook Ayarları)' : '(Entegratörler İçin)'}
+                  Webhook URL
                 </h4>
                 <p className="text-xs text-gray-500 mb-2">
-                  {platform === 'trendyol'
-                    ? 'Trendyol satıcı panelindeki Webhook Ayarları sayfasına ekleyin:'
-                    : 'Entegratör panelinizdeki webhook ayarlarına ekleyin (entegratör değilseniz otomatik çekilir):'}
+                  İlgili pazaryeri panelindeki webhook/entegrasyon ayarlarına bu URL'yi ekleyin:
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className={'flex-1 text-sm ' + (platform === 'trendyol' ? 'text-orange-400' : 'text-purple-400') + ' bg-[#080b12] rounded-lg px-3 py-2 border border-[#1a2332] font-mono truncate'}>
-                    {typeof window !== 'undefined' ? window.location.origin + '/api/marketplace/' + platform + '/webhook/callback/unknown' : ''}
+                  <code className={'flex-1 text-sm text-' + pf.color + '-400 bg-[#080b12] rounded-lg px-3 py-2 border border-[#1a2332] font-mono truncate'}>
+                    {typeof window !== 'undefined' ? window.location.origin + apiBase(platform) + '/' + platform + '/webhook/callback/unknown' : ''}
                   </code>
-                  <button onClick={() => navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.origin + '/api/marketplace/' + platform + '/webhook/callback/unknown' : '')}
-                    className={'px-4 py-2 bg-' + pf.color + '-500/10 ' + (platform === 'trendyol' ? 'text-orange-400' : 'text-purple-400') + ' rounded-lg text-xs font-medium hover:bg-' + pf.color + '-500/20 border border-' + pf.color + '-500/20 transition-all shrink-0'}>Kopyala</button>
+                  <button onClick={() => navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.origin + apiBase(platform) + '/' + platform + '/webhook/callback/unknown' : '')}
+                    className={'px-4 py-2 bg-' + pf.color + '-500/10 text-' + pf.color + '-400 rounded-lg text-xs font-medium hover:bg-' + pf.color + '-500/20 border border-' + pf.color + '-500/20 transition-all shrink-0'}>Kopyala</button>
                 </div>
               </div>
             )}
@@ -537,11 +610,11 @@ export default function PazaryeriPage() {
               <div className="space-y-3">
                 {filteredMessages.map((m: any) => (
                   <div key={m._platform + '-' + m.id} className="group bg-[#080b12] border border-[#1a2332] rounded-xl p-4 hover:border-gray-700/50 transition-all">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={'w-8 h-8 rounded-full bg-gradient-to-br ' + (m._platform === 'trendyol' ? 'from-orange-400 to-orange-600' : 'from-purple-400 to-purple-600') + ' flex items-center justify-center text-white text-xs font-bold'}>
-                          {(m.from || '?')[0].toUpperCase()}
-                        </div>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className={'w-8 h-8 rounded-full bg-gradient-to-br ' + (m._platform === 'trendyol' ? 'from-orange-400 to-orange-600' : m._platform === 'trendyolgo' ? 'from-emerald-400 to-emerald-600' : m._platform === 'amazon' ? 'from-amber-400 to-amber-600' : m._platform === 'n11' ? 'from-violet-400 to-violet-600' : m._platform === 'ciceksepeti' ? 'from-pink-400 to-pink-600' : m._platform === 'pazarama' ? 'from-blue-400 to-blue-600' : m._platform === 'pttavm' ? 'from-yellow-400 to-yellow-600' : m._platform === 'yemeksepeti' ? 'from-red-400 to-red-600' : 'from-purple-400 to-purple-600') + ' flex items-center justify-center text-white text-xs font-bold'}>
+                            {(m.from || '?')[0].toUpperCase()}
+                          </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-white font-medium text-sm">{m.from}</p>
@@ -570,7 +643,7 @@ export default function PazaryeriPage() {
                         </div>
                       ) : (
                         <button onClick={() => { setReplyTo(m.id); setReplyText('') }}
-                          className={'inline-flex items-center gap-1.5 text-xs ' + (m._platform === 'trendyol' ? 'text-orange-400 hover:text-orange-300' : 'text-purple-400 hover:text-purple-300') + ' transition-all opacity-0 group-hover:opacity-100'}>
+                          className={'inline-flex items-center gap-1.5 text-xs ' + (platformBadgeClass(m._platform).includes('orange') ? 'text-orange-400 hover:text-orange-300' : platformBadgeClass(m._platform).includes('emerald') ? 'text-emerald-400 hover:text-emerald-300' : platformBadgeClass(m._platform).includes('amber') ? 'text-amber-400 hover:text-amber-300' : platformBadgeClass(m._platform).includes('violet') ? 'text-violet-400 hover:text-violet-300' : platformBadgeClass(m._platform).includes('pink') ? 'text-pink-400 hover:text-pink-300' : platformBadgeClass(m._platform).includes('blue') ? 'text-blue-400 hover:text-blue-300' : platformBadgeClass(m._platform).includes('yellow') ? 'text-yellow-400 hover:text-yellow-300' : platformBadgeClass(m._platform).includes('red') ? 'text-red-400 hover:text-red-300' : 'text-purple-400 hover:text-purple-300') + ' transition-all opacity-0 group-hover:opacity-100'}>
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                           </svg>
