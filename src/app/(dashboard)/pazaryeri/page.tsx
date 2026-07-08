@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 
-type Platform = 'trendyol' | 'hepsiburada' | 'yemeksepeti' | 'trendyolgo' | 'amazon' | 'n11' | 'ciceksepeti' | 'pazarama' | 'pttavm'
+type Platform = 'trendyol' | 'hepsiburada' | 'yemeksepeti' | 'trendyolgo' | 'n11'
 type Tab = 'ayarlar' | 'urunler' | 'siparisler' | 'mesajlar'
 type Filter = 'all' | Platform
 
@@ -10,11 +10,7 @@ const platforms = [
   { key: 'hepsiburada' as Platform, label: 'Hepsiburada', color: 'purple', gradient: 'from-purple-600 to-purple-500' },
   { key: 'yemeksepeti' as Platform, label: 'Yemeksepeti', color: 'red', gradient: 'from-red-600 to-red-500' },
   { key: 'trendyolgo' as Platform, label: 'Trendyol Go', color: 'emerald', gradient: 'from-emerald-600 to-emerald-500' },
-  { key: 'amazon' as Platform, label: 'Amazon Turkey', color: 'amber', gradient: 'from-amber-600 to-amber-500' },
   { key: 'n11' as Platform, label: 'n11', color: 'purple', gradient: 'from-purple-600 to-purple-500' },
-  { key: 'ciceksepeti' as Platform, label: 'ÇiçekSepeti', color: 'pink', gradient: 'from-pink-600 to-pink-500' },
-  { key: 'pazarama' as Platform, label: 'Pazarama', color: 'blue', gradient: 'from-blue-600 to-blue-500' },
-  { key: 'pttavm' as Platform, label: 'PTTAVM', color: 'yellow', gradient: 'from-yellow-600 to-yellow-500' },
 ]
 
 const tabs = [
@@ -38,10 +34,7 @@ export default function PazaryeriPage() {
   const [merchantId, setMerchantId] = useState('')
   const [restaurantId, setRestaurantId] = useState('')
   const [storeId, setStoreId] = useState('')
-  const [refreshToken, setRefreshToken] = useState('')
-  const [sellerId, setSellerId] = useState('')
-  const [username, setUsername] = useState('')
-  const [shopId, setShopId] = useState('')
+
 
   const [products, setProducts] = useState<any[]>([])
   const [productPage, setProductPage] = useState(0)
@@ -206,11 +199,11 @@ export default function PazaryeriPage() {
   const filteredMessages = filter === 'all' ? messages : messages.filter(m => m._platform === filter)
 
   const platformBadgeClass = (p: string) => {
-    const map: Record<string, string> = { trendyol: 'bg-orange-500/10 text-orange-400', hepsiburada: 'bg-purple-500/10 text-purple-400', yemeksepeti: 'bg-red-500/10 text-red-400', trendyolgo: 'bg-emerald-500/10 text-emerald-400', amazon: 'bg-amber-500/10 text-amber-400', n11: 'bg-violet-500/10 text-violet-400', ciceksepeti: 'bg-pink-500/10 text-pink-400', pazarama: 'bg-blue-500/10 text-blue-400', pttavm: 'bg-yellow-500/10 text-yellow-400' }
+    const map: Record<string, string> = { trendyol: 'bg-orange-500/10 text-orange-400', hepsiburada: 'bg-purple-500/10 text-purple-400', yemeksepeti: 'bg-red-500/10 text-red-400', trendyolgo: 'bg-emerald-500/10 text-emerald-400', n11: 'bg-violet-500/10 text-violet-400' }
     return map[p] || 'bg-gray-500/10 text-gray-400'
   }
   const platformShort = (p: string) => {
-    const map: Record<string, string> = { trendyol: 'TY', hepsiburada: 'HB', yemeksepeti: 'YS', trendyolgo: 'TG', amazon: 'AM', n11: 'N11', ciceksepeti: 'CS', pazarama: 'PZ', pttavm: 'PT' }
+    const map: Record<string, string> = { trendyol: 'TY', hepsiburada: 'HB', yemeksepeti: 'YS', trendyolgo: 'TG', n11: 'N11' }
     return map[p] || p.slice(0, 2).toUpperCase()
   }
   const PlatformBadge = ({ platform: p }: { platform: string }) => (
@@ -227,10 +220,6 @@ export default function PazaryeriPage() {
     if (merchantId) body.merchantId = merchantId
     if (restaurantId) body.restaurantId = restaurantId
     if (storeId) body.storeId = storeId
-    if (refreshToken) body.refreshToken = refreshToken
-    if (sellerId) body.sellerId = sellerId
-    if (username) body.username = username
-    if (shopId) body.shopId = shopId
     if (platform === 'yemeksepeti') { body.clientId = apiKey; body.clientSecret = apiSecret }
     return body
   }
@@ -241,11 +230,7 @@ export default function PazaryeriPage() {
       hepsiburada: 'Hepsiburada satıcı panelinden aldığınız API anahtarı, API Secret ve Mağaza (Merchant) ID bilgilerini girin.',
       yemeksepeti: 'Yemeksepeti partner portalından (integration.yemeksepeti.com) Client ID, Client Secret ve Restoran ID bilgilerini girin.',
       trendyolgo: 'Trendyol Go partner portalından (developers.tgoapps.com) Client ID, Client Secret ve Mağaza ID bilgilerini girin.',
-      amazon: 'Amazon Seller Central > Appstore > Geliştirici hesabınızdan SP-API OAuth bilgilerini girin.',
       n11: 'n11 satıcı panelinden (so.n11.com) API Key ve API Secret bilgilerini girin.',
-      ciceksepeti: 'ÇiçekSepeti satıcı panelinden (bayi.ciceksepeti.com) API bilgilerini girin.',
-      pazarama: 'Pazarama satıcı panelinden (isortagim.pazarama.com) Client ID ve Client Secret bilgilerini girin.',
-      pttavm: 'PTTAVM satıcı panelinden (tedarikci.pttavm.com) API bilgilerini girin.',
     }
     return map[p] || ''
   }
@@ -271,16 +256,8 @@ export default function PazaryeriPage() {
         return <>{fieldRow('Client ID', apiKey, setApiKey, 'client-id')}{fieldRow('Client Secret', apiSecret, setApiSecret, 'client-secret', 'password')}{fieldRow('Restoran ID', restaurantId, setRestaurantId, '123456')}</>
       case 'trendyolgo':
         return <>{fieldRow('Client ID', apiKey, setApiKey, 'client-id')}{fieldRow('Client Secret', apiSecret, setApiSecret, 'client-secret', 'password')}{fieldRow('Mağaza ID (Store ID)', storeId, setStoreId, '123456')}</>
-      case 'amazon':
-        return <>{fieldRow('Client ID', apiKey, setApiKey, 'amzn1.application-oa2-...')}{fieldRow('Client Secret', apiSecret, setApiSecret, 'amzn1.oa2-cs-...', 'password')}{fieldRow('Refresh Token', refreshToken, setRefreshToken, 'Atzr|...', 'password')}{fieldRow('Satıcı ID (Seller ID)', sellerId, setSellerId, 'A123456789X')}</>
       case 'n11':
         return <>{fieldRow('API Key (AppKey)', apiKey, setApiKey, 'app-key')}{fieldRow('API Secret (AppSecret)', apiSecret, setApiSecret, 'app-secret', 'password')}</>
-      case 'ciceksepeti':
-        return <>{fieldRow('API Key', apiKey, setApiKey, 'api-key')}{fieldRow('API Secret', apiSecret, setApiSecret, 'api-secret', 'password')}{fieldRow('Satıcı ID', sellerId, setSellerId, '123456')}</>
-      case 'pazarama':
-        return <>{fieldRow('Client ID (API Key)', apiKey, setApiKey, 'client-id')}{fieldRow('Client Secret (API Şifre)', apiSecret, setApiSecret, 'client-secret', 'password')}</>
-      case 'pttavm':
-        return <>{fieldRow('Kullanıcı Adı', username, setUsername, 'kullanici-adi')}{fieldRow('API Şifre', apiSecret, setApiSecret, 'sifre', 'password')}{fieldRow('Mağaza ID (Shop ID)', shopId, setShopId, '123456')}</>
       default:
         return <>{fieldRow('API Key', apiKey, setApiKey, 'api-key')}{fieldRow('API Secret', apiSecret, setApiSecret, 'api-secret', 'password')}</>
     }
@@ -293,11 +270,7 @@ export default function PazaryeriPage() {
         hepsiburada: !!apiKey && !!apiSecret && !!merchantId,
         yemeksepeti: !!apiKey && !!apiSecret && !!restaurantId,
         trendyolgo: !!apiKey && !!apiSecret && !!storeId,
-        amazon: !!apiKey && !!apiSecret && !!refreshToken && !!sellerId,
         n11: !!apiKey && !!apiSecret,
-        ciceksepeti: !!apiKey && !!apiSecret && !!sellerId,
-        pazarama: !!apiKey && !!apiSecret,
-        pttavm: !!username && !!apiSecret && !!shopId,
       }
       return checks[platform] || false
     }
@@ -397,7 +370,7 @@ export default function PazaryeriPage() {
               {platforms.map(p => {
                 const active = platform === p.key
                 return (
-                  <button key={p.key} onClick={() => { setPlatform(p.key); setApiKey(''); setApiSecret(''); setSupplierId(''); setMerchantId(''); setRestaurantId(''); setStoreId(''); setRefreshToken(''); setSellerId(''); setUsername(''); setShopId(''); setResult('') }}
+                  <button key={p.key} onClick={() => { setPlatform(p.key); setApiKey(''); setApiSecret(''); setSupplierId(''); setMerchantId(''); setRestaurantId(''); setStoreId(''); setResult('') }}
                     className={'relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ' + (active ? 'bg-gradient-to-r ' + p.gradient + ' text-white shadow-lg shadow-' + p.color + '-500/25' : 'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white hover:border-gray-600')}>
                     {p.label} {status[p.key]?.connected ? '✅' : ''}
                   </button>
@@ -609,7 +582,7 @@ export default function PazaryeriPage() {
                   <div key={m._platform + '-' + m.id} className="group bg-[#080b12] border border-[#1a2332] rounded-xl p-4 hover:border-gray-700/50 transition-all">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className={'w-8 h-8 rounded-full bg-gradient-to-br ' + (m._platform === 'trendyol' ? 'from-orange-400 to-orange-600' : m._platform === 'trendyolgo' ? 'from-emerald-400 to-emerald-600' : m._platform === 'amazon' ? 'from-amber-400 to-amber-600' : m._platform === 'n11' ? 'from-violet-400 to-violet-600' : m._platform === 'ciceksepeti' ? 'from-pink-400 to-pink-600' : m._platform === 'pazarama' ? 'from-blue-400 to-blue-600' : m._platform === 'pttavm' ? 'from-yellow-400 to-yellow-600' : m._platform === 'yemeksepeti' ? 'from-red-400 to-red-600' : 'from-purple-400 to-purple-600') + ' flex items-center justify-center text-white text-xs font-bold'}>
+                          <div className={'w-8 h-8 rounded-full bg-gradient-to-br ' + (m._platform === 'trendyol' ? 'from-orange-400 to-orange-600' : m._platform === 'trendyolgo' ? 'from-emerald-400 to-emerald-600' : m._platform === 'n11' ? 'from-violet-400 to-violet-600' : m._platform === 'yemeksepeti' ? 'from-red-400 to-red-600' : 'from-purple-400 to-purple-600') + ' flex items-center justify-center text-white text-xs font-bold'}>
                             {(m.from || '?')[0].toUpperCase()}
                           </div>
                         <div>
