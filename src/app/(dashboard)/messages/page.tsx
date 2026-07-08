@@ -88,6 +88,9 @@ export default function MessagesPage() {
   useEffect(() => {
     const saved = localStorage.getItem('aiAutoReply')
     if (saved !== null) setAiEnabled(saved === 'true')
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
   }, [])
 
   const fetchConversations = useCallback(async () => {
@@ -135,6 +138,16 @@ export default function MessagesPage() {
         })
         if (selectedRef.current === convId) {
           setMessages(prev => [...prev, { ...msg, direction: msg.direction || 'incoming' }])
+        }
+        if (msg.direction !== 'outgoing' && document.visibilityState === 'hidden') {
+          try {
+            const n = new Notification('Yeni mesaj: ' + msg.platform, {
+              body: msg.from + ': ' + (msg.content?.slice(0, 80) || ''),
+              icon: '/favicon.svg',
+              silent: true,
+            })
+            setTimeout(() => n.close(), 4000)
+          } catch {}
         }
       } catch {}
     }
