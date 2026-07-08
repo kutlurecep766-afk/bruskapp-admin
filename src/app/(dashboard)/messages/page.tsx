@@ -67,6 +67,8 @@ export default function MessagesPage() {
   const [msgLoading, setMsgLoading] = useState(false)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [platformFilter, setPlatformFilter] = useState('')
+  const [replyText, setReplyText] = useState('')
+  const [sending, setSending] = useState(false)
   const msgsEndRef = useRef<HTMLDivElement>(null)
   const selectedRef = useRef(selectedConv)
   selectedRef.current = selectedConv
@@ -136,6 +138,27 @@ export default function MessagesPage() {
   const backToList = () => {
     setMobileView('list')
     setSelectedConv(null)
+  }
+
+  const sendReply = useCallback(async () => {
+    if (!replyText.trim() || !selectedConv || sending) return
+    setSending(true)
+    const [platform, from] = selectedConv.split(':')
+    const text = replyText.trim()
+    setReplyText('')
+    try {
+      const endpoint = platform === 'whatsapp' ? '/api/whatsapp/send' : platform === 'instagram' ? '/api/instagram/send' : platform === 'telegram' ? '/api/telegram/send' : null
+      if (!endpoint) return
+      await fetch(endpoint, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(platform === 'telegram' ? { chatId: from, message: text } : { to: from, message: text }),
+      })
+    } catch {} finally { setSending(false) }
+  }, [replyText, selectedConv, sending])
+
+  const handleReplyKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply() }
   }
 
   const formatTime = (iso: string) => {
@@ -252,6 +275,25 @@ export default function MessagesPage() {
                 ))
               )}
               <div ref={msgsEndRef} />
+            </div>
+            <div className="p-3 md:p-4 border-t border-[#1a2332]">
+              <div className="flex items-center gap-2 bg-[#1a2332] rounded-xl px-3 py-2">
+                <input
+                  value={replyText} onChange={e => setReplyText(e.target.value)}
+                  onKeyDown={handleReplyKeyDown}
+                  placeholder="Mesaj yaz..."
+                  className="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-500"
+                  disabled={sending}
+                />
+                <button onClick={sendReply} disabled={sending || !replyText.trim()}
+                  className={'p-2 rounded-lg transition-all ' + (sending || !replyText.trim() ? 'text-gray-600' : 'text-blue-400 hover:bg-blue-500/20')}>
+                  {sending ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  )}
+                </button>
+              </div>
             </div>
           </>
         ) : (
