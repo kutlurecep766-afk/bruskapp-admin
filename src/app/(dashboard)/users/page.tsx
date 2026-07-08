@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Users, Plus, Pencil, Trash2, X, Shield, ShieldOff, Check, Search, Building2 } from 'lucide-react'
+import { Users, Plus, Pencil, Trash2, X, Shield, ShieldOff, Check, Search, UserPlus } from 'lucide-react'
 
 const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard' },
@@ -40,12 +40,15 @@ export default function UsersPage() {
   const [search, setSearch] = useState('')
   const [saveError, setSaveError] = useState('')
 
-  const [businessName, setBusinessName] = useState('')
-  const [regEmail, setRegEmail] = useState('')
-  const [regPassword, setRegPassword] = useState('')
-  const [regLoading, setRegLoading] = useState(false)
-  const [regError, setRegError] = useState('')
-  const [regSuccess, setRegSuccess] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [newName, setNewName] = useState('')
+  const [newRole, setNewRole] = useState('BUSINESS_OWNER')
+  const [newPerms, setNewPerms] = useState<string[]>(ALL_MODULES.map(m => m.key))
+  const [newTenantId, setNewTenantId] = useState('')
+  const [newLoading, setNewLoading] = useState(false)
+  const [newError, setNewError] = useState('')
+  const [newSuccess, setNewSuccess] = useState('')
 
   const fetchUsers = async () => {
       try {
@@ -67,34 +70,33 @@ export default function UsersPage() {
 
   const openCreate = () => {
     setEditingUser(null); setSaveError('')
-    setForm({ email: '', password: '', name: '', role: 'USER', permissions: ALL_MODULES.map(m => m.key), tenantId: '' })
+    setForm({ email: '', password: '', name: '', role: 'USER', permissions: [], tenantId: '' })
     setShowModal(true)
   }
 
   const openEdit = (u: any) => {
     setEditingUser(u); setSaveError('')
-    setForm({ email: u.email, password: '', name: u.name || '', role: u.role, permissions: u.permissions || [], tenantId: u.tenantId || '' })
+    setForm({ email: u.email, password: '', name: u.name || '', role: u.role, permissions: [], tenantId: u.tenantId || '' })
     setShowModal(true)
   }
 
-  const togglePermission = (key: string) => {
-    setForm(f => ({ ...f, permissions: f.permissions.includes(key) ? f.permissions.filter(p => p !== key) : [...f.permissions, key] }))
+  const toggleNewPerm = (key: string) => {
+    setNewPerms(p => p.includes(key) ? p.filter(x => x !== key) : [...p, key])
   }
 
-  const selectAll = () => setForm(f => ({ ...f, permissions: ALL_MODULES.map(m => m.key) }))
-  const selectNone = () => setForm(f => ({ ...f, permissions: [] }))
+  const selectAllNew = () => setNewPerms(ALL_MODULES.map(m => m.key))
+  const selectNoneNew = () => setNewPerms([])
 
   const save = async () => {
     setLoading(true); setSaveError('')
     try {
       let res
       if (editingUser) {
-        const body: any = { name: form.name, role: form.role, permissions: form.permissions, tenantId: form.tenantId }
+        const body: any = { name: form.name, role: form.role, tenantId: form.tenantId }
         res = await fetch('/api/users/' + editingUser.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) })
       } else {
-        const createPayload: any = { ...form }
-        if (!createPayload.tenantId) createPayload.tenantId = undefined
-        res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(createPayload) })
+        const payload: any = { email: form.email, password: form.password, name: form.name, role: form.role, permissions: [], tenantId: form.tenantId || undefined }
+        res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) })
       }
       if (!res.ok) { setSaveError('Kayit basarisiz (' + res.status + ')'); return }
       setShowModal(false)
@@ -103,34 +105,31 @@ export default function UsersPage() {
     finally { setLoading(false) }
   }
 
-  const remove = async (id: string) => {
-    if (!confirm('Kullaniciyi silmek istediginize emin misiniz?')) return
-    await fetch('/api/users/' + id, { method: 'DELETE', credentials: 'include' })
-    fetchUsers()
-  }
-
-  const handleRegister = async () => {
-    setRegLoading(true); setRegError(''); setRegSuccess('')
+  const handleCreateUser = async () => {
+    setNewLoading(true); setNewError(''); setNewSuccess('')
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessName, email: regEmail, password: regPassword }),
-      })
+      const payload: any = { email: newEmail, password: newPassword, name: newName, role: newRole, permissions: newPerms, tenantId: newRole === 'BUSINESS_OWNER' && newTenantId ? newTenantId : undefined }
+      const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) })
       if (res.ok) {
-        const d = await res.json()
-        setRegSuccess('Isletme olusturuldu! Slug: ' + d.slug)
-        setBusinessName(''); setRegEmail(''); setRegPassword('')
+        setNewSuccess('Kullanici olusturuldu!')
+        setNewEmail(''); setNewPassword(''); setNewName(''); setNewRole('BUSINESS_OWNER'); setNewPerms(ALL_MODULES.map(m => m.key)); setNewTenantId('')
+        fetchUsers()
         return
       }
       const txt = await res.text()
       let msg = ''
-      if (res.status === 429) msg = 'Cok fazla istek. Lutfen bekleyin.'
+      if (res.status === 429) msg = 'Cok fazla istek.'
       else if (res.status >= 500) msg = 'Sunucu hatasi.'
       else { try { const j = JSON.parse(txt); msg = j.message ? (Array.isArray(j.message) ? j.message[0] : j.message) : j.error || 'Hata' } catch { msg = 'Hata' } }
-      setRegError(msg + ' (' + res.status + ')')
-    } catch { setRegError('Baglanti hatasi') }
-    finally { setRegLoading(false) }
+      setNewError(msg + ' (' + res.status + ')')
+    } catch { setNewError('Baglanti hatasi') }
+    finally { setNewLoading(false) }
+  }
+
+  const remove = async (id: string) => {
+    if (!confirm('Kullaniciyi silmek istediginize emin misiniz?')) return
+    await fetch('/api/users/' + id, { method: 'DELETE', credentials: 'include' })
+    fetchUsers()
   }
 
   const filtered = users.filter(u => u.email.includes(search) || u.name?.includes(search) || u.role?.includes(search))
@@ -142,22 +141,67 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-white">Kullanici Yonetimi</h1>
           <p className="text-gray-500 text-sm mt-1">Kullanicilari yonetin, yetkilendirin</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all"><Plus size={16} /> Yeni Kullanici</button>
       </div>
 
-      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20"><Building2 size={20} /></div>
-          <div><h3 className="text-white font-semibold">Yeni Isletme Olustur</h3><p className="text-xs text-gray-500">Yeni bir isletme hesabi acin</p></div>
+      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20"><UserPlus size={20} /></div>
+          <div><h3 className="text-white font-semibold">Yeni Kullanici Olustur</h3><p className="text-xs text-gray-500">Rol ve modul yetkileriyle birlikte olusturun</p></div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Firma adi" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
-          <input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="E-posta" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
-          <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="Parola" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
-          <button onClick={handleRegister} disabled={regLoading || !businessName || !regEmail || !regPassword} className="py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50">{regLoading ? 'Olusturuluyor...' : 'Isletme Olustur'}</button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ad Soyad" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
+          <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="E-posta" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
+          <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Parola" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
+          <select value={newRole} onChange={e => setNewRole(e.target.value)} className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all">
+            <option value="USER">Kullanici</option>
+            <option value="BUSINESS_OWNER">Isletme Sahibi</option>
+            <option value="ADMIN">Admin</option>
+            <option value="SUPER_ADMIN">Super Admin</option>
+          </select>
+          {newRole === 'BUSINESS_OWNER' && (
+            <select value={newTenantId} onChange={e => setNewTenantId(e.target.value)} className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all">
+              <option value="">Isletme secin</option>
+              {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          )}
         </div>
-        {regError && <div className="mt-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2"><p className="text-red-400 text-xs">{regError}</p></div>}
-        {regSuccess && <div className="mt-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2"><p className="text-emerald-400 text-xs">{regSuccess}</p></div>}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-gray-500 font-medium">Modul Yetkileri</label>
+            <div className="flex gap-2">
+              <button onClick={selectAllNew} className="text-xs text-blue-400 hover:text-blue-300">Tumunu Sec</button>
+              <button onClick={selectNoneNew} className="text-xs text-gray-500 hover:text-gray-400">Temizle</button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {ALL_MODULES.map(m => {
+              const active = newPerms.includes(m.key)
+              return (
+                <button key={m.key} onClick={() => toggleNewPerm(m.key)}
+                  className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-[#080b12]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
+                  {active ? <Check size={11} /> : <div className="w-[11px]" />}{m.label}
+                </button>
+              )
+            })}
+          </div>
+          {newPerms.includes('virtual-pos') && (
+            <div className="mt-3 bg-[#080b12]/40 border border-[#1a2332] rounded-xl p-4 space-y-2">
+              <label className="text-xs text-gray-500 font-medium">Sanal POS Saglayicilari</label>
+              <div className="flex flex-wrap gap-2">{VIRTUAL_POS_PROVIDERS.map(p => {
+                const active = newPerms.includes(p.key)
+                return (
+                  <button key={p.key} onClick={() => toggleNewPerm(p.key)}
+                    className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#0d1117]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
+                    {active ? <Check size={11} /> : <div className="w-[11px]" />}{p.label}
+                  </button>
+                )
+              })}</div>
+            </div>
+          )}
+        </div>
+        {newError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{newError}</p></div>}
+        {newSuccess && <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3"><p className="text-emerald-400 text-xs">{newSuccess}</p></div>}
+        <button onClick={handleCreateUser} disabled={newLoading || !newEmail || !newPassword} className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">{newLoading ? 'Olusturuluyor...' : 'Kullanici Olustur'}</button>
       </div>
 
       <div className="relative max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Ara..." className="w-full bg-[#0d1117]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>
@@ -199,41 +243,14 @@ export default function UsersPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative w-full max-w-2xl bg-[#0d1117] border border-[#1a2332] rounded-2xl shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">{editingUser ? 'Kullanici Duzenle' : 'Yeni Kullanici'}</h3><button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/5 text-gray-500"><X size={18} /></button></div>
+          <div className="relative w-full max-w-lg bg-[#0d1117] border border-[#1a2332] rounded-2xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">{editingUser ? 'Kullanici Duzenle' : 'Basit Kullanici Ekle'}</h3><button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/5 text-gray-500"><X size={18} /></button></div>
             <div className="grid grid-cols-2 gap-4">
               <div><label className="text-xs text-gray-500 block mb-1.5">Ad Soyad</label><input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Kullanici adi" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>
               <div><label className="text-xs text-gray-500 block mb-1.5">E-posta</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ornek@email.com" disabled={!!editingUser} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all disabled:opacity-50" /></div>
               {!editingUser && <div><label className="text-xs text-gray-500 block mb-1.5">Parola</label><input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="En az 6 karakter" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>}
               <div><label className="text-xs text-gray-500 block mb-1.5">Rol</label><select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} disabled={editingUser?.role === 'SUPER_ADMIN'} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all disabled:opacity-50"><option value="USER">Kullanici</option><option value="BUSINESS_OWNER">Isletme Sahibi</option><option value="ADMIN">Admin</option><option value="SUPER_ADMIN">Super Admin</option></select></div>
-              {form.role === 'BUSINESS_OWNER' && (
-                <div><label className="text-xs text-gray-500 block mb-1.5">Isletme</label><select value={form.tenantId} onChange={e => setForm({ ...form, tenantId: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all"><option value="">-- Yeni Isletme Olustur --</option>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
-              )}
             </div>
-            {editingUser?.role === 'SUPER_ADMIN' ? (
-              <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-                <p className="text-xs text-amber-400 font-medium">Super Admin tum modullere erisir. Yetkiler degistirilemez.</p>
-              </div>
-            ) : (
-              <><div><div className="flex items-center justify-between mb-3"><label className="text-xs text-gray-500 font-medium">Modul Yetkileri</label><div className="flex gap-2"><button onClick={selectAll} className="text-xs text-blue-400 hover:text-blue-300">Tumunu Sec</button><button onClick={selectNone} className="text-xs text-gray-500 hover:text-gray-400">Temizle</button></div></div><div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{ALL_MODULES.map(m => { const active = form.permissions.includes(m.key); return (<button key={m.key} onClick={() => togglePermission(m.key)} className={'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ' + (active ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-[#080b12]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>{active ? <Check size={12} /> : <div className="w-3" />}{m.label}</button>)})}</div></div>
-              {form.permissions.includes('virtual-pos') && (
-                <div className="bg-[#080b12]/50 border border-[#1a2332] rounded-xl p-4 space-y-2">
-                  <label className="text-xs text-gray-500 font-medium">Sanal POS Saglayicilari</label>
-                  <div className="flex flex-wrap gap-2">{VIRTUAL_POS_PROVIDERS.map(p => {
-                    const active = form.permissions.includes(p.key)
-                    return (
-                      <button key={p.key} onClick={() => togglePermission(p.key)}
-                        className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#0d1117]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
-                        {active ? <Check size={11} /> : <div className="w-[11px]" />}{p.label}
-                      </button>
-                    )
-                  })}</div>
-                  {!form.permissions.some(p => p.startsWith('virtual-pos-')) && (
-                    <p className="text-[10px] text-amber-400/70">En az bir saglayici secilmezse kullanici Sanal POS sayfasini bos gorur.</p>
-                  )}
-                </div>
-              )}</>
-            )}
             {saveError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{saveError}</p></div>}
             <div className="flex gap-3 justify-end pt-2"><button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-all">Iptal</button><button onClick={save} disabled={loading || !form.email || (!editingUser && !form.password)} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">{loading ? 'Kaydediliyor...' : 'Kaydet'}</button></div>
           </div>
