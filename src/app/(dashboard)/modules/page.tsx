@@ -19,7 +19,7 @@ const ALL_MODULES = [
 export default function ModulesPage() {
   const [tenantId, setTenantId] = useState('')
   const [slug, setSlug] = useState('')
-  const [features, setFeatures] = useState<Record<string, boolean>>({})
+  const [features, setFeatures] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -100,6 +100,16 @@ export default function ModulesPage() {
             </div>
           )
         })}
+      </div>
+
+      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-5 space-y-4">
+        <h3 className="text-sm font-semibold text-white">AI Mesaj Limiti</h3>
+        <p className="text-xs text-gray-500">WhatsApp ve Instagram AI yanıtları için aylık mesaj limiti. 0 = limitsiz.</p>
+        <div className="flex items-center gap-3">
+          <input type="number" min={0} step={100} value={features.messageLimit ?? 0} onChange={e => setFeatures(prev => ({ ...prev, messageLimit: parseInt(e.target.value) || 0 }))}
+            className="w-32 bg-[#1a2332] border border-[#2a3a52] rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-blue-500/50" />
+          <span className="text-xs text-gray-500">mesaj / ay</span>
+        </div>
       </div>
 
       <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-5">

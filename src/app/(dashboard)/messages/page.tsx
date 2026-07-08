@@ -69,9 +69,17 @@ export default function MessagesPage() {
   const [platformFilter, setPlatformFilter] = useState('')
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
+  const [aiEnabled, setAiEnabled] = useState(true)
+  const [aiPausedMap, setAiPausedMap] = useState<Record<string, boolean>>({})
+  const [aiToggling, setAiToggling] = useState<string | null>(null)
   const msgsEndRef = useRef<HTMLDivElement>(null)
   const selectedRef = useRef(selectedConv)
   selectedRef.current = selectedConv
+
+  useEffect(() => {
+    const saved = localStorage.getItem('aiAutoReply')
+    if (saved !== null) setAiEnabled(saved === 'true')
+  }, [])
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -157,6 +165,28 @@ export default function MessagesPage() {
     } catch {} finally { setSending(false) }
   }, [replyText, selectedConv, sending])
 
+  const toggleAiGlobal = () => {
+    const next = !aiEnabled
+    setAiEnabled(next)
+    localStorage.setItem('aiAutoReply', String(next))
+  }
+
+  const toggleAiPause = async (convId: string) => {
+    const [platform, from] = convId.split(':')
+    if (platform !== 'whatsapp' && platform !== 'instagram') return
+    const isPaused = aiPausedMap[convId]
+    setAiToggling(convId)
+    try {
+      const endpoint = isPaused ? `/api/${platform}/ai/resume` : `/api/${platform}/ai/pause`
+      const res = await fetch(endpoint, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from }),
+      })
+      if (res.ok) setAiPausedMap(prev => ({ ...prev, [convId]: !isPaused }))
+    } catch {} finally { setAiToggling(null) }
+  }
+
   const handleReplyKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply() }
   }
@@ -213,7 +243,13 @@ export default function MessagesPage() {
               )
             })}
           </div>
-          <p className="text-xs text-gray-500">{filteredConvs.length} konusma</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500">{filteredConvs.length} konusma</p>
+            <button onClick={toggleAiGlobal} className={'text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all ' + (aiEnabled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>
+              <div className={'w-1.5 h-1.5 rounded-full ' + (aiEnabled ? 'bg-emerald-400' : 'bg-red-400')} />
+              AI {aiEnabled ? 'Aktif' : 'Kapali'}
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
@@ -254,10 +290,18 @@ export default function MessagesPage() {
               <div className={'w-8 h-8 rounded-full flex items-center justify-center ' + platformColor(messages[0]?.platform)}>
                 {platformIcon(messages[0]?.platform, 'w-4 h-4 ' + platformIconColor(messages[0]?.platform))}
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-white font-medium text-sm">{selectedConv.split(':')[1]}</h3>
                 <p className="text-xs text-gray-500 capitalize">{messages[0]?.platform || ''} - {messages.length} mesaj</p>
               </div>
+              {['whatsapp', 'instagram'].includes(selectedConv.split(':')[0]) && (
+                <button onClick={() => toggleAiPause(selectedConv)} disabled={aiToggling === selectedConv}
+                  className={'text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ' + (aiPausedMap[selectedConv] ? 'bg-blue-500/10 text-blue-400' : 'bg-amber-500/10 text-amber-400')}>
+                  {aiToggling === selectedConv ? (
+                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  ) : aiPausedMap[selectedConv] ? 'AI\'ye Devret' : 'AI\'den Devral'}
+                </button>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2">
               {msgLoading ? (
