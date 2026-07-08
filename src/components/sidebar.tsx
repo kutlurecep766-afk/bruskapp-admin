@@ -26,6 +26,8 @@ const ALL_MODULES = [
   { key: 'virtual-pos', label: 'Sanal POS', icon: Wallet, href: '/virtual-pos', perm: 'virtual-pos' },
   { key: 'payments', label: 'Ödemeler', icon: CreditCard, href: '/payments', perm: 'payments' },
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
+  { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, href: '/whatsapp', perm: 'whatsapp' },
+  { key: 'instagram', label: 'Instagram', icon: MessageCircle, href: '/instagram', perm: 'instagram' },
   { key: 'telegram', label: 'Sistem Kontrol', icon: Settings2, href: '/telegram', perm: 'telegram' },
   { key: 'pazaryeri', label: 'Pazaryeri', icon: Store, href: '/pazaryeri', perm: 'trendyol' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
