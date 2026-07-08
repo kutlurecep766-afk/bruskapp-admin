@@ -92,7 +92,7 @@ export default function UsersPage() {
     try {
       let res
       if (editingUser) {
-        const body: any = { name: form.name, role: form.role, tenantId: form.tenantId }
+        const body: any = { name: form.name, role: form.role }
         res = await fetch('/api/users/' + editingUser.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) })
       } else {
         const payload: any = { email: form.email, password: form.password, name: form.name, role: form.role, permissions: [], tenantId: form.tenantId || undefined }
@@ -108,20 +108,22 @@ export default function UsersPage() {
   const handleCreateUser = async () => {
     setNewLoading(true); setNewError(''); setNewSuccess('')
     try {
-      const payload: any = { email: newEmail, password: newPassword, name: newName, role: newRole, permissions: newPerms, tenantId: newRole === 'BUSINESS_OWNER' && newTenantId ? newTenantId : undefined }
-      const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) })
-      if (res.ok) {
-        setNewSuccess('Kullanici olusturuldu!')
-        setNewEmail(''); setNewPassword(''); setNewName(''); setNewRole('BUSINESS_OWNER'); setNewPerms(ALL_MODULES.map(m => m.key)); setNewTenantId('')
-        fetchUsers()
-        return
+      const regRes = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ businessName: newName || newEmail.split('@')[0], email: newEmail, password: newPassword }) })
+      if (!regRes.ok) {
+        const txt = await regRes.text()
+        let msg = ''; try { const j = JSON.parse(txt); msg = j.message ? (Array.isArray(j.message) ? j.message[0] : j.message) : j.error || 'Hata' } catch { msg = 'Hata' }
+        setNewError(msg + ' (' + regRes.status + ')'); setNewLoading(false); return
       }
-      const txt = await res.text()
-      let msg = ''
-      if (res.status === 429) msg = 'Cok fazla istek.'
-      else if (res.status >= 500) msg = 'Sunucu hatasi.'
-      else { try { const j = JSON.parse(txt); msg = j.message ? (Array.isArray(j.message) ? j.message[0] : j.message) : j.error || 'Hata' } catch { msg = 'Hata' } }
-      setNewError(msg + ' (' + res.status + ')')
+      const { slug } = await regRes.json()
+      const usersRes = await fetch('/api/users', { credentials: 'include' })
+      const allUsers = await usersRes.json()
+      const created = allUsers.find((u: any) => u.email === newEmail)
+      if (created) {
+        await fetch('/api/users/' + created.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ role: newRole, name: newName, permissions: newPerms }) })
+      }
+      setNewSuccess('Isletme olusturuldu! Slug: ' + slug)
+      setNewEmail(''); setNewPassword(''); setNewName(''); setNewRole('BUSINESS_OWNER'); setNewPerms(ALL_MODULES.map(m => m.key)); setNewTenantId('')
+      fetchUsers()
     } catch { setNewError('Baglanti hatasi') }
     finally { setNewLoading(false) }
   }
