@@ -58,6 +58,15 @@ function PlatformDot({ platform }: { platform: string }) {
   return <div className={'w-2 h-2 rounded-full ' + (colors[platform] || 'bg-gray-400')} />
 }
 
+const themeBg: Record<string, string> = { whatsapp: '#0b141a', instagram: '#1a0d14', telegram: '#0d1418' }
+const themeHeader: Record<string, string> = { whatsapp: 'bg-[#1f2c33] border-b border-[#2a3a4a]', instagram: 'bg-[#2a1a28] border-b border-[#3a2a38]', telegram: 'bg-[#17212b] border-b border-[#232e3a]' }
+const themeChatBg: Record<string, string> = { whatsapp: '#0b141a', instagram: '#0d0a0e', telegram: '#0b141a' }
+const themeOutgoing: Record<string, string> = { whatsapp: 'text-white rounded-2xl rounded-br-md', instagram: 'text-white rounded-2xl rounded-br-md', telegram: 'text-white rounded-2xl rounded-br-md' }
+const themeOutgoingBg: Record<string, string> = { whatsapp: '#005c4b', instagram: '#8a3a5c', telegram: '#2b5278' }
+const themeIncomingBg: Record<string, string> = { whatsapp: '#1f2c33', instagram: '#1a1218', telegram: '#182533' }
+const themeFooter: Record<string, string> = { whatsapp: 'bg-[#1f2c33]', instagram: 'bg-[#2a1a28]', telegram: 'bg-[#17212b]' }
+const themeInputBg: Record<string, string> = { whatsapp: '#2a3942', instagram: '#3a2a38', telegram: '#242f3d' }
+
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<any[]>([])
   const [filteredConvs, setFilteredConvs] = useState<any[]>([])
@@ -259,7 +268,7 @@ export default function MessagesPage() {
           ) : (
             filteredConvs.map((conv: any) => (
               <button key={conv.id} onClick={() => selectConv(conv.id)}
-                className={'w-full text-left px-4 py-3 border-b border-[#1a2332]/50 hover:bg-[#1a2332]/30 transition-all ' + (selectedConv === conv.id ? 'bg-[#1a2332]/50 md:border-l-2 md:border-l-blue-500' : '')}>
+                className={'w-full text-left px-4 py-3 border-b border-[#1a2332]/50 hover:bg-[#1a2332]/30 transition-all ' + (selectedConv === conv.id ? 'bg-[#1a2332]/50 md:border-l-2 md:border-l-' + (conv.platform === 'whatsapp' ? 'green-500' : conv.platform === 'instagram' ? 'pink-500' : conv.platform === 'telegram' ? 'blue-500' : 'blue-500') : '')}>
                 <div className="flex items-start gap-3">
                   <div className={'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ' + platformColor(conv.platform)}>
                     {platformIcon(conv.platform, 'w-4 h-4 ' + platformIconColor(conv.platform))}
@@ -278,70 +287,79 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      <div className={'flex-1 bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl overflow-hidden flex flex-col ' + (mobileView === 'list' ? 'hidden md:flex' : 'flex')}>
+          <div className={'flex-1 flex flex-col overflow-hidden rounded-2xl ' + (mobileView === 'list' ? 'hidden md:flex' : 'flex')} style={{ backgroundColor: themeBg[messages[0]?.platform] || '#0d1117' }}>
         {selectedConv ? (
           <>
-            <div className="p-3 md:p-4 border-b border-[#1a2332] flex items-center gap-3">
-              <button onClick={backToList} className="md:hidden text-gray-400 hover:text-white mr-1">
+            <div className={'flex items-center gap-3 px-4 py-3 ' + themeHeader[messages[0]?.platform] || 'bg-[#0d1117]'}>
+              <button onClick={backToList} className="md:hidden text-white/70 hover:text-white mr-1">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <div className={'w-8 h-8 rounded-full flex items-center justify-center ' + platformColor(messages[0]?.platform)}>
-                {platformIcon(messages[0]?.platform, 'w-4 h-4 ' + platformIconColor(messages[0]?.platform))}
+              <div className={'w-9 h-9 rounded-full flex items-center justify-center shadow-lg ' + platformColor(messages[0]?.platform)}>
+                {platformIcon(messages[0]?.platform, 'w-4.5 h-4.5 ' + platformIconColor(messages[0]?.platform))}
               </div>
-              <div className="flex-1">
-                <h3 className="text-white font-medium text-sm">{selectedConv.split(':')[1]}</h3>
-                <p className="text-xs text-gray-500 capitalize">{messages[0]?.platform || ''} - {messages.length} mesaj</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-semibold text-sm truncate">{selectedConv.split(':')[1]}</h3>
+                <p className="text-xs text-white/60 truncate">{messages.length} mesaj · {messages[0]?.platform || ''}</p>
               </div>
               {['whatsapp', 'instagram'].includes(selectedConv.split(':')[0]) && (
                 <button onClick={() => toggleAiPause(selectedConv)} disabled={aiToggling === selectedConv}
-                  className={'text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ' + (aiPausedMap[selectedConv] ? 'bg-blue-500/10 text-blue-400' : 'bg-amber-500/10 text-amber-400')}>
+                  className={'text-xs font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all backdrop-blur-sm ' + (aiPausedMap[selectedConv] ? 'bg-white/10 text-white' : 'bg-white/10 text-white/80 hover:bg-white/20')}>
                   {aiToggling === selectedConv ? (
                     <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                   ) : aiPausedMap[selectedConv] ? 'AI\'ye Devret' : 'AI\'den Devral'}
                 </button>
               )}
             </div>
-            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-1" style={{ backgroundColor: themeChatBg[messages[0]?.platform] || '#0a0e14' }}>
               {msgLoading ? (
                 <div className="text-center text-gray-500 text-sm py-8">Yukleniyor...</div>
               ) : messages.length === 0 ? (
                 <div className="text-center text-gray-500 text-sm py-8">Henuz mesaj yok</div>
               ) : (
-                messages.map((msg: any) => (
-                  <div key={msg.id} className={'flex ' + (msg.direction === 'outgoing' ? 'justify-end' : 'justify-start')}>
-                    <div className={'max-w-[85%] md:max-w-[70%] px-3 py-2 md:px-4 md:py-2.5 rounded-2xl text-sm ' + (msg.direction === 'outgoing' ? 'bg-blue-500 text-white rounded-br-md' : 'bg-[#1a2332] text-gray-200 rounded-bl-md')}>
-                      <p className="break-words">{msg.content}</p>
-                      <p className={'text-xs mt-1 ' + (msg.direction === 'outgoing' ? 'text-blue-200' : 'text-gray-500')}>{formatTime(msg.createdAt)}</p>
+                messages.map((msg: any, idx: number) => {
+                  const isOut = msg.direction === 'outgoing'
+                  const platform = messages[0]?.platform
+                  const showAvatar = !isOut && (idx === 0 || messages[idx-1]?.direction === 'outgoing')
+                  return (
+                    <div key={msg.id} className={'flex items-end gap-2 ' + (isOut ? 'justify-end' : 'justify-start')}>
+                      {!isOut && <div className={'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ' + (showAvatar ? platformColor(platform) : 'opacity-0')}>{showAvatar && platformIcon(platform, 'w-3.5 h-3.5 ' + platformIconColor(platform))}</div>}
+                      <div className={'max-w-[80%] md:max-w-[65%] px-3.5 py-2.5 text-sm leading-relaxed shadow-sm ' + (isOut ? themeOutgoing[platform] || 'bg-blue-600 text-white rounded-2xl rounded-br-md' : 'text-gray-100 rounded-2xl rounded-bl-md')} style={{ backgroundColor: isOut ? themeOutgoingBg[platform] : themeIncomingBg[platform] }}>
+                        <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+                        <div className={'flex items-center gap-1 mt-1 ' + (isOut ? 'justify-end' : 'justify-start')}>
+                          <span className={'text-[10px] ' + (isOut ? 'text-white/60' : 'text-gray-500')}>{formatTime(msg.createdAt)}</span>
+                          {isOut && <svg className="w-3.5 h-3.5 text-white/50" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/></svg>}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               )}
               <div ref={msgsEndRef} />
             </div>
-            <div className="p-3 md:p-4 border-t border-[#1a2332]">
-              <div className="flex items-center gap-2 bg-[#1a2332] rounded-xl px-3 py-2">
+            <div className={'px-4 py-3 ' + themeFooter[messages[0]?.platform] || 'bg-[#0d1117] border-t border-[#1a2332]'}>
+              <div className="flex items-center gap-2 rounded-xl px-4 py-2.5" style={{ backgroundColor: themeInputBg[messages[0]?.platform] || '#1a2332' }}>
                 <input
                   value={replyText} onChange={e => setReplyText(e.target.value)}
                   onKeyDown={handleReplyKeyDown}
-                  placeholder="Mesaj yaz..."
-                  className="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-500"
+                  placeholder={"Mesaj yaz..."}
+                  className="flex-1 bg-transparent text-white text-sm outline-none placeholder-white/40"
                   disabled={sending}
                 />
                 <button onClick={sendReply} disabled={sending || !replyText.trim()}
-                  className={'p-2 rounded-lg transition-all ' + (sending || !replyText.trim() ? 'text-gray-600' : 'text-blue-400 hover:bg-blue-500/20')}>
+                  className={'p-1.5 rounded-lg transition-all ' + (sending || !replyText.trim() ? 'text-white/20' : 'text-white/80 hover:scale-110')}>
                   {sending ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                   ) : (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                   )}
                 </button>
               </div>
             </div>
           </>
         ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center">
+          <div className="hidden md:flex flex-1 items-center justify-center" style={{ backgroundColor: '#0a0e14' }}>
             <div className="text-center">
               <div className="w-16 h-16 mx-auto rounded-full bg-[#1a2332] flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
