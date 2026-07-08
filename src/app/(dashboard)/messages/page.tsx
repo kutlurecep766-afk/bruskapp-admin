@@ -91,7 +91,25 @@ export default function MessagesPage() {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission()
     }
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        if (!reg.pushManager) return
+        fetch('/api/push/vapid-key').then(r => r.json()).then(({ publicKey }) => {
+          if (!publicKey) return
+          reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) })
+            .then(sub => fetch('/api/push/subscribe', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub.toJSON()) }).catch(() => {}))
+            .catch(() => {})
+        }).catch(() => {})
+      }).catch(() => {})
+    }
   }, [])
+
+  function urlBase64ToUint8Array(base64: string) {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4)
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const raw = atob(b64)
+    return new Uint8Array(raw.split('').map(c => c.charCodeAt(0)))
+  }
 
   const fetchConversations = useCallback(async () => {
     try {
