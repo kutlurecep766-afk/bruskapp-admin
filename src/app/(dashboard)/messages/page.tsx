@@ -146,10 +146,20 @@ export default function MessagesPage() {
     if (msgsEndRef.current) msgsEndRef.current.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const selectConv = (id: string) => {
+  const selectConv = async (id: string) => {
     setSelectedConv(id)
     setMobileView('chat')
     fetchMessages(id)
+    const [platform, from] = id.split(':')
+    if (platform === 'whatsapp' || platform === 'instagram') {
+      try {
+        const res = await fetch(`/api/${platform}/ai/status?from=${encodeURIComponent(from)}`, { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          setAiPausedMap(prev => ({ ...prev, [id]: data.paused }))
+        }
+      } catch {}
+    }
   }
 
   const backToList = () => {
