@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 
 export default function WhatsAppPage() {
-  const [tab, setTab] = useState<'config' | 'send'>('config')
+  const [tab, setTab] = useState<'config' | 'send' | 'profile'>('config')
   const [accessToken, setAccessToken] = useState('')
   const [phoneNumberId, setPhoneNumberId] = useState('')
   const [webhookToken, setWebhookToken] = useState('')
@@ -13,6 +13,13 @@ export default function WhatsAppPage() {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [webhookUrl, setWebhookUrl] = useState('')
+
+  // profile state
+  const [profile, setProfile] = useState<any>(null)
+  const [about, setAbout] = useState('')
+  const [description, setDescription] = useState('')
+  const [email, setEmail] = useState('')
+  const [websites, setWebsites] = useState('')
 
   useEffect(() => {
     fetch('/api/whatsapp/config', { credentials: 'include' })
@@ -25,7 +32,24 @@ export default function WhatsAppPage() {
         }
         if (d.webhookUrl) setWebhookUrl(d.webhookUrl)
       }).catch(() => {})
+    loadProfile()
   }, [])
+
+  const loadProfile = async () => {
+    try {
+      const res = await fetch('/api/whatsapp/profile', { credentials: 'include' })
+      if (res.ok) {
+        const d = await res.json()
+        if (d.success && d.data) {
+          setProfile(d.data)
+          setAbout(d.data.about || '')
+          setDescription(d.data.description || '')
+          setEmail(d.data.email || '')
+          setWebsites(d.data.websites?.join('\n') || '')
+        }
+      }
+    } catch {}
+  }
 
   const callApi = async (endpoint: string, body: object) => {
     setLoading(true); setResult('')
@@ -36,6 +60,26 @@ export default function WhatsAppPage() {
       if (endpoint === '/api/whatsapp/config' && data.id) setSaved(true)
     } catch { setResult('Baglanti hatasi') }
     finally { setLoading(false) }
+  }
+
+  const saveProfile = async () => {
+    setLoading(true)
+    setResult('')
+    try {
+      const body: any = {}
+      if (about) body.about = about
+      if (description) body.description = description
+      if (email) body.email = email
+      if (websites.trim()) body.websites = websites.split('\n').map(s => s.trim()).filter(Boolean)
+      const res = await fetch('/api/whatsapp/profile', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      setResult(JSON.stringify(data, null, 2))
+      if (data.success) loadProfile()
+    } catch {} finally { setLoading(false) }
   }
 
   return (
@@ -63,6 +107,7 @@ export default function WhatsAppPage() {
 
       <div className="flex gap-2">
         <button onClick={() => setTab('config')} className={'px-6 py-2 rounded-xl text-sm font-medium transition-all '+(tab==='config'?'bg-blue-500 text-white':'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white')}>Yapilandirma</button>
+        <button onClick={() => setTab('profile')} className={'px-6 py-2 rounded-xl text-sm font-medium transition-all '+(tab==='profile'?'bg-blue-500 text-white':'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white')}>Profil</button>
         <button onClick={() => setTab('send')} className={'px-6 py-2 rounded-xl text-sm font-medium transition-all '+(tab==='send'?'bg-blue-500 text-white':'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white')}>Mesaj Gonder</button>
       </div>
 
@@ -103,6 +148,55 @@ export default function WhatsAppPage() {
                 {loading ? 'Kaydediliyor...' : 'Kaydet'}
               </button>
             </div>
+            {result && <pre className="bg-[#080b12] rounded-xl p-4 text-sm text-gray-300 font-mono overflow-x-auto border border-[#1a2332]">{result}</pre>}
+          </div>
+        ) : tab === 'profile' ? (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-white font-semibold">WhatsApp Profil</h3>
+              <p className="text-sm text-gray-500 mt-1">WhatsApp Business hesabinizin profil bilgilerini duzenleyin.</p>
+            </div>
+
+            {profile?.profile_picture_url && (
+              <div className="flex items-center gap-4">
+                <img src={profile.profile_picture_url} alt="Profil" className="w-16 h-16 rounded-full border-2 border-[#1a2332]" />
+                <div>
+                  <p className="text-white text-sm font-medium">Mevcut profil fotografi</p>
+                  <p className="text-gray-500 text-xs">Degistirmek icin Meta panelinden yukleyin</p>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">Hakkinda (About)</label>
+              <input type="text" value={about} onChange={e => setAbout(e.target.value)} placeholder="WhatsApp profilinde gorunecek hakkinda yazisi"
+                className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all" />
+              <p className="text-xs text-gray-500 mt-1">Kisa aciklama, WhatsApp profilinde gorunur.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">Isletme Aciklamasi (Description)</label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
+                className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all resize-none" />
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">E-posta</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ornek@isletme.com"
+                className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all" />
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">Web Siteleri (her satira bir URL)</label>
+              <textarea value={websites} onChange={e => setWebsites(e.target.value)} rows={3} placeholder="https://isletme.com"
+                className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all resize-none font-mono" />
+            </div>
+
+            <button onClick={saveProfile} disabled={loading}
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/20 transition-all disabled:opacity-50">
+              {loading ? 'Kaydediliyor...' : 'Profili Guncelle'}
+            </button>
+
             {result && <pre className="bg-[#080b12] rounded-xl p-4 text-sm text-gray-300 font-mono overflow-x-auto border border-[#1a2332]">{result}</pre>}
           </div>
         ) : (
