@@ -66,12 +66,12 @@ export default function WhatsAppPage() {
     setLoading(true)
     setResult('')
     try {
-      const body: any = {
-        about: about || '',
-        description: description || '',
-        email: email || '',
-        websites: websites.trim() ? websites.split('\n').map(s => s.trim()).filter(Boolean) : [],
-      }
+      const body: any = {}
+      if (about.trim()) body.about = about.trim()
+      if (description.trim()) body.description = description.trim()
+      if (email.trim()) body.email = email.trim()
+      const sites = websites.split('\n').map(s => s.trim()).filter(Boolean)
+      if (sites.length > 0) body.websites = sites
       const res = await fetch('/api/whatsapp/profile', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -173,10 +173,10 @@ export default function WhatsAppPage() {
           </div>
         ) : tab === 'profile' ? (
           <div className="space-y-4">
-            <div>
-              <h3 className="text-white font-semibold">WhatsApp Profil</h3>
-              <p className="text-sm text-gray-500 mt-1">WhatsApp Business hesabinizin profil bilgilerini duzenleyin.</p>
-            </div>
+                <div>
+                  <h3 className="text-white font-semibold">WhatsApp Profil</h3>
+                  <p className="text-sm text-gray-500 mt-1">WhatsApp Business hesabinizin profil bilgilerini duzenleyin. Not: Bos birakilan alanlar guncellenmez (Meta API siniri). Silmek icin Meta panelini kullanin.</p>
+                </div>
 
             <div className="flex items-center gap-4">
               {profile?.profile_picture_url ? (
@@ -188,7 +188,7 @@ export default function WhatsAppPage() {
               )}
               <div>
                 <p className="text-white text-sm font-medium">Profil Fotografi</p>
-                <p className="text-gray-500 text-xs mt-1">WhatsApp Cloud API resim yuklemeyi desteklemez. <a className="text-blue-400 hover:underline" href="https://business.facebook.com/wa/manage" target="_blank">Meta panelinden</a> guncelleyin.</p>
+                <p className="text-gray-500 text-xs mt-1">WhatsApp Cloud API profil fotografi degistirmeyi desteklemez (Meta API sinirlamasi). <a className="text-blue-400 hover:underline" href="https://business.facebook.com/wa/manage" target="_blank">Meta panelinden</a> guncelleyebilirsiniz.</p>
               </div>
             </div>
 
