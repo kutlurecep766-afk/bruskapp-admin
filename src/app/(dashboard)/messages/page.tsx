@@ -316,7 +316,7 @@ export default function MessagesPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-white truncate">{conv.from}</span>
+                      <span className="text-sm font-medium text-white truncate">{conv.fromName || conv.from}</span>
                       <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{formatTime(conv.lastMessageAt)}</span>
                     </div>
                     <p className="text-xs text-gray-500 truncate mt-0.5">{conv.lastContent}</p>
@@ -341,7 +341,7 @@ export default function MessagesPage() {
                 {platformIcon(messages[0]?.platform, 'w-4.5 h-4.5 ' + platformIconColor(messages[0]?.platform))}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold text-sm truncate">{selectedConv.split(':')[1]}</h3>
+                <h3 className="text-white font-semibold text-sm truncate">{messages.find(m => m.direction === 'incoming')?.fromName || selectedConv.split(':')[1]}</h3>
                 <p className="text-xs text-white/60 truncate">{messages.length} mesaj · {messages[0]?.platform || ''}</p>
               </div>
               {['whatsapp', 'instagram'].includes(selectedConv.split(':')[0]) && (
