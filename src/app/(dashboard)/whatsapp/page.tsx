@@ -66,15 +66,34 @@ export default function WhatsAppPage() {
     setLoading(true)
     setResult('')
     try {
-      const body: any = {}
-      if (about) body.about = about
-      if (description) body.description = description
-      if (email) body.email = email
-      if (websites.trim()) body.websites = websites.split('\n').map(s => s.trim()).filter(Boolean)
+      const body: any = {
+        about: about || '',
+        description: description || '',
+        email: email || '',
+        websites: websites.trim() ? websites.split('\n').map(s => s.trim()).filter(Boolean) : [],
+      }
       const res = await fetch('/api/whatsapp/profile', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      setResult(JSON.stringify(data, null, 2))
+      if (data.success) loadProfile()
+    } catch {} finally { setLoading(false) }
+  }
+
+  const uploadProfilePicture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLoading(true)
+    setResult('')
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/whatsapp/profile/picture', {
+        method: 'POST', credentials: 'include',
+        body: form,
       })
       const data = await res.json()
       setResult(JSON.stringify(data, null, 2))
@@ -157,15 +176,22 @@ export default function WhatsAppPage() {
               <p className="text-sm text-gray-500 mt-1">WhatsApp Business hesabinizin profil bilgilerini duzenleyin.</p>
             </div>
 
-            {profile?.profile_picture_url && (
-              <div className="flex items-center gap-4">
-                <img src={profile.profile_picture_url} alt="Profil" className="w-16 h-16 rounded-full border-2 border-[#1a2332]" />
-                <div>
-                  <p className="text-white text-sm font-medium">Mevcut profil fotografi</p>
-                  <p className="text-gray-500 text-xs">Degistirmek icin Meta panelinden yukleyin</p>
+            <div className="flex items-center gap-4">
+              {profile?.profile_picture_url ? (
+                <img src={profile.profile_picture_url} alt="Profil" className="w-16 h-16 rounded-full border-2 border-[#1a2332] object-cover" />
+              ) : (
+                <div className="w-16 h-16 rounded-full border-2 border-[#1a2332] bg-[#1a2332] flex items-center justify-center">
+                  <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </div>
+              )}
+              <div>
+                <p className="text-white text-sm font-medium">Profil Fotografi</p>
+                <label className="inline-block mt-1 px-4 py-1.5 bg-[#1a2332] text-gray-300 rounded-lg text-xs font-medium hover:bg-[#1f2a3a] border border-[#2a3a4a] cursor-pointer transition-all">
+                  Dosya Sec
+                  <input type="file" accept="image/*" onChange={uploadProfilePicture} className="hidden" />
+                </label>
               </div>
-            )}
+            </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1.5">Hakkinda (About)</label>
