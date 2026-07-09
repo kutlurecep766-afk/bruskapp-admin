@@ -24,6 +24,7 @@ interface Config {
   products: Product[]
   faqs: FAQ[]
   systemPrompt: string
+  knowledgeBase: string
 }
 
 export default function WebchatPage() {
@@ -214,6 +215,20 @@ export default function WebchatPage() {
           ))}
           {config.faqs.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Henüz SSS eklenmemiş</p>}
         </div>
+      </div>
+
+      <div className="glass rounded-2xl border border-[#1a2332] p-6 space-y-4">
+        <div>
+          <h2 className="text-white font-semibold mb-1">Bilgi Havuzu</h2>
+          <p className="text-gray-500 text-xs mb-4">İşletmeniz, ürünleriniz, hizmetleriniz hakkında detaylı bilgileri buraya yapıştırın. AI asistanı bu bilgileri kullanarak cevap verecek.</p>
+        </div>
+        <textarea
+          value={config.knowledgeBase}
+          onChange={e => update('knowledgeBase', e.target.value)}
+          rows={16}
+          className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 resize-y font-mono leading-relaxed"
+          placeholder={'Örneğin işletmenizle ilgili her şeyi buraya yazın/kopyalayın:\n\n- Şirket tarihçesi\n- Tüm hizmet detayları\n- Fiyatlandırma bilgileri\n- Paket içerikleri\n- Referanslar\n- İletişim politikası\n- Sık yapılan hatalar ve çözümleri\n- vb.'}
+        />
       </div>
     </div>
   )
