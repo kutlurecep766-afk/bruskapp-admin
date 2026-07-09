@@ -78,8 +78,12 @@ export default function WhatsAppPage() {
         body: JSON.stringify(body),
       })
       const data = await res.json()
-      setResult(JSON.stringify(data, null, 2))
-      if (data.success) loadProfile()
+      if (data.success) {
+        loadProfile()
+        setResult(JSON.stringify(data, null, 2))
+      } else {
+        setResult(JSON.stringify(data, null, 2))
+      }
     } catch {} finally { setLoading(false) }
   }
 
@@ -175,7 +179,7 @@ export default function WhatsAppPage() {
           <div className="space-y-4">
                 <div>
                   <h3 className="text-white font-semibold">WhatsApp Profil</h3>
-                  <p className="text-sm text-gray-500 mt-1">WhatsApp Business hesabinizin profil bilgilerini duzenleyin. Not: Bos birakilan alanlar guncellenmez (Meta API siniri). Silmek icin Meta panelini kullanin.</p>
+                  <p className="text-sm text-gray-500 mt-1">WhatsApp Business hesabinizin profil bilgilerini duzenleyin.</p>
                 </div>
 
             <div className="flex items-center gap-4">
@@ -188,33 +192,36 @@ export default function WhatsAppPage() {
               )}
               <div>
                 <p className="text-white text-sm font-medium">Profil Fotografi</p>
-                <p className="text-gray-500 text-xs mt-1">WhatsApp Cloud API profil fotografi degistirmeyi desteklemez (Meta API sinirlamasi). <a className="text-blue-400 hover:underline" href="https://business.facebook.com/wa/manage" target="_blank">Meta panelinden</a> guncelleyebilirsiniz.</p>
+                <p className="text-gray-500 text-xs mt-1">WhatsApp Cloud API profil fotografi degistirmeyi desteklemez. <a className="text-blue-400 hover:underline" href="https://business.facebook.com/wa/manage" target="_blank">Meta panelinden</a> guncelleyin.</p>
               </div>
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1.5">Hakkinda (About)</label>
-              <input type="text" value={about} onChange={e => setAbout(e.target.value)} placeholder="WhatsApp profilinde gorunecek hakkinda yazisi"
+              <input type="text" value={about} onChange={e => setAbout(e.target.value)} placeholder="WhatsApp profilinde gorunecek yazi"
                 className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all" />
-              <p className="text-xs text-gray-500 mt-1">Kisa aciklama, WhatsApp profilinde gorunur.</p>
+              <p className="text-xs text-gray-500 mt-1">Bos birakilirsa WhatsApp'taki eski deger aynen kalir (Meta API silmeye izin vermez).</p>
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1.5">Isletme Aciklamasi (Description)</label>
               <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
                 className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all resize-none" />
+              <p className="text-xs text-gray-500 mt-1">Bos birakilirsa degismez. Silmek icin Meta paneli.</p>
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1.5">E-posta</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ornek@isletme.com"
                 className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all" />
+              <p className="text-xs text-gray-500 mt-1">Bos birakilirsa degismez.</p>
             </div>
 
             <div>
               <label className="block text-sm text-gray-400 mb-1.5">Web Siteleri (her satira bir URL)</label>
               <textarea value={websites} onChange={e => setWebsites(e.target.value)} rows={3} placeholder="https://isletme.com"
                 className="w-full bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all resize-none font-mono" />
+              <p className="text-xs text-gray-500 mt-1">Bos birakilirsa degismez.</p>
             </div>
 
             <button onClick={saveProfile} disabled={loading}
