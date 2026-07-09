@@ -99,6 +99,8 @@ export default function WhatsAppPage() {
       setResult(JSON.stringify(data, null, 2))
       if (data.success) loadProfile()
     } catch {} finally { setLoading(false) }
+    // reset input
+    e.target.value = ''
   }
 
   return (
@@ -186,10 +188,7 @@ export default function WhatsAppPage() {
               )}
               <div>
                 <p className="text-white text-sm font-medium">Profil Fotografi</p>
-                <label className="inline-block mt-1 px-4 py-1.5 bg-[#1a2332] text-gray-300 rounded-lg text-xs font-medium hover:bg-[#1f2a3a] border border-[#2a3a4a] cursor-pointer transition-all">
-                  Dosya Sec
-                  <input type="file" accept="image/*" onChange={uploadProfilePicture} className="hidden" />
-                </label>
+                <p className="text-gray-500 text-xs mt-1">WhatsApp Cloud API resim yuklemeyi desteklemez. <a className="text-blue-400 hover:underline" href="https://business.facebook.com/wa/manage" target="_blank">Meta panelinden</a> guncelleyin.</p>
               </div>
             </div>
 
