@@ -208,8 +208,8 @@ export default function WhatsAppPage() {
             {profile && (
               <div className="space-y-3 bg-[#080b12]/50 rounded-xl p-4 border border-[#1a2332]">
                 <p className="text-white text-sm font-medium mb-2">Mevcut Profil Bilgileri (Sadece goruntuleme)</p>
-                {profile.about && <div><span className="text-gray-500 text-xs">Hakkinda:</span><p className="text-white text-sm">{profile.about}</p></div>}
-                {profile.description && <div><span className="text-gray-500 text-xs">Aciklama:</span><p className="text-white text-sm">{profile.description}</p></div>}
+                {profile.description && <div><span className="text-gray-500 text-xs">Hakkinda / Aciklama:</span><p className="text-white text-sm whitespace-pre-wrap">{profile.description}</p></div>}
+                {profile.about && <div><span className="text-gray-500 text-xs">Kisa Hakkinda (about):</span><p className="text-white text-sm">{profile.about}</p></div>}
                 {profile.email && <div><span className="text-gray-500 text-xs">E-posta:</span><p className="text-white text-sm">{profile.email}</p></div>}
                 {profile.websites?.length > 0 && <div><span className="text-gray-500 text-xs">Web Siteleri:</span><p className="text-white text-sm">{profile.websites.join(', ')}</p></div>}
               </div>
