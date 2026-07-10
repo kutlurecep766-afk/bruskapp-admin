@@ -30,6 +30,7 @@ const ALL_MODULES = [
   { key: 'instagram', label: 'Instagram', icon: MessageCircle, href: '/instagram', perm: 'instagram' },
   { key: 'telegram', label: 'Sistem Kontrol', icon: Settings2, href: '/telegram', perm: 'telegram' },
   { key: 'pazaryeri', label: 'Pazaryeri', icon: Store, href: '/pazaryeri', perm: 'trendyol' },
+  { key: 'stok', label: 'Stok Yönetimi', icon: Package, href: '/stok', perm: 'products' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'modules', label: 'Modüller', icon: Puzzle, href: '/modules', perm: 'settings' },
 ]
