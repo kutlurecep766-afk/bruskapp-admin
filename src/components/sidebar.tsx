@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Bot, Headphones, QrCode, Puzzle,
   MessageSquare, Bell, ShoppingCart, CalendarCheck, CreditCard,
   BarChart3, Settings2, Cog, Shield, MessageCircle,
-  Package, Wallet, Store, Truck, FileText, Sun, Moon
+  Package, Wallet, Store, Truck, FileText, Sun, Moon, Crown
 } from 'lucide-react'
 import { useTheme } from './theme-provider'
 
@@ -31,6 +31,7 @@ const ALL_MODULES = [
   { key: 'telegram', label: 'Sistem Kontrol', icon: Settings2, href: '/telegram', perm: 'telegram' },
   { key: 'pazaryeri', label: 'Pazaryeri', icon: Store, href: '/pazaryeri', perm: 'trendyol' },
   { key: 'stok', label: 'Stok Yönetimi', icon: Package, href: '/stok', perm: 'products' },
+  { key: 'pricing', label: 'Fiyatlandırma', icon: Crown, href: '/pricing', perm: 'settings' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'modules', label: 'Modüller', icon: Puzzle, href: '/modules', perm: 'settings' },
 ]
