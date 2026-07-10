@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Package, RefreshCw, Search, Check, X, DollarSign, Tag, Barcode, Loader2 } from 'lucide-react'
+import { Package, RefreshCw, Search, Check, X, DollarSign, Tag, Barcode, Loader2, Plus, Minus, Store } from 'lucide-react'
 
 export default function StokPage() {
   const [products, setProducts] = useState<any[]>([])
@@ -9,6 +9,7 @@ export default function StokPage() {
   const [syncing, setSyncing] = useState(false)
   const [syncResults, setSyncResults] = useState<{ platform: string; success: boolean; message: string }[] | null>(null)
   const [editingStock, setEditingStock] = useState<{ id: number; stock: number; price: number } | null>(null)
+  const [stockModal, setStockModal] = useState<{ product: any; type: 'ADD' | 'DEDUCT'; qty: string; note: string } | null>(null)
 
   useEffect(() => { fetchProducts() }, [])
 
@@ -55,6 +56,42 @@ export default function StokPage() {
     } catch {}
   }
 
+  const applyStockChange = async () => {
+    if (!stockModal) return
+    const qty = parseInt(stockModal.qty)
+    if (!qty || qty <= 0) return
+    try {
+      const res = await fetch('/api/products/manual-stock', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: stockModal.product.id, quantity: qty, type: stockModal.type, note: stockModal.note }),
+      })
+      if (res.ok) {
+        setStockModal(null)
+        fetchProducts()
+      }
+    } catch {}
+  }
+
+  const pullFromMarketplaces = async () => {
+    const platforms = ['trendyol', 'hepsiburada', 'n11', 'yemeksepeti', 'trendyolgo']
+    setSyncing(true)
+    setSyncResults(null)
+    const results: any[] = []
+    for (const platform of platforms) {
+      try {
+        const res = await fetch(`/api/marketplace/${platform}/stock/pull`, { method: 'POST', credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          results.push({ platform, success: data.success, message: data.message || `${data.synced || 0} ürün` })
+        }
+      } catch {}
+    }
+    setSyncResults(results)
+    setSyncing(false)
+    setTimeout(() => setSyncResults(null), 8000)
+  }
+
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     (p.barcode || '').toLowerCase().includes(search.toLowerCase())
@@ -68,6 +105,10 @@ export default function StokPage() {
           <p className="text-gray-500 text-sm mt-1">Stok ve fiyatları tek ekrandan güncelleyin, tüm pazaryerlerine tek tıkla gönderin</p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={pullFromMarketplaces} disabled={syncing} className="flex items-center gap-2 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all disabled:opacity-50">
+            <Store size={16} />
+            Pazaryerlerinden Çek
+          </button>
           <button onClick={syncAll} disabled={syncing} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50">
             <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
             {syncing ? 'Senkronize...' : 'Tümünü Pazaryerlerine Gönder'}
@@ -145,6 +186,10 @@ export default function StokPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => setStockModal({ product: p, type: 'ADD', qty: '1', note: '' })}
+                          className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all" title="Stok Ekle"><Plus size={14} /></button>
+                        <button onClick={() => setStockModal({ product: p, type: 'DEDUCT', qty: '1', note: '' })}
+                          className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all" title="Stok Düş"><Minus size={14} /></button>
                         {isEditing ? (
                           <>
                             <button onClick={saveStock} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"><Check size={14} /></button>
@@ -172,6 +217,31 @@ export default function StokPage() {
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-400/30"></span> Stok = 0</span>
         <span className="text-gray-600 ml-auto">{products.filter(p => p.barcode).length}/{products.length} ürün barkodlu</span>
       </div>
+
+      {stockModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setStockModal(null)}>
+          <div className="bg-[#0d1117] rounded-2xl border border-[#1a2332] p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-bold text-lg mb-1">{stockModal.type === 'ADD' ? 'Stok Ekle' : 'Stok Düş'}</h3>
+            <p className="text-gray-400 text-sm mb-4">{stockModal.product.name} ({stockModal.product.barcode || 'barkod yok'}) — Mevcut stok: <span className="text-white font-medium">{stockModal.product.stock}</span></p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Miktar</label>
+                <input type="number" min="1" value={stockModal.qty} onChange={e => setStockModal({ ...stockModal, qty: e.target.value })}
+                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500/50" autoFocus />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Not (opsiyonel)</label>
+                <input type="text" value={stockModal.note} onChange={e => setStockModal({ ...stockModal, note: e.target.value })}
+                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500/50" placeholder="Sayım fazlası, fire, vb." />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setStockModal(null)} className="flex-1 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all">İptal</button>
+                <button onClick={applyStockChange} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all bg-violet-600 hover:bg-violet-700">{stockModal.type === 'ADD' ? 'Stok Ekle' : 'Stok Düş'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
