@@ -41,11 +41,12 @@ export default function StokPage() {
 
   const saveStock = async () => {
     if (!editingStock) return
+    const { id, stock, price } = editingStock
     try {
-      const res = await fetch(`/api/products/${editingStock.id}`, {
+      const res = await fetch(`/api/products/${id}`, {
         method: 'PATCH', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock: editingStock.stock, price: editingStock.price }),
+        body: JSON.stringify({ stock, price }),
       })
       if (res.ok) {
         setEditingStock(null)
@@ -113,50 +114,53 @@ export default function StokPage() {
                 <tr><td colSpan={6} className="px-4 py-16 text-center text-gray-500"><Loader2 size={24} className="animate-spin mx-auto mb-2" />Yükleniyor...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className="px-4 py-16 text-center text-gray-500"><Package size={36} className="mx-auto mb-2 text-gray-700" /><p>Ürün bulunamadı</p></td></tr>
-              ) : filtered.map(p => (
-                <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-4 py-3">
-                    {p.barcode ? (
-                      <span className="flex items-center gap-1.5 text-cyan-400 text-xs"><Barcode size={12} />{p.barcode}</span>
-                    ) : (
-                      <span className="text-gray-600 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-white font-medium">{p.name}</td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">{p.category || '—'}</td>
-                  <td className="px-4 py-3 text-right">
-                    {editingStock?.id === p.id ? (
-                      <input type="number" value={editingStock.stock} onChange={e => setEditingStock({ ...editingStock, stock: parseInt(e.target.value) || 0 })}
-                        className="w-20 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" autoFocus />
-                    ) : (
-                      <span className={`font-medium ${p.stock > 50 ? 'text-emerald-400' : p.stock > 0 ? 'text-amber-400' : 'text-red-400'}`}>{p.stock}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {editingStock?.id === p.id ? (
-                      <input type="number" step="0.01" value={editingStock.price} onChange={e => setEditingStock({ ...editingStock, price: parseFloat(e.target.value) || 0 })}
-                        className="w-24 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" />
-                    ) : (
-                      <span className="text-emerald-400 font-medium">{p.price.toFixed(2)} ₺</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {editingStock?.id === p.id ? (
-                        <>
-                          <button onClick={saveStock} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"><Check size={14} /></button>
-                          <button onClick={() => setEditingStock(null)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"><X size={14} /></button>
-                        </>
+              ) : filtered.map(p => {
+                const isEditing = editingStock?.id === p.id
+                return (
+                  <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-3">
+                      {p.barcode ? (
+                        <span className="flex items-center gap-1.5 text-cyan-400 text-xs"><Barcode size={12} />{p.barcode}</span>
                       ) : (
-                        <button onClick={() => setEditingStock({ id: p.id, stock: p.stock, price: p.price })}
-                          className="px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-all border border-violet-500/20">
-                          Düzenle
-                        </button>
+                        <span className="text-gray-600 text-xs">—</span>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-3 text-white font-medium">{p.name}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs">{p.category || '—'}</td>
+                    <td className="px-4 py-3 text-right">
+                      {isEditing ? (
+                        <input type="number" value={editingStock!.stock} onChange={e => setEditingStock({ ...editingStock!, stock: parseInt(e.target.value) || 0 })}
+                          className="w-20 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" autoFocus />
+                      ) : (
+                        <span className={`font-medium ${p.stock > 50 ? 'text-emerald-400' : p.stock > 0 ? 'text-amber-400' : 'text-red-400'}`}>{p.stock}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {isEditing ? (
+                        <input type="number" step="0.01" value={editingStock!.price} onChange={e => setEditingStock({ ...editingStock!, price: parseFloat(e.target.value) || 0 })}
+                          className="w-24 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" />
+                      ) : (
+                        <span className="text-emerald-400 font-medium">{p.price.toFixed(2)} ₺</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {isEditing ? (
+                          <>
+                            <button onClick={saveStock} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"><Check size={14} /></button>
+                            <button onClick={() => setEditingStock(null)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"><X size={14} /></button>
+                          </>
+                        ) : (
+                          <button onClick={() => setEditingStock({ id: p.id, stock: p.stock, price: p.price })}
+                            className="px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-all border border-violet-500/20">
+                            Düzenle
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
