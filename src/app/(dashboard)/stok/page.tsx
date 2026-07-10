@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Package, RefreshCw, Search, Check, X, DollarSign, Tag, Barcode, Loader2, Plus, Minus, Store } from 'lucide-react'
+import { Package, RefreshCw, Search, Check, X, DollarSign, Tag, Barcode, Loader2, Plus, Minus, Store, Link2, ArrowRight } from 'lucide-react'
 
 export default function StokPage() {
   const [products, setProducts] = useState<any[]>([])
@@ -14,14 +14,20 @@ export default function StokPage() {
   const [scanning, setScanning] = useState(false)
   const [createProduct, setCreateProduct] = useState<{ barcode: string } | null>(null)
   const [createForm, setCreateForm] = useState({ name: '', price: '', stock: '0', category: '' })
+  const [mpData, setMpData] = useState<{ total: number; linked: number; unlinked: number; unlinkedProducts: any[] } | null>(null)
+  const [manualLink, setManualLink] = useState<{ mpid: number; selected: string } | null>(null)
 
   useEffect(() => { fetchProducts() }, [])
 
   const fetchProducts = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/products', { credentials: 'include' })
-      if (res.ok) setProducts(await res.json())
+      const [pRes, mRes] = await Promise.all([
+        fetch('/api/products', { credentials: 'include' }),
+        fetch('/api/marketplace/unlinked', { credentials: 'include' }),
+      ])
+      if (pRes.ok) setProducts(await pRes.json())
+      if (mRes.ok) setMpData(await mRes.json())
     } catch {} finally { setLoading(false) }
   }
 
@@ -131,7 +137,43 @@ export default function StokPage() {
     }
     setSyncResults(results)
     setSyncing(false)
-    setTimeout(() => setSyncResults(null), 8000)
+    setTimeout(() => { setSyncResults(null); fetchProducts() }, 1000)
+  }
+
+  const mergeAuto = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/marketplace/merge-auto', { method: 'POST', credentials: 'include' })
+      if (res.ok) {
+        const result = await res.json()
+        setSyncResults([{ platform: 'birleştirme', success: true, message: result.message }])
+        fetchProducts()
+      }
+    } catch {} finally { setSyncing(false) }
+  }
+
+  const createLocalFromMp = async (mpId: number) => {
+    try {
+      const res = await fetch('/api/marketplace/create-local-from-marketplace', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marketplaceProductId: mpId }),
+      })
+      if (res.ok) fetchProducts()
+    } catch {}
+  }
+
+  const linkManual = async () => {
+    if (!manualLink || !manualLink.selected) return
+    try {
+      await fetch('/api/marketplace/merge-manual', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marketplaceProductId: manualLink.mpid, localProductId: parseInt(manualLink.selected) }),
+      })
+      setManualLink(null)
+      fetchProducts()
+    } catch {}
   }
 
   const filtered = products.filter(p =>
@@ -139,28 +181,33 @@ export default function StokPage() {
     (p.barcode || '').toLowerCase().includes(search.toLowerCase())
   )
 
+  const unlinkedMp = mpData?.unlinkedProducts || []
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Stok Yönetimi</h1>
-          <p className="text-gray-500 text-sm mt-1">Stok ve fiyatları tek ekrandan güncelleyin, tüm pazaryerlerine tek tıkla gönderin</p>
+          <p className="text-gray-500 text-sm mt-1">Stok, fiyat, barkodlu ürün girişi ve pazaryeri birleştirme — tek ekranda</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={pullFromMarketplaces} disabled={syncing} className="flex items-center gap-2 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all disabled:opacity-50">
-            <Store size={16} />
-            Pazaryerlerinden Çek
+            <Store size={16} /> Pazaryerlerinden Çek
           </button>
+          {unlinkedMp.length > 0 && (
+            <button onClick={mergeAuto} disabled={syncing} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50">
+              <Link2 size={16} /> {unlinkedMp.length} Ürünü Birleştir
+            </button>
+          )}
           <button onClick={syncAll} disabled={syncing} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50">
             <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? 'Senkronize...' : 'Tümünü Pazaryerlerine Gönder'}
+            Pazaryerlerine Gönder
           </button>
         </div>
       </div>
 
       {syncResults && (
         <div className="glass rounded-2xl border border-violet-500/20 p-4 space-y-2">
-          <p className="text-sm text-white font-medium">Senkronizasyon Sonuçları</p>
           {syncResults.map((r, i) => (
             <div key={i} className={`flex items-center gap-2 text-xs ${r.success ? 'text-emerald-400' : 'text-red-400'}`}>
               <span className={`w-2 h-2 rounded-full shrink-0 ${r.success ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
@@ -170,7 +217,7 @@ export default function StokPage() {
         </div>
       )}
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Ürün veya barkod ara..." className="w-full bg-[#0d1117]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2 text-white text-sm focus:outline-none focus:border-violet-500/50 placeholder-gray-600 transition-all" />
@@ -185,12 +232,15 @@ export default function StokPage() {
           placeholder="Barkod okut veya gir — ürün varsa stok ekle, yoksa oluştur..." autoComplete="off"
           className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 placeholder-gray-600" />
         <button onClick={scanBarcode} disabled={scanning || !barcodeInput.trim()} className="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 flex items-center gap-1">
-          {scanning ? <Loader2 size={14} className="animate-spin" /> : <Barcode size={14} />}
-          Sorgula
+          {scanning ? <Loader2 size={14} className="animate-spin" /> : <Barcode size={14} />} Sorgula
         </button>
       </div>
 
       <div className="glass rounded-2xl border border-[#1a2332] overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 bg-[#080b12]/50 border-b border-[#1a2332]">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Yerel Ürünler ({products.length})</span>
+          <span className="text-xs text-gray-600">{products.filter(p => p.barcode).length}/{products.length} barkodlu</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -212,48 +262,16 @@ export default function StokPage() {
                 const isEditing = editingStock?.id === p.id
                 return (
                   <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3">
-                      {p.barcode ? (
-                        <span className="flex items-center gap-1.5 text-cyan-400 text-xs"><Barcode size={12} />{p.barcode}</span>
-                      ) : (
-                        <span className="text-gray-600 text-xs">—</span>
-                      )}
-                    </td>
+                    <td className="px-4 py-3">{p.barcode ? <span className="flex items-center gap-1.5 text-cyan-400 text-xs"><Barcode size={12} />{p.barcode}</span> : <span className="text-gray-600 text-xs">—</span>}</td>
                     <td className="px-4 py-3 text-white font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-gray-400 text-xs">{p.category || '—'}</td>
-                    <td className="px-4 py-3 text-right">
-                      {isEditing ? (
-                        <input type="number" value={editingStock!.stock} onChange={e => setEditingStock({ ...editingStock!, stock: parseInt(e.target.value) || 0 })}
-                          className="w-20 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" autoFocus />
-                      ) : (
-                        <span className={`font-medium ${p.stock > 50 ? 'text-emerald-400' : p.stock > 0 ? 'text-amber-400' : 'text-red-400'}`}>{p.stock}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {isEditing ? (
-                        <input type="number" step="0.01" value={editingStock!.price} onChange={e => setEditingStock({ ...editingStock!, price: parseFloat(e.target.value) || 0 })}
-                          className="w-24 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" />
-                      ) : (
-                        <span className="text-emerald-400 font-medium">{p.price.toFixed(2)} ₺</span>
-                      )}
-                    </td>
+                    <td className="px-4 py-3 text-right">{isEditing ? <input type="number" value={editingStock!.stock} onChange={e => setEditingStock({ ...editingStock!, stock: parseInt(e.target.value) || 0 })} className="w-20 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" autoFocus /> : <span className={`font-medium ${p.stock > 50 ? 'text-emerald-400' : p.stock > 0 ? 'text-amber-400' : 'text-red-400'}`}>{p.stock}</span>}</td>
+                    <td className="px-4 py-3 text-right">{isEditing ? <input type="number" step="0.01" value={editingStock!.price} onChange={e => setEditingStock({ ...editingStock!, price: parseFloat(e.target.value) || 0 })} className="w-24 text-right bg-[#080b12]/80 border border-violet-500/50 rounded-lg px-2 py-1 text-white text-sm focus:outline-none" /> : <span className="text-emerald-400 font-medium">{p.price.toFixed(2)} ₺</span>}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => setStockModal({ product: p, type: 'ADD', qty: '1', note: '' })}
-                          className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all" title="Stok Ekle"><Plus size={14} /></button>
-                        <button onClick={() => setStockModal({ product: p, type: 'DEDUCT', qty: '1', note: '' })}
-                          className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all" title="Stok Düş"><Minus size={14} /></button>
-                        {isEditing ? (
-                          <>
-                            <button onClick={saveStock} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"><Check size={14} /></button>
-                            <button onClick={() => setEditingStock(null)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"><X size={14} /></button>
-                          </>
-                        ) : (
-                          <button onClick={() => setEditingStock({ id: p.id, stock: p.stock, price: p.price })}
-                            className="px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-all border border-violet-500/20">
-                            Düzenle
-                          </button>
-                        )}
+                        <button onClick={() => setStockModal({ product: p, type: 'ADD', qty: '1', note: '' })} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all" title="Stok Ekle"><Plus size={14} /></button>
+                        <button onClick={() => setStockModal({ product: p, type: 'DEDUCT', qty: '1', note: '' })} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all" title="Stok Düş"><Minus size={14} /></button>
+                        {isEditing ? (<><button onClick={saveStock} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"><Check size={14} /></button><button onClick={() => setEditingStock(null)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"><X size={14} /></button></>) : (<button onClick={() => setEditingStock({ id: p.id, stock: p.stock, price: p.price })} className="px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-all border border-violet-500/20">Düzenle</button>)}
                       </div>
                     </td>
                   </tr>
@@ -264,12 +282,57 @@ export default function StokPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-xs text-gray-500 px-2">
+      <div className="flex items-center gap-4 text-xs text-gray-500 px-2 flex-wrap">
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-400/30"></span> Stok &gt; 50</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-400/30"></span> Stok &gt; 0</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-400/30"></span> Stok = 0</span>
-        <span className="text-gray-600 ml-auto">{products.filter(p => p.barcode).length}/{products.length} ürün barkodlu</span>
+        <span className="text-gray-600 ml-auto">{products.filter(p => p.barcode).length}/{products.length} barkodlu</span>
       </div>
+
+      {unlinkedMp.length > 0 && (
+        <div className="glass rounded-2xl border border-emerald-500/20 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 bg-[#080b12]/50 border-b border-emerald-500/20">
+            <div className="flex items-center gap-2">
+              <Store size={16} className="text-emerald-400" />
+              <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">Pazaryeri Ürünleri — Birleştirilmemiş ({unlinkedMp.length})</span>
+            </div>
+            <button onClick={mergeAuto} disabled={syncing} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-lg hover:bg-emerald-500/20 transition-all border border-emerald-500/20 flex items-center gap-1">
+              <Link2 size={12} /> Tümünü Birleştir
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-emerald-500/10 bg-[#080b12]/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pazaryeri</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barkod</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ürün</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Fiyat</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlem</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-emerald-500/10">
+                {unlinkedMp.map(mp => (
+                  <tr key={mp.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-3"><span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-lg text-xs font-medium capitalize">{mp.platform}</span></td>
+                    <td className="px-4 py-3 text-cyan-400 text-xs font-mono">{mp.barcode || '—'}</td>
+                    <td className="px-4 py-3 text-white font-medium">{mp.title}</td>
+                    <td className="px-4 py-3 text-right text-gray-300">{mp.stock}</td>
+                    <td className="px-4 py-3 text-right text-emerald-400">{mp.price?.toFixed(2)} ₺</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => createLocalFromMp(mp.id)} className="px-2 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-all">Ürün Oluştur</button>
+                        <button onClick={() => setManualLink({ mpid: mp.id, selected: '' })} className="px-2 py-1.5 rounded-lg bg-violet-500/10 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-all">Elle Eşle</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {stockModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setStockModal(null)}>
@@ -277,16 +340,8 @@ export default function StokPage() {
             <h3 className="text-white font-bold text-lg mb-1">{stockModal.type === 'ADD' ? 'Stok Ekle' : 'Stok Düş'}</h3>
             <p className="text-gray-400 text-sm mb-4">{stockModal.product.name} ({stockModal.product.barcode || 'barkod yok'}) — Mevcut stok: <span className="text-white font-medium">{stockModal.product.stock}</span></p>
             <div className="space-y-4">
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Miktar</label>
-                <input type="number" min="1" value={stockModal.qty} onChange={e => setStockModal({ ...stockModal, qty: e.target.value })}
-                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500/50" autoFocus />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Not (opsiyonel)</label>
-                <input type="text" value={stockModal.note} onChange={e => setStockModal({ ...stockModal, note: e.target.value })}
-                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500/50" placeholder="Sayım fazlası, fire, vb." />
-              </div>
+              <div><label className="text-xs text-gray-500 mb-1 block">Miktar</label><input type="number" min="1" value={stockModal.qty} onChange={e => setStockModal({ ...stockModal, qty: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500/50" autoFocus /></div>
+              <div><label className="text-xs text-gray-500 mb-1 block">Not (opsiyonel)</label><input type="text" value={stockModal.note} onChange={e => setStockModal({ ...stockModal, note: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500/50" placeholder="Sayım fazlası, fire, vb." /></div>
               <div className="flex gap-2">
                 <button onClick={() => setStockModal(null)} className="flex-1 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all">İptal</button>
                 <button onClick={applyStockChange} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all bg-violet-600 hover:bg-violet-700">{stockModal.type === 'ADD' ? 'Stok Ekle' : 'Stok Düş'}</button>
@@ -300,34 +355,35 @@ export default function StokPage() {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setCreateProduct(null)}>
           <div className="bg-[#0d1117] rounded-2xl border border-cyan-500/20 p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <h3 className="text-white font-bold text-lg mb-1">Yeni Ürün Oluştur</h3>
-            <p className="text-gray-400 text-sm mb-4">Barkod: <span className="text-cyan-400 font-mono">{createProduct.barcode}</span> — Bu barkodla eşleşen ürün bulunamadı, bilgileri girerek oluşturabilirsin.</p>
+            <p className="text-gray-400 text-sm mb-4">Barkod: <span className="text-cyan-400 font-mono">{createProduct.barcode}</span> — Bu barkodla eşleşen ürün bulunamadı.</p>
             <div className="space-y-4">
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Ürün Adı *</label>
-                <input type="text" value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })}
-                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" autoFocus />
-              </div>
+              <div><label className="text-xs text-gray-500 mb-1 block">Ürün Adı *</label><input type="text" value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" autoFocus /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Fiyat (₺)</label>
-                  <input type="number" step="0.01" min="0" value={createForm.price} onChange={e => setCreateForm({ ...createForm, price: e.target.value })}
-                    className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Stok</label>
-                  <input type="number" min="0" value={createForm.stock} onChange={e => setCreateForm({ ...createForm, stock: e.target.value })}
-                    className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" />
-                </div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Fiyat (₺)</label><input type="number" step="0.01" min="0" value={createForm.price} onChange={e => setCreateForm({ ...createForm, price: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" /></div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Stok</label><input type="number" min="0" value={createForm.stock} onChange={e => setCreateForm({ ...createForm, stock: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" /></div>
               </div>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Kategori</label>
-                <input type="text" value={createForm.category} onChange={e => setCreateForm({ ...createForm, category: e.target.value })}
-                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" placeholder="Örn: Yiyecek, İçecek..." />
-              </div>
+              <div><label className="text-xs text-gray-500 mb-1 block">Kategori</label><input type="text" value={createForm.category} onChange={e => setCreateForm({ ...createForm, category: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" placeholder="Örn: Yiyecek, İçecek..." /></div>
               <div className="flex gap-2">
                 <button onClick={() => setCreateProduct(null)} className="flex-1 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all">İptal</button>
                 <button onClick={submitCreateProduct} disabled={!createForm.name} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all bg-cyan-600 hover:bg-cyan-700">Ürünü Oluştur & Stoğa Ekle</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {manualLink && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setManualLink(null)}>
+          <div className="bg-[#0d1117] rounded-2xl border border-[#1a2332] p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-bold text-lg mb-4">Elle Eşleştir</h3>
+            <p className="text-gray-400 text-sm mb-4">Bu pazaryeri ürününü hangi yerel ürünle eşleştirmek istiyorsun? (Yerel ürünün barkodu güncellenir)</p>
+            <select value={manualLink.selected} onChange={e => setManualLink({ ...manualLink, selected: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm mb-4 focus:outline-none focus:border-violet-500/50">
+              <option value="">Ürün seç</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.barcode || 'barkod yok'})</option>)}
+            </select>
+            <div className="flex gap-2">
+              <button onClick={() => setManualLink(null)} className="flex-1 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all">İptal</button>
+              <button onClick={linkManual} disabled={!manualLink.selected} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all bg-violet-600 hover:bg-violet-700 disabled:opacity-50"><ArrowRight size={16} className="inline mr-1" />Eşleştir</button>
             </div>
           </div>
         </div>
