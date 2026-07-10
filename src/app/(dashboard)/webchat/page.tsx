@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { MessageCircle, Plus, Trash2, Save } from 'lucide-react'
+import { MessageCircle, Plus, Trash2, Save, Upload } from 'lucide-react'
 
 interface Product {
   name: string
@@ -25,6 +25,8 @@ interface Config {
   faqs: FAQ[]
   systemPrompt: string
   knowledgeBase: string
+  logoUrl: string
+  logoDescription: string
 }
 
 export default function WebchatPage() {
@@ -172,6 +174,38 @@ export default function WebchatPage() {
           <div className="md:col-span-2">
             <label className="text-xs text-gray-500 block mb-1.5">Sistem Promptu</label>
             <textarea value={config.systemPrompt} onChange={e => update('systemPrompt', e.target.value)} rows={2} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 resize-none" />
+          </div>
+        </div>
+      </div>
+
+      <div className="glass rounded-2xl border border-[#1a2332] p-6 space-y-5">
+        <h2 className="text-white font-semibold">Logo & Görsel</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs text-gray-500 block mb-1.5">Logo</label>
+            {config.logoUrl && (
+              <img src={config.logoUrl} alt="Logo" className="h-20 mb-3 rounded-xl border border-[#1a2332] bg-[#080b12]/50 p-2" />
+            )}
+            <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 rounded-xl text-sm font-medium cursor-pointer hover:bg-blue-600/30 transition-all border border-blue-500/20">
+              <Upload size={16} />
+              Logo Yükle
+              <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const form = new FormData()
+                form.append('file', file)
+                try {
+                  const res = await fetch('/api/webchat/logo', { method: 'POST', credentials: 'include', body: form })
+                  const data = await res.json()
+                  if (data.logoUrl) update('logoUrl', data.logoUrl)
+                } catch {}
+              }} />
+            </label>
+            <button onClick={() => update('logoUrl', '')} className="ml-2 px-3 py-2 text-xs text-gray-500 hover:text-red-400 transition-colors">Kaldır</button>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1.5">Logo Açıklaması</label>
+            <textarea value={config.logoDescription} onChange={e => update('logoDescription', e.target.value)} rows={2} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 resize-none" placeholder={'Logonuzun görsel açıklaması (AI tanıması için). Örn: "Mavi zemin üzerinde beyaz bir kuş figürü ve altında BRUSKAPP yazısı"'} />
           </div>
         </div>
       </div>
