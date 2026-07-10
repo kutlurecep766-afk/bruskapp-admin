@@ -284,7 +284,7 @@ export default function StokPage() {
           </div>
 
           <div className="flex justify-end mb-3">
-            <a href="/products" className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"><Plus size={16} /> Yeni Ürün</a>
+            <button onClick={() => window.location.href = '/brk-mgmt/products'} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"><Plus size={16} /> Yeni Ürün</button>
           </div>
           <div className="glass rounded-2xl border border-[#1a2332] overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 bg-[#080b12]/50 border-b border-[#1a2332]">
