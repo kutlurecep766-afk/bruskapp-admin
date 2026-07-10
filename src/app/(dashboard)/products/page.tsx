@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Package, Plus, Pencil, Trash2, X, Search, Image as ImageIcon, Tag, Layers, DollarSign, Link as LinkIcon, Copy, Check, Upload, Loader2, ChevronDown, ChevronUp, Palette, ImageOff, RefreshCw, Barcode } from 'lucide-react'
+import { Package, Plus, Minus, Pencil, Trash2, X, Search, Image as ImageIcon, Tag, Layers, DollarSign, Link as LinkIcon, Copy, Check, Upload, Loader2, ChevronDown, ChevronUp, Palette, ImageOff, RefreshCw, Barcode } from 'lucide-react'
 
 const CATEGORIES = [
   'Yiyecek', 'İçecek', 'Tatlı', 'Kahvaltı', 'Ara Sıcak', 'Salata', 'Fast Food', 'Giyim', 'Aksesuar', 'Elektronik', 'Ev & Yaşam', 'Diğer'
