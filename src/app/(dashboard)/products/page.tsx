@@ -15,6 +15,7 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: '', description: '', category: 'Yiyecek', barcode: '', price: '', stock: '', active: true, image: null as string | null })
   const [variants, setVariants] = useState<any[]>([])
   const [variantForm, setVariantForm] = useState({ name: '', barcode: '', price: '', stock: '', options: '' })
+  const [stockModal, setStockModal] = useState<{ product: any; type: 'ADD' | 'DEDUCT'; qty: string; note: string } | null>(null)
   const [syncing, setSyncing] = useState<number | null>(null)
   const [syncResults, setSyncResults] = useState<{ platform: string; success: boolean; message: string }[] | null>(null)
   const [bulkSyncing, setBulkSyncing] = useState(false)
@@ -120,6 +121,18 @@ export default function ProductsPage() {
   const deleteVariant = async (vid: number) => {
     const res = await fetch(`/api/products/variants/${vid}`, { method: 'DELETE', credentials: 'include' })
     if (res.ok && editing) loadVariants(editing.id)
+  }
+  const applyStockChange = async () => {
+    if (!stockModal) return
+    const qty = parseInt(stockModal.qty) || 1
+    try {
+      const res = await fetch('/api/products/manual-stock', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: stockModal.product.id, quantity: qty, type: stockModal.type, note: stockModal.note }),
+      })
+      if (res.ok) { setStockModal(null); fetchProducts() }
+    } catch {}
   }
 
   const openCreate = () => {
@@ -476,6 +489,8 @@ export default function ProductsPage() {
                 <div className="flex items-center gap-2 text-xs flex-wrap">
                   <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/5 text-purple-400 rounded-lg border border-purple-500/10"><Layers size={10} />{p.category}</span>
                   <span className={'flex items-center gap-1 px-2 py-0.5 rounded-lg border ' + (p.stock > 50 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10' : p.stock > 0 ? 'bg-amber-500/5 text-amber-400 border-amber-500/10' : 'bg-red-500/5 text-red-400 border-red-500/10')}><Tag size={10} />Stok: {p.stock}</span>
+                  <button onClick={() => setStockModal({ product: p, type: 'ADD', qty: '1', note: '' })} className="p-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"><Plus size={12} /></button>
+                  <button onClick={() => setStockModal({ product: p, type: 'DEDUCT', qty: '1', note: '' })} className="p-1 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"><Minus size={12} /></button>
                   {p.barcode && <span className="flex items-center gap-1 px-2 py-0.5 bg-cyan-500/5 text-cyan-400 rounded-lg border border-cyan-500/10"><Barcode size={10} />{p.barcode}</span>}
                 </div>
                 <button
@@ -592,6 +607,22 @@ export default function ProductsPage() {
             <div className="flex gap-3 justify-end pt-2">
               <button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-all">İptal</button>
               <button onClick={save} disabled={!form.name || !form.price} className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50">Kaydet</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {stockModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setStockModal(null)}>
+          <div className="bg-[#0d1117] border border-[#1a2332] rounded-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-bold text-lg mb-1">{stockModal.type === 'ADD' ? 'Stok Ekle' : 'Stok Düş'}</h3>
+            <p className="text-gray-400 text-sm mb-4">{stockModal.product.name} — Mevcut stok: <span className="text-white font-medium">{stockModal.product.stock}</span></p>
+            <div className="space-y-3 mb-4">
+              <div><label className="text-xs text-gray-500 mb-1 block">Miktar</label><input type="number" min="1" value={stockModal.qty} onChange={e => setStockModal({ ...stockModal, qty: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50" autoFocus /></div>
+              <div><label className="text-xs text-gray-500 mb-1 block">Not (opsiyonel)</label><input value={stockModal.note} onChange={e => setStockModal({ ...stockModal, note: e.target.value })} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50" placeholder="Sayım fazlası, fire, vb." /></div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setStockModal(null)} className="flex-1 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all">İptal</button>
+              <button onClick={applyStockChange} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all bg-emerald-600 hover:bg-emerald-700">{stockModal.type === 'ADD' ? 'Stok Ekle' : 'Stok Düş'}</button>
             </div>
           </div>
         </div>

@@ -205,7 +205,7 @@ export default function StokPage() {
       const res = await fetch('/api/purchase-invoices', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...invoiceForm, date: new Date(invoiceForm.date).toISOString(), items: invoiceItems.map(i => ({ productId: i.productId, quantity: parseInt(i.quantity) || 0, unitPrice: parseFloat(i.unitPrice) || 0 })) }),
+        body: JSON.stringify({ ...invoiceForm, date: new Date(invoiceForm.date).toISOString(), items: invoiceItems.map(i => ({ productId: parseInt(i.productId as any) || 0, quantity: parseInt(i.quantity) || 0, unitPrice: parseFloat(i.unitPrice) || 0 })) }),
       })
       if (res.ok) { setShowInvoiceForm(false); setInvoiceForm({ invoiceNo: '', supplier: '', date: new Date().toISOString().split('T')[0], totalAmount: 0, note: '' }); setInvoiceItems([]); fetchInvoices() }
     } catch {}
