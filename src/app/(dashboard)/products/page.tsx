@@ -13,6 +13,8 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [form, setForm] = useState({ name: '', description: '', category: 'Yiyecek', barcode: '', price: '', stock: '', active: true, image: null as string | null })
+  const [variants, setVariants] = useState<any[]>([])
+  const [variantForm, setVariantForm] = useState({ name: '', barcode: '', price: '', stock: '', options: '' })
   const [syncing, setSyncing] = useState<number | null>(null)
   const [syncResults, setSyncResults] = useState<{ platform: string; success: boolean; message: string }[] | null>(null)
   const [bulkSyncing, setBulkSyncing] = useState(false)
@@ -102,15 +104,36 @@ export default function ProductsPage() {
 
   const removeImage = () => { setForm(prev => ({ ...prev, image: null })) }
 
+  const loadVariants = async (productId: number) => {
+    try {
+      const res = await fetch(`/api/products/${productId}/variants`, { credentials: 'include' })
+      if (res.ok) setVariants(await res.json())
+    } catch {}
+  }
+  const addVariant = async () => {
+    if (!variantForm.name || !editing?.id) return
+    const body: any = { name: variantForm.name, barcode: variantForm.barcode, price: variantForm.price ? Number(variantForm.price) : undefined, stock: variantForm.stock ? Number(variantForm.stock) : 0 }
+    if (variantForm.options) body.options = variantForm.options.split(',').map((s: string) => s.trim()).filter(Boolean)
+    const res = await fetch(`/api/products/${editing.id}/variants`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) })
+    if (res.ok) { loadVariants(editing.id); setVariantForm({ name: '', barcode: '', price: '', stock: '', options: '' }) }
+  }
+  const deleteVariant = async (vid: number) => {
+    const res = await fetch(`/api/products/variants/${vid}`, { method: 'DELETE', credentials: 'include' })
+    if (res.ok && editing) loadVariants(editing.id)
+  }
+
   const openCreate = () => {
     setEditing(null)
     setForm({ name: '', description: '', category: 'Yiyecek', barcode: '', price: '', stock: '', active: true, image: null })
+    setVariants([])
     setShowModal(true)
   }
 
   const openEdit = (p: any) => {
     setEditing(p)
     setForm({ name: p.name, description: p.description || '', category: p.category, barcode: p.barcode || '', price: String(p.price), stock: String(p.stock), active: p.active, image: p.images?.[0] || null })
+    setVariants([])
+    if (p.id) loadVariants(p.id)
     setShowModal(true)
   }
 
@@ -519,6 +542,36 @@ export default function ProductsPage() {
                   </div>
                 </div>
               </div>
+              {editing && variants.length > 0 && (
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1.5">Varyantlar</label>
+                  <div className="space-y-2">
+                    {variants.map((v: any) => (
+                      <div key={v.id} className="flex items-center gap-2 bg-[#080b12]/50 rounded-xl p-3 border border-[#1a2332]">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white truncate">{v.name}</p>
+                          <p className="text-[11px] text-gray-500">{v.barcode && 'Barkod: ' + v.barcode}{v.price ? ' / ' + v.price + ' TL' : ''} / Stok: {v.stock}</p>
+                          {v.options?.length > 0 && <p className="text-[11px] text-gray-600">{v.options.join(', ')}</p>}
+                        </div>
+                        <button onClick={() => deleteVariant(v.id)} className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {editing && (
+                <div className="border border-dashed border-[#1a2332] rounded-xl p-4 space-y-3">
+                  <label className="text-xs text-gray-500 block">Yeni Varyant Ekle</label>
+                  <input type="text" value={variantForm.name} onChange={e => setVariantForm({ ...variantForm, name: e.target.value })} placeholder="Varyant adı (örn: Siyah / XL)" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input type="text" value={variantForm.barcode} onChange={e => setVariantForm({ ...variantForm, barcode: e.target.value })} placeholder="Barkod" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+                    <input type="number" value={variantForm.price} onChange={e => setVariantForm({ ...variantForm, price: e.target.value })} placeholder="Fiyat" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+                    <input type="number" value={variantForm.stock} onChange={e => setVariantForm({ ...variantForm, stock: e.target.value })} placeholder="Stok" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+                  </div>
+                  <input type="text" value={variantForm.options} onChange={e => setVariantForm({ ...variantForm, options: e.target.value })} placeholder="Seçenekler (virgülle ayırın: color:Siyah, size:XL)" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+                  <button onClick={addVariant} disabled={!variantForm.name} className="w-full py-2 bg-emerald-600/20 text-emerald-400 rounded-lg text-xs font-medium hover:bg-emerald-600/30 transition-all disabled:opacity-50">Varyant Ekle</button>
+                </div>
+              )}
               <div>
                 <label className="text-xs text-gray-500 block mb-1.5">Ürün Görseli</label>
                 {form.image ? (
