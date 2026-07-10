@@ -130,6 +130,41 @@ export default function WhatsAppPage() {
         </div>
       )}
 
+      {profile && profile.verified_name && (
+        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+            {profile.verified_name.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-semibold text-lg truncate">{profile.verified_name}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-gray-500 text-xs">{profile.display_phone_number || phoneNumberId}</span>
+              {profile.name_status === 'APPROVED' ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-medium">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                  Onayli
+                </span>
+              ) : profile.name_status === 'PENDING' ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg text-xs font-medium">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Onay Bekliyor
+                </span>
+              ) : profile.name_status === 'DECLINED' ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                  Reddedildi
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-500/10 text-gray-400 rounded-lg text-xs font-medium">Bilinmiyor</span>
+              )}
+            </div>
+          </div>
+          <a href="https://business.facebook.com/wa/manage" target="_blank" className="px-4 py-2 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all border border-[#2a3a4a] whitespace-nowrap flex-shrink-0">
+            Meta Panel
+          </a>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <button onClick={() => setTab('config')} className={'px-6 py-2 rounded-xl text-sm font-medium transition-all '+(tab==='config'?'bg-blue-500 text-white':'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white')}>Yapilandirma</button>
         <button onClick={() => setTab('profile')} className={'px-6 py-2 rounded-xl text-sm font-medium transition-all '+(tab==='profile'?'bg-blue-500 text-white':'bg-[#0d1117]/80 border border-[#1a2332] text-gray-400 hover:text-white')}>Profil</button>
@@ -181,6 +216,36 @@ export default function WhatsAppPage() {
                   <h3 className="text-white font-semibold">WhatsApp Profil</h3>
                   <p className="text-sm text-gray-500 mt-1">WhatsApp Business hesabinizin profil bilgilerini duzenleyin.</p>
                 </div>
+
+            {profile && profile.verified_name && (
+              <div className="bg-[#080b12]/50 rounded-xl p-4 border border-[#1a2332] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-xs uppercase tracking-wider">Isletme Adi (Display Name)</span>
+                  {profile.name_status === 'APPROVED' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-medium">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                      Onayli
+                    </span>
+                  ) : profile.name_status === 'PENDING' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg text-xs font-medium">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      Onay Bekliyor
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium">Onayli Degil</span>
+                  )}
+                </div>
+                <p className="text-white font-semibold text-lg">{profile.verified_name}</p>
+                <p className="text-gray-500 text-xs">Musterilerin WhatsApp'ta gordugu isim. Meta panelinden degistirebilirsiniz.</p>
+              </div>
+            )}
+
+            {profile && profile.display_phone_number && (
+              <div className="bg-[#080b12]/50 rounded-xl p-4 border border-[#1a2332] flex items-center gap-3">
+                <span className="text-gray-500 text-xs uppercase tracking-wider">Telefon:</span>
+                <span className="text-white font-medium">{profile.display_phone_number}</span>
+              </div>
+            )}
 
             <div className="flex items-center gap-4">
               {profile?.profile_picture_url ? (
