@@ -10,6 +10,10 @@ export default function StokPage() {
   const [syncResults, setSyncResults] = useState<{ platform: string; success: boolean; message: string }[] | null>(null)
   const [editingStock, setEditingStock] = useState<{ id: number; stock: number; price: number } | null>(null)
   const [stockModal, setStockModal] = useState<{ product: any; type: 'ADD' | 'DEDUCT'; qty: string; note: string } | null>(null)
+  const [barcodeInput, setBarcodeInput] = useState('')
+  const [scanning, setScanning] = useState(false)
+  const [createProduct, setCreateProduct] = useState<{ barcode: string } | null>(null)
+  const [createForm, setCreateForm] = useState({ name: '', price: '', stock: '0', category: '' })
 
   useEffect(() => { fetchProducts() }, [])
 
@@ -51,6 +55,44 @@ export default function StokPage() {
       })
       if (res.ok) {
         setEditingStock(null)
+        fetchProducts()
+      }
+    } catch {}
+  }
+
+  const scanBarcode = async () => {
+    if (!barcodeInput.trim()) return
+    setScanning(true)
+    try {
+      const res = await fetch(`/api/products/by-barcode/${encodeURIComponent(barcodeInput.trim())}`, { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.found && data.product) {
+          setStockModal({ product: data.product, type: 'ADD', qty: '1', note: 'QR barkod ile' })
+        } else {
+          setCreateProduct({ barcode: barcodeInput.trim() })
+          setCreateForm({ name: '', price: '', stock: '0', category: '' })
+        }
+      }
+    } catch {} finally { setScanning(false); setBarcodeInput('') }
+  }
+
+  const submitCreateProduct = async () => {
+    if (!createProduct || !createForm.name) return
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: createForm.name,
+          barcode: createProduct.barcode,
+          price: parseFloat(createForm.price) || 0,
+          stock: parseInt(createForm.stock) || 0,
+          category: createForm.category,
+        }),
+      })
+      if (res.ok) {
+        setCreateProduct(null)
         fetchProducts()
       }
     } catch {}
@@ -135,6 +177,17 @@ export default function StokPage() {
         </div>
         <button onClick={() => setSearch('')} className="px-3 py-2 text-xs text-gray-500 hover:text-white transition-all">Temizle</button>
         <button onClick={fetchProducts} className="px-3 py-2 text-xs text-gray-500 hover:text-white transition-all flex items-center gap-1"><RefreshCw size={12} /> Yenile</button>
+      </div>
+
+      <div className="glass rounded-2xl border border-cyan-500/20 p-4 flex items-center gap-3">
+        <Barcode size={20} className="text-cyan-400 flex-shrink-0" />
+        <input type="text" value={barcodeInput} onChange={e => setBarcodeInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && scanBarcode()}
+          placeholder="Barkod okut veya gir — ürün varsa stok ekle, yoksa oluştur..." autoComplete="off"
+          className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 placeholder-gray-600" />
+        <button onClick={scanBarcode} disabled={scanning || !barcodeInput.trim()} className="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 flex items-center gap-1">
+          {scanning ? <Loader2 size={14} className="animate-spin" /> : <Barcode size={14} />}
+          Sorgula
+        </button>
       </div>
 
       <div className="glass rounded-2xl border border-[#1a2332] overflow-hidden">
@@ -237,6 +290,43 @@ export default function StokPage() {
               <div className="flex gap-2">
                 <button onClick={() => setStockModal(null)} className="flex-1 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all">İptal</button>
                 <button onClick={applyStockChange} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all bg-violet-600 hover:bg-violet-700">{stockModal.type === 'ADD' ? 'Stok Ekle' : 'Stok Düş'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {createProduct && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setCreateProduct(null)}>
+          <div className="bg-[#0d1117] rounded-2xl border border-cyan-500/20 p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-bold text-lg mb-1">Yeni Ürün Oluştur</h3>
+            <p className="text-gray-400 text-sm mb-4">Barkod: <span className="text-cyan-400 font-mono">{createProduct.barcode}</span> — Bu barkodla eşleşen ürün bulunamadı, bilgileri girerek oluşturabilirsin.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Ürün Adı *</label>
+                <input type="text" value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" autoFocus />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Fiyat (₺)</label>
+                  <input type="number" step="0.01" min="0" value={createForm.price} onChange={e => setCreateForm({ ...createForm, price: e.target.value })}
+                    className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Stok</label>
+                  <input type="number" min="0" value={createForm.stock} onChange={e => setCreateForm({ ...createForm, stock: e.target.value })}
+                    className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Kategori</label>
+                <input type="text" value={createForm.category} onChange={e => setCreateForm({ ...createForm, category: e.target.value })}
+                  className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500/50" placeholder="Örn: Yiyecek, İçecek..." />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setCreateProduct(null)} className="flex-1 px-4 py-2.5 bg-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:bg-[#243040] transition-all">İptal</button>
+                <button onClick={submitCreateProduct} disabled={!createForm.name} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all bg-cyan-600 hover:bg-cyan-700">Ürünü Oluştur & Stoğa Ekle</button>
               </div>
             </div>
           </div>

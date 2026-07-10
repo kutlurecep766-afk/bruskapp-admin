@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Bot, Headphones, QrCode, Puzzle,
   MessageSquare, Bell, ShoppingCart, CalendarCheck, CreditCard,
   BarChart3, Settings2, Cog, Shield, MessageCircle,
-  Package, Wallet, Store, Truck, FileText, Sun, Moon, Crown
+  Package, Wallet, Store, Truck, FileText, Sun, Moon, Crown, Link2
 } from 'lucide-react'
 import { useTheme } from './theme-provider'
 
@@ -32,6 +32,7 @@ const ALL_MODULES = [
   { key: 'pazaryeri', label: 'Pazaryeri', icon: Store, href: '/pazaryeri', perm: 'trendyol' },
   { key: 'stok', label: 'Stok Yönetimi', icon: Package, href: '/stok', perm: 'products' },
   { key: 'stok-hareketleri', label: 'Stok Hareketleri', icon: BarChart3, href: '/stok-hareketleri', perm: 'products' },
+  { key: 'urun-birlestir', label: 'Ürün Birleştirme', icon: Link2, href: '/urun-birlestir', perm: 'products' },
   { key: 'fatura-alis', label: 'Alış Faturaları', icon: FileText, href: '/fatura-alis', perm: 'products' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'modules', label: 'Modüller', icon: Puzzle, href: '/modules', perm: 'settings' },
