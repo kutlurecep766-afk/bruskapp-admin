@@ -210,8 +210,13 @@ export default function ProductsPage() {
           setSaved(true)
           setTimeout(() => setSaved(false), 3000)
         }
+      } else {
+        const err = await res.text().catch(() => 'Bilinmeyen hata')
+        alert('Hata: ' + err)
       }
-    } catch {}
+    } catch (e: any) {
+      alert('Baglanti hatasi: ' + (e.message || 'bilinmeyen'))
+    }
   }
 
   const remove = async (id: string) => {
