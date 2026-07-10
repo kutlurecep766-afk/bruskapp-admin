@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Package, Plus, Pencil, Trash2, X, Search, Image as ImageIcon, Tag, Layers, DollarSign, Link as LinkIcon, Copy, Check, Upload, Loader2, ChevronDown, ChevronUp, Palette, ImageOff } from 'lucide-react'
+import { Package, Plus, Pencil, Trash2, X, Search, Image as ImageIcon, Tag, Layers, DollarSign, Link as LinkIcon, Copy, Check, Upload, Loader2, ChevronDown, ChevronUp, Palette, ImageOff, RefreshCw, Barcode } from 'lucide-react'
 
 const CATEGORIES = [
   'Yiyecek', 'İçecek', 'Tatlı', 'Kahvaltı', 'Ara Sıcak', 'Salata', 'Fast Food', 'Giyim', 'Aksesuar', 'Elektronik', 'Ev & Yaşam', 'Diğer'
@@ -12,7 +12,10 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({ name: '', description: '', category: 'Yiyecek', price: '', stock: '', active: true, image: null as string | null })
+  const [form, setForm] = useState({ name: '', description: '', category: 'Yiyecek', barcode: '', price: '', stock: '', active: true, image: null as string | null })
+  const [syncing, setSyncing] = useState<number | null>(null)
+  const [syncResults, setSyncResults] = useState<{ platform: string; success: boolean; message: string }[] | null>(null)
+  const [bulkSyncing, setBulkSyncing] = useState(false)
   const [storefrontUrl, setStorefrontUrl] = useState<string | null>('')
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -101,14 +104,51 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ name: '', description: '', category: 'Yiyecek', price: '', stock: '', active: true, image: null })
+    setForm({ name: '', description: '', category: 'Yiyecek', barcode: '', price: '', stock: '', active: true, image: null })
     setShowModal(true)
   }
 
   const openEdit = (p: any) => {
     setEditing(p)
-    setForm({ name: p.name, description: p.description || '', category: p.category, price: String(p.price), stock: String(p.stock), active: p.active, image: p.images?.[0] || null })
+    setForm({ name: p.name, description: p.description || '', category: p.category, barcode: p.barcode || '', price: String(p.price), stock: String(p.stock), active: p.active, image: p.images?.[0] || null })
     setShowModal(true)
+  }
+
+  const syncProduct = async (productId: number) => {
+    setSyncing(productId)
+    setSyncResults(null)
+    try {
+      const res = await fetch('/api/products/sync', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds: [productId] }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSyncResults(data.results)
+        setTimeout(() => setSyncResults(null), 5000)
+      }
+    } catch {} finally { setSyncing(null) }
+  }
+
+  const syncAll = async () => {
+    setBulkSyncing(true)
+    setSyncResults(null)
+    try {
+      const ids = products.map(p => p.id)
+      const res = await fetch('/api/products/sync', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds: ids }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSyncResults(data.results)
+        setTimeout(() => setSyncResults(null), 5000)
+      }
+    } catch {} finally { setBulkSyncing(false) }
   }
 
   const save = async () => {
@@ -116,6 +156,7 @@ export default function ProductsPage() {
     const payload = {
       name: form.name,
       description: form.description,
+      barcode: form.barcode,
       category: form.category,
       price: Number(form.price),
       stock: Number(form.stock),
@@ -166,8 +207,25 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold text-white">Ürün Yönetimi</h1>
           <p className="text-gray-500 text-sm mt-1">Ürünlerinizi ekleyin, müşterileriniz mağaza linkinizden görüntülesin</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"><Plus size={16} /> Yeni Ürün</button>
+        <div className="flex items-center gap-2">
+          <button onClick={syncAll} disabled={bulkSyncing || !products.length} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50">
+            <RefreshCw size={16} className={bulkSyncing ? 'animate-spin' : ''} /> {bulkSyncing ? 'Senkronize...' : 'Tümünü Pazaryerlerine Gönder'}
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"><Plus size={16} /> Yeni Ürün</button>
+        </div>
       </div>
+
+      {syncResults && (
+        <div className="glass rounded-2xl border border-violet-500/20 p-4 space-y-2">
+          <p className="text-sm text-white font-medium">Senkronizasyon Sonuçları</p>
+          {syncResults.map((r, i) => (
+            <div key={i} className={`flex items-center gap-2 text-xs ${r.success ? 'text-emerald-400' : 'text-red-400'}`}>
+              <span className="w-2 h-2 rounded-full shrink-0 ${r.success ? 'bg-emerald-400' : 'bg-red-400'}"></span>
+              <span className="font-medium capitalize">{r.platform}:</span> {r.message}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className={'glass rounded-2xl border p-4 flex items-center justify-between flex-wrap gap-3 transition-all ' + (storefrontUrl ? 'border-emerald-500/20' : 'border-[#1a2332] opacity-60')}>
         <div className="flex items-center gap-3">
@@ -387,16 +445,25 @@ export default function ProductsPage() {
               </div>
               {!p.active && <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none"><span className="text-xs font-medium text-gray-400 bg-black/60 px-3 py-1 rounded-full">Pasif</span></div>}
             </div>
-            <div className="p-4 space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-white text-sm font-semibold leading-tight">{p.name}</h3>
-                <span className="text-emerald-400 text-sm font-bold whitespace-nowrap">{p.price.toFixed(2)} ₺</span>
+              <div className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-white text-sm font-semibold leading-tight">{p.name}</h3>
+                  <span className="text-emerald-400 text-sm font-bold whitespace-nowrap">{p.price.toFixed(2)} ₺</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs flex-wrap">
+                  <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/5 text-purple-400 rounded-lg border border-purple-500/10"><Layers size={10} />{p.category}</span>
+                  <span className={'flex items-center gap-1 px-2 py-0.5 rounded-lg border ' + (p.stock > 50 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10' : p.stock > 0 ? 'bg-amber-500/5 text-amber-400 border-amber-500/10' : 'bg-red-500/5 text-red-400 border-red-500/10')}><Tag size={10} />Stok: {p.stock}</span>
+                  {p.barcode && <span className="flex items-center gap-1 px-2 py-0.5 bg-cyan-500/5 text-cyan-400 rounded-lg border border-cyan-500/10"><Barcode size={10} />{p.barcode}</span>}
+                </div>
+                <button
+                  onClick={() => syncProduct(p.id)}
+                  disabled={syncing === p.id}
+                  className="w-full mt-2 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-medium bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={12} className={syncing === p.id ? 'animate-spin' : ''} />
+                  {syncing === p.id ? 'Senkronize...' : 'Pazaryerlerine Gönder'}
+                </button>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/5 text-purple-400 rounded-lg border border-purple-500/10"><Layers size={10} />{p.category}</span>
-                <span className={'flex items-center gap-1 px-2 py-0.5 rounded-lg border ' + (p.stock > 50 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10' : p.stock > 0 ? 'bg-amber-500/5 text-amber-400 border-amber-500/10' : 'bg-red-500/5 text-red-400 border-red-500/10')}><Tag size={10} />Stok: {p.stock}</span>
-              </div>
-            </div>
           </div>
         ))}
         {filtered.length === 0 && (
@@ -423,6 +490,11 @@ export default function ProductsPage() {
               <div>
                 <label className="text-xs text-gray-500 block mb-1.5">Açıklama</label>
                 <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Ürün açıklaması..." rows={3} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600 transition-all resize-none" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1.5">Barkod</label>
+                <div className="relative"><Barcode size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input type="text" value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="Barkod kodu (pazaryerleri ile eşleşme için)" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600 transition-all" /></div>
+                <p className="text-[10px] text-gray-600 mt-1">Pazaryerlerindeki ürün barkodu ile aynı olmalıdır</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
