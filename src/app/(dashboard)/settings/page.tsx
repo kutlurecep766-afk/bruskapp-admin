@@ -11,16 +11,19 @@ export default function SettingsPage() {
   const [verifyLoading, setVerifyLoading] = useState(false)
   const [error, setError] = useState('')
   const [verifyError, setVerifyError] = useState('')
-
   const [show2faSection, setShow2faSection] = useState(false)
-  const h = {'Content-Type': 'application/json'}
+
+  const [prefs, setPrefs] = useState<{ newOrder: boolean; lowStock: boolean; newMessage: boolean }>({ newOrder: true, lowStock: true, newMessage: true })
+  const [prefResult, setPrefResult] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  const h = { 'Content-Type': 'application/json' }
 
   useEffect(() => {
     if (sessionStorage.getItem('2fa_setup') === 'true') {
       setVerified(true)
       return
     }
-    (async () => {
+    ;(async () => {
       try {
         let res = await fetch('/api/auth/2fa/status', { credentials: 'include' })
         if (res.status === 401) {
@@ -34,7 +37,29 @@ export default function SettingsPage() {
         }
       } catch {}
     })()
+
+    // Load notification preferences
+    fetch('/api/notifications/preferences', { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => { if (d) setPrefs(d) })
+      .catch(() => {})
   }, [])
+
+  const savePreference = async (key: string, value: boolean) => {
+    setPrefResult(null)
+    try {
+      const updated = { ...prefs, [key]: value }
+      const res = await fetch('/api/notifications/preferences', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify(updated) })
+      if (res.ok) {
+        setPrefs(updated)
+        setPrefResult({ ok: true, msg: 'Kaydedildi' })
+      } else {
+        setPrefResult({ ok: false, msg: 'Kaydedilemedi' })
+      }
+    } catch { setPrefResult({ ok: false, msg: 'Hata' }) } finally {
+      setTimeout(() => setPrefResult(null), 2000)
+    }
+  }
 
   const handleSetup2fa = async () => {
     setLoading(true); setError('')
@@ -75,20 +100,17 @@ export default function SettingsPage() {
     return (
       <div className="space-y-6 max-w-lg mx-auto">
         {header}
-        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6 text-center">
-          <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-            <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-3 h-3 rounded-full bg-emerald-400" />
+            <h3 className="text-white font-semibold">2FA Aktif</h3>
           </div>
-          <h3 className="text-white font-semibold mb-1">2FA Aktif</h3>
-          <p className="text-sm text-gray-500">Hesabiniz korunuyor.</p>
-          <p className="text-xs text-gray-600 mt-2">Sonraki girislerde Google Authenticator kodu istenecek.</p>
+          <p className="text-sm text-gray-500 mb-4">Google Authenticator ile korunuyor.</p>
           <button onClick={async () => {
             if (!confirm('2FA\'yi devre disi birakmak istediginize emin misiniz?')) return
             const r = await fetch('/api/auth/2fa/disable', { method: 'POST', credentials: 'include' })
             if (r.ok) { sessionStorage.removeItem('2fa_setup'); sessionStorage.removeItem('2fa_verified'); setVerified(false); setShow2faSetup(false) }
-          }} className="mt-4 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all">2FA'yi Devre Disi Birak</button>
+          }} className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all">2FA'yi Devre Disi Birak</button>
         </div>
       </div>
     )
@@ -100,10 +122,10 @@ export default function SettingsPage() {
         {header}
         <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
           <h3 className="text-white font-semibold mb-4 text-center">2FA Kurulumu</h3>
-          <p className="text-sm text-gray-500 mb-4 text-center">Google Authenticator uygulamasi ile asagidaki QR kodu taratin:</p>
+          <p className="text-sm text-gray-500 mb-4 text-center">Google Authenticator ile QR kodu taratin:</p>
           {qrCode && <div className="flex justify-center mb-4"><img src={qrCode} alt="QR" className="w-48 h-48 rounded-xl bg-white p-2" /></div>}
           {secret && <div className="mb-4"><p className="text-xs text-gray-500 mb-1">Yedek kod:</p><p className="text-sm font-mono text-blue-400 bg-[#080b12] p-2 rounded-xl text-center select-all">{secret}</p></div>}
-          <p className="text-sm text-gray-500 mb-3 text-center">Google Authenticator uygulamasindaki 6 haneli kodu girin:</p>
+          <p className="text-sm text-gray-500 mb-3 text-center">6 haneli kodu girin:</p>
           <div className="space-y-3">
             <input type="text" value={verifyToken} onChange={(e) => setVerifyToken(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000 000" className="w-full text-center text-xl tracking-[0.5em] bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 transition-all font-mono" maxLength={6} inputMode="numeric" />
             {verifyError && <p className="text-red-400 text-xs break-all text-center">{verifyError}</p>}
@@ -117,6 +139,51 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-lg mx-auto">
       {header}
+
+      {/* Mobil Uygulama */}
+      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-3 h-3 rounded-full bg-blue-400" />
+          <h3 className="text-white font-semibold">Mobil Uygulama</h3>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">Bruskapp mobil uygulamasi ile Chrome'a ihtiyac duymadan anlik bildirim alin.</p>
+        <a href="/api/push/apk" download
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          Uygulamayi Indir (APK)
+        </a>
+      </div>
+
+      {/* Bildirim Tercihleri */}
+      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 rounded-full bg-indigo-400" />
+            <h3 className="text-white font-semibold">Bildirim Tercihleri</h3>
+          </div>
+          {prefResult && <span className={'text-xs ' + (prefResult.ok ? 'text-green-400' : 'text-red-400')}>{prefResult.msg}</span>}
+        </div>
+        <div className="space-y-3">
+          {[
+            { key: 'newOrder', label: 'Yeni Sipariş', desc: 'Yeni sipariş alındığında bildirim gönder' },
+            { key: 'lowStock', label: 'Düşük Stok Uyarısı', desc: 'Stok eşik değerin altına düştüğünde uyarı' },
+            { key: 'newMessage', label: 'Yeni Mesaj', desc: 'WhatsApp/Instagram/Telegram\'dan yeni mesaj geldiğinde bildirim' },
+          ].map(item => (
+            <div key={item.key} className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm text-white">{item.label}</p>
+                <p className="text-xs text-gray-500">{item.desc}</p>
+              </div>
+              <button onClick={() => savePreference(item.key, !(prefs as any)[item.key])}
+                className={'relative inline-flex h-5 w-9 items-center rounded-full transition-all ' + ((prefs as any)[item.key] ? 'bg-indigo-500' : 'bg-gray-600')}>
+                <span className={'inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-all ' + ((prefs as any)[item.key] ? 'translate-x-4.5' : 'translate-x-1')} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2FA */}
       <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6 text-center">
         <h3 className="text-white font-semibold mb-4">Iki Faktorlu Dogrulama</h3>
         <p className="text-sm text-gray-500 mb-4">Hesabinizi 2FA ile koruyun.</p>
