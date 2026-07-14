@@ -5,14 +5,18 @@ self.addEventListener('push', e => {
   if (!e.data) return
   try {
     const data = e.data.json()
+    const title = data.title || 'Bruskapp'
+    const body = data.body || ''
     e.waitUntil(
-      self.registration.showNotification(data.title || 'Bruskapp', {
-        body: data.body || '',
+      self.registration.showNotification(title, {
+        body,
         icon: data.icon || '/favicon.svg',
-        badge: '/favicon.svg',
-        vibrate: [200, 100, 200],
+        badge: data.icon || '/favicon.svg',
+        vibrate: [300, 150, 200, 150, 300],
         requireInteraction: true,
         silent: false,
+        timestamp: Date.now(),
+        data: { url: data.url || '/brk-mgmt/messages' },
       })
     )
   } catch {}

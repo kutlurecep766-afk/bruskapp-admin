@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Bot, Headphones, QrCode, Puzzle,
   MessageSquare, Bell, ShoppingCart, CalendarCheck, CreditCard,
   BarChart3, Settings2, Cog, Shield, MessageCircle,
-  Package, Wallet, Store, Truck, FileText, Sun, Moon, Crown
+  Package, Wallet, Store, Truck, FileText, Sun, Moon, Crown, Link2, Radio, Megaphone
 } from 'lucide-react'
 import { useTheme } from './theme-provider'
 
@@ -33,6 +33,8 @@ const ALL_MODULES = [
   { key: 'stok', label: 'Stok Yönetimi', icon: Package, href: '/stok', perm: 'products' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'modules', label: 'Modüller', icon: Puzzle, href: '/modules', perm: 'settings' },
+  { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonlar\u0131', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
+  { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'chatbot-integrations' },
 ]
 
 export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; toggle: () => void }) {
@@ -106,6 +108,12 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             <Link href="/webchat" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/webchat') ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <MessageCircle size={18} className={isActive('/webchat') ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'} />
               {!collapsed && <span>Chatbot Ayarları</span>}
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link href="/announcements" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/announcements') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+              <Megaphone size={18} className={isActive('/announcements') ? 'text-amber-400' : 'text-gray-500 group-hover:text-gray-300'} />
+              {!collapsed && <span>Duyuru Yonetimi</span>}
             </Link>
           )}
           {visibleItems.map((item) => {

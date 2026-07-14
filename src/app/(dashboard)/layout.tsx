@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/sidebar'
 import Topbar from '@/components/topbar'
 import NotificationToast from '@/components/NotificationToast'
+import AnnouncementBanner from '@/components/announcement-banner'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
@@ -39,7 +40,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/brk-mgmt/sw.js')
+      navigator.serviceWorker.register('/brk-mgmt/sw.js').then(reg => {
+        if (!('PushManager' in window)) return
+        Notification.requestPermission().then(perm => {
+          if (perm !== 'granted') return
+          reg.pushManager.getSubscription().then(sub => {
+            if (sub) return sub
+            return fetch('/api/push/vapid-key').then(r => r.json()).then(({ publicKey }) => {
+              return reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: publicKey,
+              })
+            })
+          }).then(sub => {
+            if (!sub) return
+            const p256dh = sub.getKey('p256dh')
+            const auth = sub.getKey('auth')
+            if (!p256dh || !auth) return
+            const arrToB64 = (arr: ArrayBuffer) => btoa(Array.from(new Uint8Array(arr), b => String.fromCharCode(b)).join(''))
+            fetch('/api/push/subscribe', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                endpoint: sub.endpoint,
+                keys: { p256dh: arrToB64(p256dh), auth: arrToB64(auth) },
+              }),
+            }).catch(() => {})
+          }).catch(() => {})
+        }).catch(() => {})
+      }).catch(() => {})
     }
   }, [])
 
@@ -101,7 +131,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar toggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
-          <div className="max-w-7xl mx-auto animate-slide-in">{children}</div>
+          <div className="max-w-7xl mx-auto animate-slide-in">
+            <AnnouncementBanner />
+            {children}
+          </div>
           <NotificationToast />
         </main>
       </div>

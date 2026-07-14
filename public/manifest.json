@@ -1,0 +1,19 @@
+{
+  "name": "Bruskapp Admin",
+  "short_name": "Bruskapp",
+  "description": "Bruskapp yonetim paneli",
+  "start_url": "/brk-mgmt",
+  "display": "standalone",
+  "background_color": "#020408",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"]
+}
