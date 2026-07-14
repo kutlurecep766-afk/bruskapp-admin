@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Shield } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/sidebar'
@@ -38,39 +38,54 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     check()
   }, [router])
 
+  const pushSubscribed = useRef(false)
+
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/brk-mgmt/sw.js').then(reg => {
-        if (!('PushManager' in window)) return
-        Notification.requestPermission().then(perm => {
-          if (perm !== 'granted') return
-          reg.pushManager.getSubscription().then(sub => {
-            if (sub) return sub
-            return fetch('/api/push/vapid-key').then(r => r.json()).then(({ publicKey }) => {
-              return reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: publicKey,
-              })
-            })
-          }).then(sub => {
-            if (!sub) return
-            const p256dh = sub.getKey('p256dh')
-            const auth = sub.getKey('auth')
-            if (!p256dh || !auth) return
-            const arrToB64 = (arr: ArrayBuffer) => btoa(Array.from(new Uint8Array(arr), b => String.fromCharCode(b)).join(''))
-            fetch('/api/push/subscribe', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                endpoint: sub.endpoint,
-                keys: { p256dh: arrToB64(p256dh), auth: arrToB64(auth) },
-              }),
-            }).catch(() => {})
-          }).catch(() => {})
-        }).catch(() => {})
+    if (pushSubscribed.current) return
+    pushSubscribed.current = true
+
+    // Capacitor FCM registration
+    const cap = (window as any).Capacitor
+    if (cap?.isNative && cap.Plugins?.PushNotifications) {
+      const pn = cap.Plugins.PushNotifications
+      pn.requestPermissions().then((r: any) => {
+        if (r.receive === 'granted') {
+          pn.register()
+          pn.addListener('registration', (token: any) => {
+            fetch('/api/push/fcm-register', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token.value }) }).catch(() => {})
+          })
+        }
       }).catch(() => {})
+      return
     }
+
+    // Web Push subscription
+    const init = async () => {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+      if (Notification.permission === 'denied') return
+      try {
+        const reg = await navigator.serviceWorker.register('/brk-mgmt/sw.js')
+        let sub = await reg.pushManager.getSubscription()
+        if (!sub) {
+          const r = await fetch('/api/push/vapid-key')
+          const { publicKey } = await r.json()
+          if (Notification.permission === 'granted') {
+            sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: publicKey })
+          } else {
+            const perm = await Notification.requestPermission()
+            if (perm !== 'granted') return
+            sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: publicKey })
+          }
+        }
+        if (!sub) return
+        const p256dh = sub.getKey('p256dh')
+        const auth = sub.getKey('auth')
+        if (!p256dh || !auth) return
+        const arrToB64 = (arr: ArrayBuffer) => btoa(Array.from(new Uint8Array(arr), b => String.fromCharCode(b)).join(''))
+        fetch('/api/push/subscribe', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint, keys: { p256dh: arrToB64(p256dh), auth: arrToB64(auth) } }) }).catch(() => {})
+      } catch {}
+    }
+    init()
   }, [])
 
   // Periodic status check for account restriction

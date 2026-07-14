@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { QrCode, Plus, Copy, Check, ToggleLeft, ToggleRight, Download, Loader2, X, Square, CheckSquare, Printer, Wifi, DownloadCloud } from 'lucide-react'
+import { QrCode, Plus, Copy, Check, ToggleLeft, ToggleRight, Download, Loader2, X, Square, CheckSquare, Printer, Wifi, DownloadCloud, MapPin } from 'lucide-react'
 import QRCode from 'qrcode'
 
 export default function QrMenuPage() {
@@ -24,6 +24,8 @@ export default function QrMenuPage() {
   const [printerPort, setPrinterPort] = useState('9100')
   const [printerEnabled, setPrinterEnabled] = useState(false)
   const [testPrinting, setTestPrinting] = useState(false)
+  const [latitude, setLatitude] = useState('')
+  const [longitude, setLongitude] = useState('')
 
   useEffect(() => {
     fetch('/api/tenants/me', { credentials: 'include' })
@@ -40,6 +42,8 @@ export default function QrMenuPage() {
           setCurrentStorefrontCfg(cfg)
           if (cfg.masaNumbers) setMasaNumbers(cfg.masaNumbers)
           if (cfg.qrEnabled !== undefined) setQrEnabled(cfg.qrEnabled)
+          if (cfg.latitude) setLatitude(String(cfg.latitude))
+          if (cfg.longitude) setLongitude(String(cfg.longitude))
         }
         if (tenant?.printerConfig) {
           const pc = typeof tenant.printerConfig === 'string' ? JSON.parse(tenant.printerConfig) : tenant.printerConfig
@@ -422,6 +426,38 @@ export default function QrMenuPage() {
             })}
           </div>
         )}
+      </div>
+
+      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-5">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center"><MapPin className="w-4 h-4 text-gray-400" /></div>
+          <h3 className="text-sm font-semibold text-white">Konum Koruması</h3>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">Müşteriler sadece işletmeye yakın olduklarında sipariş verebilir. Google Maps'ten işletmenizin koordinatlarını alıp girin.</p>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Enlem (Latitude)</label>
+            <input type="text" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="Örn: 41.0082" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Boylam (Longitude)</label>
+            <input type="text" value={longitude} onChange={e => setLongitude(e.target.value)} placeholder="Örn: 28.9784" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            if (!tenantId) return
+            setSaving(true)
+            const updatedCfg = { ...currentStorefrontCfg, latitude: latitude ? parseFloat(latitude) : undefined, longitude: longitude ? parseFloat(longitude) : undefined }
+            setCurrentStorefrontCfg(updatedCfg)
+            await saveConfig(updatedCfg)
+            setSaving(false)
+          }}
+          disabled={saving || (!latitude && !longitude)}
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50"
+        >
+          {saving ? 'Kaydediliyor...' : 'Konumu Kaydet'}
+        </button>
       </div>
 
       <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-5">

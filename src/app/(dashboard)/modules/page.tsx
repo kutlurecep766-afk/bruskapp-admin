@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Check, X as XIcon, Loader2, Save } from 'lucide-react'
 
@@ -11,6 +11,7 @@ const ALL_MODULES = [
   { key: 'payments', label: 'Ödeme İşlemleri', desc: 'Sanal POS ve ödeme geçmişi', emoji: '💳' },
   { key: 'ai-chatbots', label: 'AI Chatbotlar', desc: 'Yapay zeka destekli sohbet botları', emoji: '🤖' },
   { key: 'analytics', label: 'Analitik & Raporlar', desc: 'Satış, müşteri ve stok raporları', emoji: '📊' },
+  { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', desc: "WhatsApp, Instagram, FB Messenger, Telegram bağlantısı", emoji: '🔗' },
   { key: 'kargo', label: 'Kargo Entegrasyonu', desc: 'Kargo takibi ve gönderi yönetimi', emoji: '🚚' },
   { key: 'messages', label: 'Mesajlaşma', desc: 'Müşteri mesajları ve bildirimler', emoji: '💬' },
   { key: 'settings', label: 'Ayarlar', desc: 'Mağaza ve sistem ayarları', emoji: '⚙️' },

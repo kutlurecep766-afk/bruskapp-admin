@@ -96,26 +96,6 @@ export default function SettingsPage() {
     </div>
   )
 
-  if (verified) {
-    return (
-      <div className="space-y-6 max-w-lg mx-auto">
-        {header}
-        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-3 h-3 rounded-full bg-emerald-400" />
-            <h3 className="text-white font-semibold">2FA Aktif</h3>
-          </div>
-          <p className="text-sm text-gray-500 mb-4">Google Authenticator ile korunuyor.</p>
-          <button onClick={async () => {
-            if (!confirm('2FA\'yi devre disi birakmak istediginize emin misiniz?')) return
-            const r = await fetch('/api/auth/2fa/disable', { method: 'POST', credentials: 'include' })
-            if (r.ok) { sessionStorage.removeItem('2fa_setup'); sessionStorage.removeItem('2fa_verified'); setVerified(false); setShow2faSetup(false) }
-          }} className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all">2FA'yi Devre Disi Birak</button>
-        </div>
-      </div>
-    )
-  }
-
   if (show2faSetup) {
     return (
       <div className="space-y-6 max-w-lg mx-auto">
@@ -184,11 +164,28 @@ export default function SettingsPage() {
       </div>
 
       {/* 2FA */}
-      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6 text-center">
-        <h3 className="text-white font-semibold mb-4">Iki Faktorlu Dogrulama</h3>
-        <p className="text-sm text-gray-500 mb-4">Hesabinizi 2FA ile koruyun.</p>
-        {error && <p className="text-red-400 text-xs mb-3 break-all">{error}</p>}
-        <button onClick={handleSetup2fa} disabled={loading} className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/20 transition-all disabled:opacity-50">{loading ? 'Kuruluyor...' : '2FA Kur'}</button>
+      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className={'w-3 h-3 rounded-full ' + (verified ? 'bg-emerald-400' : 'bg-gray-500')} />
+          <h3 className="text-white font-semibold">Iki Faktorlu Dogrulama</h3>
+          {verified && <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Aktif</span>}
+        </div>
+        {verified ? (
+          <div>
+            <p className="text-sm text-gray-500 mb-4">Google Authenticator ile korunuyor.</p>
+            <button onClick={async () => {
+              if (!confirm('2FA\'yi devre disi birakmak istediginize emin misiniz?')) return
+              const r = await fetch('/api/auth/2fa/disable', { method: 'POST', credentials: 'include' })
+              if (r.ok) { sessionStorage.removeItem('2fa_setup'); sessionStorage.removeItem('2fa_verified'); setVerified(false) }
+            }} className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all">2FA'yi Devre Disi Birak</button>
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-4">Hesabinizi 2FA ile koruyun.</p>
+            {error && <p className="text-red-400 text-xs mb-3 break-all">{error}</p>}
+            <button onClick={handleSetup2fa} disabled={loading} className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/20 transition-all disabled:opacity-50">{loading ? 'Kuruluyor...' : '2FA Kur'}</button>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -22,6 +22,9 @@ const ALL_MODULES = [
   { key: 'webchat', label: 'Chatbot Ayarları' },
   { key: 'kargo', label: 'Kargo' },
   { key: 'e-fatura', label: 'e-Fatura' },
+  { key: 'stok', label: 'Stok Yönetimi' },
+  { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları' },
+  { key: 'zernio-accounts', label: 'Aboneler / Hesaplar' },
 ]
 
 const VIRTUAL_POS_PROVIDERS = [
