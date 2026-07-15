@@ -167,7 +167,9 @@ export default function MessagesPage() {
   const selectConv = async (id: string) => {
     setSelectedConv(id); setMobileView('chat'); fetchMessages(id)
     const [platform, from] = id.split(':')
-    markAsRead(id)
+    markAsRead(id).then(() => {
+      setConversations(prev => prev.map(c => c.id === id ? { ...c, count: 0 } : c))
+    })
     if (platform === 'whatsapp' || platform === 'instagram') {
       try {
         const res = await fetch(`/api/${platform}/ai/status?from=${encodeURIComponent(from)}`, { credentials: 'include' })
