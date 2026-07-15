@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "bruskapp - Admin Panel",
   description: "AI otomasyon platformu yonetim paneli",
   icons: {
-    icon: "/logo.svg",
+    icon: "/api/push/favicon.svg",
   },
 }
 
