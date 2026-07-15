@@ -13,6 +13,9 @@ function TGIcon({ className }: { className?: string }) {
 function HepsiburadaIcon({ className }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>
 }
+function MessengerIcon({ className }: { className?: string }) {
+  return <svg className={className} viewBox="0 0 24 24" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49-.094-.82-.18-2.083.038-2.98l.603-2.56s-.16-.32-.16-.794c0-.744.432-1.3.97-1.3.456 0 .68.342.68.752 0 .458-.29 1.144-.44 1.78-.126.53.268.962.795.962.954 0 1.688-1.008 1.688-2.463 0-1.288-.926-2.188-2.246-2.188-1.53 0-2.428 1.148-2.428 2.333 0 .462.178.957.4 1.226.044.054.05.1.037.156-.04.168-.13.536-.148.61-.023.098-.078.12-.18.072-.672-.312-1.092-1.296-1.092-2.088 0-1.7 1.235-3.26 3.56-3.26 1.87 0 3.322 1.332 3.322 3.113 0 1.858-1.172 3.353-2.8 3.353-.546 0-1.06-.284-1.236-.62l-.336 1.28c-.122.47-.452 1.058-.672 1.416A10.05 10.05 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="currentColor"/></svg>
+}
 function TrendyolIcon({ className }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" fill="none"><path d="M4 7h16l-1.5 14H5.5L4 7zM8 7V5a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="12" cy="14" r="2" fill="currentColor" opacity="0.6"/></svg>
 }
@@ -22,38 +25,52 @@ const PLATFORMS = [
   { key: 'whatsapp', label: 'WhatsApp', icon: WAIcon, color: 'text-green-300', bg: 'bg-green-500/20' },
   { key: 'instagram', label: 'Instagram', icon: IGAcon, color: 'text-pink-300', bg: 'bg-pink-500/20' },
   { key: 'telegram', label: 'Telegram', icon: TGIcon, color: 'text-blue-300', bg: 'bg-blue-500/20' },
+  { key: 'messenger', label: 'Facebook', icon: MessengerIcon, color: 'text-sky-300', bg: 'bg-sky-500/20' },
   { key: 'trendyol', label: 'Trendyol', icon: TrendyolIcon, color: 'text-orange-300', bg: 'bg-orange-500/20' },
   { key: 'hepsiburada', label: 'Hepsiburada', icon: HepsiburadaIcon, color: 'text-purple-300', bg: 'bg-purple-500/20' },
 ]
 
 const platformColor = (p: string) => {
   if (p === 'whatsapp') return 'bg-green-500/20'; if (p === 'instagram') return 'bg-pink-500/20'
-  if (p === 'telegram') return 'bg-blue-500/20'; if (p === 'trendyol') return 'bg-orange-500/20'
-  if (p === 'hepsiburada') return 'bg-purple-500/20'; return 'bg-gray-500/20'
+  if (p === 'telegram') return 'bg-blue-500/20'; if (p === 'messenger') return 'bg-sky-500/20'
+  if (p === 'trendyol') return 'bg-orange-500/20'; if (p === 'hepsiburada') return 'bg-purple-500/20'
+  return 'bg-gray-500/20'
 }
 const platformIconColor = (p: string) => {
   if (p === 'whatsapp') return 'text-green-400'; if (p === 'instagram') return 'text-pink-400'
-  if (p === 'telegram') return 'text-blue-400'; if (p === 'trendyol') return 'text-orange-400'
-  if (p === 'hepsiburada') return 'text-purple-400'; return 'text-gray-400'
+  if (p === 'telegram') return 'text-blue-400'; if (p === 'messenger') return 'text-sky-400'
+  if (p === 'trendyol') return 'text-orange-400'; if (p === 'hepsiburada') return 'text-purple-400'
+  return 'text-gray-400'
 }
 const platformBadge = (p: string) => {
   if (p === 'whatsapp') return { bg: 'bg-green-500/15', text: 'text-green-300', label: 'WA' }
   if (p === 'instagram') return { bg: 'bg-pink-500/15', text: 'text-pink-300', label: 'IG' }
   if (p === 'telegram') return { bg: 'bg-blue-500/15', text: 'text-blue-300', label: 'TG' }
+  if (p === 'messenger') return { bg: 'bg-sky-500/15', text: 'text-sky-300', label: 'FB' }
   if (p === 'trendyol') return { bg: 'bg-orange-500/15', text: 'text-orange-300', label: 'TY' }
   if (p === 'hepsiburada') return { bg: 'bg-purple-500/15', text: 'text-purple-300', label: 'HB' }
   return { bg: 'bg-gray-500/15', text: 'text-gray-300', label: '??' }
 }
 
-const themeBg: Record<string, string> = { whatsapp: '#0b141a', instagram: '#1a0d14', telegram: '#0d1418' }
-const themeChatBg: Record<string, string> = { whatsapp: '#0b141a', instagram: '#0d0a0e', telegram: '#0b141a' }
-const themeOutgoingBg: Record<string, string> = { whatsapp: '#005c4b', instagram: '#8a3a5c', telegram: '#2b5278' }
-const themeIncomingBg: Record<string, string> = { whatsapp: '#1f2c33', instagram: '#1a1218', telegram: '#182533' }
-const themeInputBg: Record<string, string> = { whatsapp: '#2a3942', instagram: '#3a2a38', telegram: '#242f3d' }
+const themeBg: Record<string, string> = { whatsapp: '#0b141a', instagram: '#1a0d14', telegram: '#0d1418', messenger: '#0a0e1a' }
+const themeChatBg: Record<string, string> = { whatsapp: '#0b141a', instagram: '#0d0a0e', telegram: '#0b141a', messenger: '#080c18' }
+const themeOutgoingBg: Record<string, string> = { whatsapp: '#005c4b', instagram: '#8a3a5c', telegram: '#2b5278', messenger: '#0066ff' }
+const themeIncomingBg: Record<string, string> = { whatsapp: '#1f2c33', instagram: '#1a1218', telegram: '#182533', messenger: '#141824' }
+const themeInputBg: Record<string, string> = { whatsapp: '#2a3942', instagram: '#3a2a38', telegram: '#242f3d', messenger: '#1a1f2e' }
+
+const themeWallpaper: Record<string, string> = {
+  whatsapp: 'url("data:image/svg+xml,%3Csvg width=\'32\' height=\'32\' viewBox=\'0 0 32 32\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M11 0h2v2h-2zM5 5h2v2H5zM1 9h2v2H1zM9 9h2v2H9zM21 7h2v2h-2zM25 3h2v2h-2zM15 13h2v2h-2zM23 13h2v2h-2zM27 11h2v2h-2zM29 17h2v2h-2zM19 19h2v2h-2zM7 15h2v2H7zM3 21h2v2H3zM13 21h2v2h-2zM17 25h2v2h-2zM9 27h2v2H9zM29 25h2v2h-2zM1 1h2v2H1z\'/%3E%3C/g%3E%3C/svg%3E")',
+  instagram: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.02\'%3E%3Ccircle cx=\'4\' cy=\'4\' r=\'1.5\'/%3E%3Ccircle cx=\'20\' cy=\'8\' r=\'1.5\'/%3E%3Ccircle cx=\'36\' cy=\'4\' r=\'1.5\'/%3E%3Ccircle cx=\'12\' cy=\'20\' r=\'1.5\'/%3E%3Ccircle cx=\'28\' cy=\'20\' r=\'1.5\'/%3E%3Ccircle cx=\'4\' cy=\'36\' r=\'1.5\'/%3E%3Ccircle cx=\'20\' cy=\'32\' r=\'1.5\'/%3E%3Ccircle cx=\'36\' cy=\'36\' r=\'1.5\'/%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'2.5\'/%3E%3C/g%3E%3C/svg%3E")',
+  telegram: 'url("data:image/svg+xml,%3Csvg width=\'30\' height=\'30\' viewBox=\'0 0 30 30\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.025\'%3E%3Cpolygon points=\'15,2 18,12 28,12 20,18 23,28 15,22 7,28 10,18 2,12 12,12\'/%3E%3C/g%3E%3C/svg%3E")',
+  messenger: 'url("data:image/svg+xml,%3Csvg width=\'36\' height=\'36\' viewBox=\'0 0 36 36\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.02\'%3E%3Crect x=\'2\' y=\'2\' width=\'14\' height=\'14\' rx=\'2\'/%3E%3Crect x=\'20\' y=\'2\' width=\'14\' height=\'14\' rx=\'2\'/%3E%3Crect x=\'2\' y=\'20\' width=\'14\' height=\'14\' rx=\'2\'/%3E%3Crect x=\'20\' y=\'20\' width=\'14\' height=\'14\' rx=\'2\'/%3E%3C/g%3E%3C/svg%3E")',
+  trendyol: 'url("data:image/svg+xml,%3Csvg width=\'28\' height=\'28\' viewBox=\'0 0 28 28\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.02\'%3E%3Cpath d=\'M14 2L26 14 14 26 2 14z\'/%3E%3C/g%3E%3C/svg%3E")',
+  hepsiburada: 'url("data:image/svg+xml,%3Csvg width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.025\'%3E%3Cpath d=\'M4 4h8v8H4zM12 4h8v8h-8zM4 12h8v8H4zM12 12h8v8h-8z\'/%3E%3C/g%3E%3C/svg%3E")',
+}
 
 function platformIcon(p: string, className: string) {
   if (p === 'whatsapp') return <WAIcon className={className} />; if (p === 'instagram') return <IGAcon className={className} />
-  if (p === 'telegram') return <TGIcon className={className} />; if (p === 'trendyol') return <TrendyolIcon className={className} />
+  if (p === 'telegram') return <TGIcon className={className} />; if (p === 'messenger') return <MessengerIcon className={className} />
+  if (p === 'trendyol') return <TrendyolIcon className={className} />
   if (p === 'hepsiburada') return <HepsiburadaIcon className={className} />; return null
 }
 
@@ -234,7 +251,7 @@ export default function MessagesPage() {
           <div className="flex gap-1.5 flex-wrap">
             {PLATFORMS.map(p => {
               const Icon = p.icon
-              return                 <button key={p.key} onClick={() => setPlatformFilter(p.key)} className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 ' + (platformFilter === p.key ? p.color + ' ' + p.bg + ' shadow-sm' : 'text-gray-500 hover:text-white bg-[#1a2332]/30 hover:bg-[#1a2332]/60')}>
+              return                <button key={p.key} onClick={() => setPlatformFilter(p.key)} className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 ' + (platformFilter === p.key ? p.color + ' ' + p.bg + ' shadow-sm' : 'text-gray-500 hover:text-white bg-[#1a2332]/30 hover:bg-[#1a2332]/60')}>
                 {Icon && <Icon className="w-3.5 h-3.5" />}{p.label}
               </button>
             })}
@@ -284,7 +301,7 @@ export default function MessagesPage() {
                 </div>
                 <p className="text-[11px] text-white/40">{messages.length} mesaj</p>
               </div>
-              {['whatsapp', 'instagram'].includes(selectedConv.split(':')[0]) && (
+              {['whatsapp', 'instagram', 'messenger'].includes(selectedConv.split(':')[0]) && (
                 <button onClick={() => toggleAiPause(selectedConv)} disabled={aiToggling === selectedConv} className={'text-xs font-semibold flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all backdrop-blur-sm border ' + (aiPausedMap[selectedConv] ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20')}>
                   {aiToggling === selectedConv ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                     : aiPausedMap[selectedConv] ? <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Devral</>
@@ -293,8 +310,8 @@ export default function MessagesPage() {
                 </button>
               )}
             </div>
-            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-0.5 scrollbar-thin scrollbar-thumb-white/[0.06] scrollbar-track-transparent chat-area" style={{ backgroundColor: themeChatBg[messages[0]?.platform] || '#0a0e14' }}>
-              <div className="absolute inset-0 pointer-events-none opacity-[0.015]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Ccircle cx=\'1\' cy=\'1\' r=\'0.5\'/%3E%3C/g%3E%3C/svg%3E")' }} />
+            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-0.5 scrollbar-thin scrollbar-thumb-white/[0.06] scrollbar-track-transparent chat-area relative" style={{ backgroundColor: themeChatBg[messages[0]?.platform] || '#0a0e14' }}>
+              <div className="absolute inset-0 pointer-events-none opacity-[0.5]" style={{ backgroundImage: themeWallpaper[messages[0]?.platform] || 'none' }} />
               {msgLoading ? (
                 <div className="space-y-4 p-4 relative z-10">{Array.from({ length: 5 }).map((_, i) => <div key={i} className={'flex ' + (i % 2 === 0 ? 'justify-start' : 'justify-end')}><div className={'h-12 rounded-2xl animate-pulse ' + (i % 2 === 0 ? 'w-52 bg-white/[0.04]' : 'w-40 bg-white/[0.04]')} /></div>)}</div>
               ) : messages.length === 0 ? (
