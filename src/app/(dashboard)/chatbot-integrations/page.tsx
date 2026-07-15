@@ -15,20 +15,20 @@ const PLATFORM_SVGS: Record<string, string> = {
 }
 
 const platforms = [
-  { key: 'whatsapp', label: 'WhatsApp', color: 'text-green-400', bg: 'bg-[#25D366]/10', border: 'border-green-500/20', note: 'WhatsApp Business hesab\u0131n\u0131z\u0131 ba\u011flay\u0131n', type: 'zernio' as const },
-  { key: 'instagram', label: 'Instagram', color: 'text-pink-400', bg: 'bg-[#E4405F]/10', border: 'border-pink-500/20', note: 'Instagram i\u015fletme hesab\u0131n\u0131z\u0131 ba\u011flay\u0131n', type: 'zernio' as const },
-  { key: 'facebook', label: 'Facebook Messenger', color: 'text-blue-400', bg: 'bg-[#0866FF]/10', border: 'border-blue-500/20', note: 'Facebook sayfan\u0131z\u0131 ba\u011flay\u0131n', type: 'zernio' as const },
-  { key: 'telegram', label: 'Telegram', color: 'text-sky-400', bg: 'bg-[#0088CC]/10', border: 'border-sky-500/20', note: "BotFather'da olu\u015fturdu\u011funuz botu ba\u011flay\u0131n", type: 'telegram' as const },
-  { key: 'webchat', label: 'Web Chat', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', note: 'Web sitenize entegre edin, m\u00fc\u015fterilerinizle canl\u0131 ileti\u015fim kurun', type: 'webchat' as const },
-  { key: 'trendyol', label: 'Trendyol', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', note: 'Trendyol ma\u011fazan\u0131za gelen sorular\u0131 cevaplay\u0131n', type: 'apikey' as const },
-  { key: 'hepsiburada', label: 'Hepsiburada', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', note: 'Hepsiburada ma\u011fazan\u0131za gelen sorular\u0131 cevaplay\u0131n', type: 'apikey' as const },
-  { key: 'n11', label: 'n11', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', note: 'n11 ma\u011fazan\u0131za gelen sorular\u0131 cevaplay\u0131n', type: 'apikey' as const },
+  { key: 'whatsapp', label: 'WhatsApp', color: 'text-green-400', bg: 'bg-[#25D366]/10', border: 'border-green-500/20', note: 'WhatsApp Business hesabınızı bağlayın', type: 'zernio' as const },
+  { key: 'instagram', label: 'Instagram', color: 'text-pink-400', bg: 'bg-[#E4405F]/10', border: 'border-pink-500/20', note: 'Instagram işletme hesabınızı bağlayın', type: 'zernio' as const },
+  { key: 'facebook', label: 'Facebook Messenger', color: 'text-blue-400', bg: 'bg-[#0866FF]/10', border: 'border-blue-500/20', note: 'Facebook sayfanızı bağlayın', type: 'zernio' as const },
+  { key: 'telegram', label: 'Telegram', color: 'text-sky-400', bg: 'bg-[#0088CC]/10', border: 'border-sky-500/20', note: "BotFather'da oluşturduğunuz botu bağlayın", type: 'telegram' as const },
+  { key: 'webchat', label: 'Web Chat', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', note: 'Web sitenize entegre edin, müşterilerinizle canlı iletişim kurun', type: 'webchat' as const },
+  { key: 'trendyol', label: 'Trendyol', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', note: 'Trendyol mağazanıza gelen soruları cevaplayın', type: 'apikey' as const },
+  { key: 'hepsiburada', label: 'Hepsiburada', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', note: 'Hepsiburada mağazanıza gelen soruları cevaplayın', type: 'apikey' as const },
+  { key: 'n11', label: 'n11', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', note: 'n11 mağazanıza gelen soruları cevaplayın', type: 'apikey' as const },
 ]
 
 const WEB_CHAT_STEPS = [
-  { title: 'Kodu Kopyalay\u0131n', desc: 'A\u015fa\u011f\u0131daki kodu kopyalay\u0131n, web sitenize ekleyeceksiniz.' },
-  { title: 'Web Sitenize Ekleyin', desc: 'WordPress, Wix, \u0130kas vb. panelinizde "Özel Kod" veya "Header" b\u00f6l\u00fcm\u00fcne yap\u0131\u015ft\u0131r\u0131n.' },
-  { title: 'Tamam!', desc: 'M\u00fc\u015fterileriniz web sitenizde sohbet balonu g\u00f6recek. Gelen mesajlar bu panele d\u00fc\u015fecek.' },
+  { title: 'Kodu Kopyalayın', desc: 'Aşağıdaki kodu kopyalayın, web sitenize ekleyeceksiniz.' },
+  { title: 'Web Sitenize Ekleyin', desc: 'WordPress, Wix, İkas vb. panelinizde "Özel Kod" veya "Header" bölümüne yapıştırın.' },
+  { title: 'Tamam!', desc: 'Müşterileriniz web sitenizde sohbet balonu görecek. Gelen mesajlar bu panele düşecek.' },
 ]
 
 export default function ChatbotIntegrationsPage() {
@@ -116,7 +116,7 @@ export default function ChatbotIntegrationsPage() {
   useEffect(() => {
     const connected = searchParams.get('connected')
     const error = searchParams.get('error')
-    if (connected) showToast('success', connected + ' ba\u015far\u0131yla ba\u011fland\u0131!')
+    if (connected) showToast('success', connected + ' başarıyla bağlandı!')
     if (error) showToast('error', decodeURIComponent(error))
     fetchConnections()
     ensureProfile()
@@ -163,17 +163,17 @@ export default function ChatbotIntegrationsPage() {
         if (isApp) {
           window.open(data.url, '_blank')
           setConnecting(null)
-          showToast('success', platform.charAt(0).toUpperCase() + platform.slice(1) + ' sayfas\u0131 a\u00e7\u0131ld\u0131, onaylay\u0131n ve geri d\u00f6n\u00fcn.')
+          showToast('success', platform.charAt(0).toUpperCase() + platform.slice(1) + ' sayfası açıldı, onaylayın ve geri dönün.')
         } else {
           window.location.href = data.url
         }
       } else {
-        showToast('error', 'Ba\u011flant\u0131 URL al\u0131namad\u0131: ' + (data.message || ''))
+        showToast('error', 'Bağlantı URL alınamadı: ' + (data.message || ''))
         setConnecting(null)
       }
     } catch (e: any) {
       clearTimeout(timeout)
-      showToast('error', 'Ba\u011flant\u0131 hatas\u0131: ' + (e.message || ''))
+      showToast('error', 'Bağlantı hatası: ' + (e.message || ''))
       setConnecting(null)
     }
   }
@@ -197,12 +197,12 @@ export default function ChatbotIntegrationsPage() {
       if (json.success) {
         setApiKeyConnected(prev => ({ ...prev, [apiKeyModal.platform]: true }))
         setApiKeyModal(null)
-        showToast('success', apiKeyModal.label + ' ba\u011fland\u0131!')
+        showToast('success', apiKeyModal.label + ' bağlandı!')
       } else {
-        setApiKeyError(json.message || 'Ba\u011flant\u0131 ba\u015far\u0131s\u0131z')
+        setApiKeyError(json.message || 'Bağlantı başarısız')
       }
     } catch {
-      setApiKeyError('Ba\u011flant\u0131 hatas\u0131')
+      setApiKeyError('Bağlantı hatası')
     } finally {
       setApiKeySaving(false)
     }
@@ -215,20 +215,20 @@ export default function ChatbotIntegrationsPage() {
         credentials: 'include',
       })
       setApiKeyConnected(prev => ({ ...prev, [platform]: false }))
-      showToast('success', platform + ' ba\u011flant\u0131s\u0131 kesildi')
+      showToast('success', platform + ' bağlantısı kesildi')
     } catch {}
   }
 
   const handleTelegramConnect = async () => {
     if (!telegramToken.trim()) {
-      setTelegramError('L\u00fctfen bot token girin')
+      setTelegramError('Lütfen bot token girin')
       return
     }
     setTelegramTesting(true)
     setTelegramError('')
     try {
       const tenantId = currentTenantId || await getTenantId()
-      if (!tenantId) { setTelegramError('Tenant bulunamad\u0131'); setTelegramTesting(false); return }
+      if (!tenantId) { setTelegramError('Tenant bulunamadı'); setTelegramTesting(false); return }
       const res = await fetch('/api/telegram/tenant-connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -239,11 +239,11 @@ export default function ChatbotIntegrationsPage() {
         setTelegramConnected(true)
         setTelegramBotInfo(json.botInfo)
         setTelegramModal(false)
-        showToast('success', 'Telegram botu ba\u015far\u0131yla ba\u011fland\u0131!')
+        showToast('success', 'Telegram botu başarıyla bağlandı!')
       } else {
-        setTelegramError(json.message || 'Ba\u011flant\u0131 ba\u015far\u0131s\u0131z')
+        setTelegramError(json.message || 'Bağlantı başarısız')
       }
-    } catch { setTelegramError('Ba\u011flant\u0131 hatas\u0131') } finally {
+    } catch { setTelegramError('Bağlantı hatası') } finally {
       setTelegramTesting(false)
     }
   }
@@ -259,14 +259,14 @@ export default function ChatbotIntegrationsPage() {
       })
       setTelegramConnected(false)
       setTelegramBotInfo(null)
-      showToast('success', 'Telegram ba\u011flant\u0131s\u0131 kesildi')
+      showToast('success', 'Telegram bağlantısı kesildi')
     } catch {}
   }
 
   const handleDisconnect = async (platform: string, type: string) => {
     if (type === 'telegram') { await handleTelegramDisconnect(); return }
     if (type === 'apikey') { await handleApiKeyDisconnect(platform); return }
-    if (type === 'webchat') { setWebchatConnected(false); showToast('success', 'Web Chat devre d\u0131\u015f\u0131 b\u0131rak\u0131ld\u0131'); return }
+    if (type === 'webchat') { setWebchatConnected(false); showToast('success', 'Web Chat devre dışı bırakıldı'); return }
     try {
       const tenantId = currentTenantId || await getTenantId()
       if (!tenantId) return
@@ -275,7 +275,7 @@ export default function ChatbotIntegrationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantId, platform }),
       })
-      showToast('success', platform + ' ba\u011flant\u0131s\u0131 kesildi')
+      showToast('success', platform + ' bağlantısı kesildi')
       fetchConnections()
     } catch {}
   }
@@ -318,15 +318,15 @@ export default function ChatbotIntegrationsPage() {
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#0088CC]/10">
                   <svg className="w-6 h-6 text-sky-400" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
                 </div>
-                <h3 className="text-white font-semibold">Telegram Bot Ba\u011fla</h3>
+                <h3 className="text-white font-semibold">Telegram Bot Bağla</h3>
               </div>
               <button onClick={() => setTelegramModal(false)} className="text-gray-500 hover:text-gray-300 transition-colors"><X className="w-5 h-5" /></button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">@BotFather ile yeni bir bot olu\u015fturun, ald\u0131\u011f\u0131n\u0131z token\u0131 a\u015fa\u011f\u0131ya yap\u0131\u015ft\u0131r\u0131n.</p>
+            <p className="text-sm text-gray-500 mb-4">@BotFather ile yeni bir bot oluşturun, aldığınız tokenı aşağıya yapıştırın.</p>
             <input type="text" value={telegramToken} onChange={e => { setTelegramToken(e.target.value); setTelegramError('') }} placeholder="1234567890:ABCdefGHIjklmNOPqrSTUvWXyz" className="w-full px-4 py-3 rounded-xl bg-[#1a2332] border border-[#2a3a4a] text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-colors mb-4" />
             {telegramError && <p className="text-xs text-red-400 mb-3">{telegramError}</p>}
             <button onClick={handleTelegramConnect} disabled={telegramTesting} className="w-full py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-sky-600 to-sky-500 text-white hover:shadow-lg hover:shadow-sky-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-              {telegramTesting ? <><Loader2 className="w-4 h-4 animate-spin" /> Do\u011frulan\u0131yor...</> : <><Bot className="w-4 h-4" /> Do\u011frula ve Ba\u011fla</>}
+              {telegramTesting ? <><Loader2 className="w-4 h-4 animate-spin" /> Doğrulanıyor...</> : <><Bot className="w-4 h-4" /> Doğrula ve Bağla</>}
             </button>
           </div>
         </div>
@@ -363,18 +363,18 @@ export default function ChatbotIntegrationsPage() {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs text-gray-500 font-medium">Embed Kodu</label>
                   <button onClick={() => copyToClipboard(webchatCode)} className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                    {copied ? <><Check size={12} className="text-green-400" /> Kopyaland\u0131</> : <><Copy size={12} /> Kopyala</>}
+                    {copied ? <><Check size={12} className="text-green-400" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                   </button>
                 </div>
-                <code className="block text-xs text-gray-300 font-mono bg-[#0d1117] rounded-lg p-3 border border-[#1a2332] break-all">{webchatCode || 'Y\u00fckleniyor...'}</code>
+                <code className="block text-xs text-gray-300 font-mono bg-[#0d1117] rounded-lg p-3 border border-[#1a2332] break-all">{webchatCode || 'Yükleniyor...'}</code>
               </div>
 
               <div className="flex gap-3">
                 <button onClick={() => { setWebchatModal(false) }} className="flex-1 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-all">
-                  \u0130ptal
+                  İptal
                 </button>
-                <button onClick={() => { setWebchatConnected(true); setWebchatModal(false); showToast('success', 'Web Chat aktifle\u015ftirildi! Kodu web sitenize ekleyin.') }} className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center gap-2">
-                  <Check size={16} /> Aktifle\u015ftir
+                <button onClick={() => { setWebchatConnected(true); setWebchatModal(false); showToast('success', 'Web Chat aktifleştirildi! Kodu web sitenize ekleyin.') }} className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center gap-2">
+                  <Check size={16} /> Aktifleştir
                 </button>
               </div>
             </div>
@@ -390,11 +390,11 @@ export default function ChatbotIntegrationsPage() {
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10">
                   <Key className="w-5 h-5 text-blue-400" />
                 </div>
-                <h3 className="text-white font-semibold">{apiKeyModal.label} API Ba\u011fla</h3>
+                <h3 className="text-white font-semibold">{apiKeyModal.label} API Bağla</h3>
               </div>
               <button onClick={() => setApiKeyModal(null)} className="text-gray-500 hover:text-gray-300 transition-colors"><X className="w-5 h-5" /></button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">{apiKeyModal.label} sat\u0131c\u0131 panelinizden API anahtarlar\u0131n\u0131z\u0131 al\u0131p girin. Gelen m\u00fc\u015fteri sorular\u0131 otomatik cevaplanacak.</p>
+            <p className="text-sm text-gray-500 mb-4">{apiKeyModal.label} satıcı panelinizden API anahtarlarınızı alıp girin. Gelen müşteri soruları otomatik cevaplanacak.</p>
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-500 block mb-1.5">API Key / App Key</label>
@@ -411,7 +411,7 @@ export default function ChatbotIntegrationsPage() {
             </div>
             {apiKeyError && <p className="text-xs text-red-400 mt-3">{apiKeyError}</p>}
             <button onClick={handleApiKeySave} disabled={apiKeySaving || !apiKeyForm.apiKey || !apiKeyForm.apiSecret} className="w-full mt-4 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-              {apiKeySaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Do\u011frulan\u0131yor...</> : <><Link2 className="w-4 h-4" /> Ba\u011fla</>}
+              {apiKeySaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Doğrulanıyor...</> : <><Link2 className="w-4 h-4" /> Bağla</>}
             </button>
           </div>
         </div>
@@ -419,8 +419,8 @@ export default function ChatbotIntegrationsPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Chatbot Entegrasyonlar\u0131</h1>
-          <p className="text-sm text-gray-500 mt-1">T\u00fcm platformlar\u0131 ba\u011flay\u0131n, gelen sorular otomatik cevap als\u0131n</p>
+          <h1 className="text-2xl font-bold text-white">Chatbot Entegrasyonları</h1>
+          <p className="text-sm text-gray-500 mt-1">Tüm platformları bağlayın, gelen sorular otomatik cevap alsın</p>
         </div>
       </div>
 
@@ -438,7 +438,7 @@ export default function ChatbotIntegrationsPage() {
                     <h3 className="text-white font-semibold">{p.label}</h3>
                     <p className="text-xs text-gray-500">
                       {isConnected
-                        ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : 'Ba\u011fl\u0131')
+                        ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : 'Bağlı')
                         : p.note}
                     </p>
                   </div>
@@ -447,11 +447,11 @@ export default function ChatbotIntegrationsPage() {
               </div>
               {isConnected ? (
                 <button onClick={() => handleDisconnect(p.key, p.type)} className="w-full py-2.5 rounded-xl text-sm font-medium border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all">
-                  Ba\u011flant\u0131y\u0131 Kes
+                  Bağlantıyı Kes
                 </button>
               ) : (
                 <button onClick={() => handleConnect(p.key, p.type)} disabled={connecting === p.key} className="w-full py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  {connecting === p.key ? <><Loader2 className="w-4 h-4 animate-spin" /> Ba\u011flan\u0131yor...</> : <><Link2 className="w-4 h-4" /> Hesap Ba\u011fla</>}
+                  {connecting === p.key ? <><Loader2 className="w-4 h-4 animate-spin" /> Bağlanıyor...</> : <><Link2 className="w-4 h-4" /> Hesap Bağla</>}
                 </button>
               )}
             </div>
