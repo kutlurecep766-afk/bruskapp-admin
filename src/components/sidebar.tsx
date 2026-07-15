@@ -3,29 +3,23 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, Users, QrCode,
+  LayoutDashboard, Users,
   MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
-  Package, Store, Truck, Sun, Moon, Crown, Link2, Radio, Megaphone
+  Sun, Moon, Crown, Link2, Radio, Megaphone
 } from 'lucide-react'
 import { useTheme } from './theme-provider'
 
 const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/', perm: 'dashboard' },
   { key: 'customers', label: 'Müşteriler', icon: Users, href: '/customers', perm: 'customers' },
-  { key: 'products', label: 'Ürünler', icon: Package, href: '/products', perm: 'products' },
-  { key: 'qr-menu', label: 'QR Menu', icon: QrCode, href: '/qr-menu', perm: 'qr-menu' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
   { key: 'notifications', label: 'Bildirimler', icon: Bell, href: '/notifications', perm: 'notifications' },
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
   { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
-  { key: 'kargo', label: 'Kargo', icon: Truck, href: '/kargo', perm: 'kargo' },
-
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
   { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, href: '/whatsapp', perm: 'whatsapp' },
   { key: 'instagram', label: 'Instagram', icon: MessageCircle, href: '/instagram', perm: 'instagram' },
-  { key: 'pazaryeri', label: 'Pazaryeri', icon: Store, href: '/pazaryeri', perm: 'trendyol' },
-  { key: 'stok', label: 'Stok Yönetimi', icon: Package, href: '/stok', perm: 'products' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonlar\u0131', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'chatbot-integrations' },
@@ -58,10 +52,9 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
   const userPermissions = user?.permissions || []
   const initial = (user?.name || user?.email || '?')[0].toUpperCase()
 
-  const hasMarketplacePerm = userPermissions.includes('trendyol') || userPermissions.includes('hepsiburada')
   const visibleItems = isSuperAdmin
     ? ALL_MODULES
-    : ALL_MODULES.filter(m => m.key === 'pazaryeri' ? hasMarketplacePerm : userPermissions.includes(m.perm))
+    : ALL_MODULES.filter(m => userPermissions.includes(m.perm))
 
   return (
     <>
