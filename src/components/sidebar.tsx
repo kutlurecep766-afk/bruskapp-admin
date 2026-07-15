@@ -3,10 +3,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, Users, Bot, Headphones, QrCode, Puzzle,
+  LayoutDashboard, Users, QrCode,
   MessageSquare, Bell, ShoppingCart, CalendarCheck, CreditCard,
-  BarChart3, Settings2, Cog, Shield, MessageCircle,
-  Package, Wallet, Store, Truck, FileText, Sun, Moon, Crown, Link2, Radio, Megaphone
+  BarChart3, Cog, Shield, MessageCircle,
+  Package, Store, Truck, Sun, Moon, Crown, Link2, Radio, Megaphone
 } from 'lucide-react'
 import { useTheme } from './theme-provider'
 
@@ -14,25 +14,19 @@ const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/', perm: 'dashboard' },
   { key: 'customers', label: 'Müşteriler', icon: Users, href: '/customers', perm: 'customers' },
   { key: 'products', label: 'Ürünler', icon: Package, href: '/products', perm: 'products' },
-  { key: 'ai-chatbots', label: 'AI Chatbotlar', icon: Bot, href: '/ai-chatbots', perm: 'ai-chatbots' },
-  { key: 'voice-assistants', label: 'Sesli AI Asistanlar', icon: Headphones, href: '/voice-assistants', perm: 'voice-assistants' },
   { key: 'qr-menu', label: 'QR Menu', icon: QrCode, href: '/qr-menu', perm: 'qr-menu' },
-  { key: 'e-fatura', label: 'e-Fatura', icon: FileText, href: '/e-fatura', perm: 'e-fatura' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
   { key: 'notifications', label: 'Bildirimler', icon: Bell, href: '/notifications', perm: 'notifications' },
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
   { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
   { key: 'kargo', label: 'Kargo', icon: Truck, href: '/kargo', perm: 'kargo' },
-  { key: 'virtual-pos', label: 'Sanal POS', icon: Wallet, href: '/virtual-pos', perm: 'virtual-pos' },
   { key: 'payments', label: 'Ödemeler', icon: CreditCard, href: '/payments', perm: 'payments' },
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
   { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, href: '/whatsapp', perm: 'whatsapp' },
   { key: 'instagram', label: 'Instagram', icon: MessageCircle, href: '/instagram', perm: 'instagram' },
-  { key: 'telegram', label: 'Sistem Kontrol', icon: Settings2, href: '/telegram', perm: 'telegram' },
   { key: 'pazaryeri', label: 'Pazaryeri', icon: Store, href: '/pazaryeri', perm: 'trendyol' },
   { key: 'stok', label: 'Stok Yönetimi', icon: Package, href: '/stok', perm: 'products' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
-  { key: 'modules', label: 'Modüller', icon: Puzzle, href: '/modules', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonlar\u0131', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'chatbot-integrations' },
 ]
