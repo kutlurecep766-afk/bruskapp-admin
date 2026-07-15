@@ -115,8 +115,7 @@ export default function ChatbotIntegrationsPage() {
       clearTimeout(timeout)
       if (data.success && data.url) {
         const isApp = window.matchMedia('(display-mode: standalone)').matches || !!(navigator as any).standalone
-        const isCapacitor = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNative
-        if (isApp || isCapacitor) {
+        if (isApp) {
           window.open(data.url, '_blank')
           setConnecting(null)
           showToast('success', platform.charAt(0).toUpperCase() + platform.slice(1) + ' sayfası açıldı, onaylayın ve geri dönün.')

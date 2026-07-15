@@ -44,21 +44,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pushSubscribed.current) return
     pushSubscribed.current = true
 
-    // Capacitor FCM registration
-    const cap = (window as any).Capacitor
-    if (cap?.isNative && cap.Plugins?.PushNotifications) {
-      const pn = cap.Plugins.PushNotifications
-      pn.requestPermissions().then((r: any) => {
-        if (r.receive === 'granted') {
-          pn.register()
-          pn.addListener('registration', (token: any) => {
-            fetch('/api/push/fcm-register', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token.value }) }).catch(() => {})
-          })
-        }
-      }).catch(() => {})
-      return
-    }
-
     // Web Push subscription
     const init = async () => {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
