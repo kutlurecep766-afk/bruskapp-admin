@@ -143,7 +143,7 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">{initial}</div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white truncate">{user?.name || user?.email || 'Yukleniyor...'}</p>
+                <p className="text-sm text-white truncate">{user?.name || user?.email || ''}</p>
                 <p className="text-xs text-gray-500">{isSuperAdmin ? 'Super Admin' : user?.role === 'ADMIN' ? 'Admin' : 'Kullanici'}</p>
                 <button onClick={async () => { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); window.location.href = '/brk-mgmt/login'; }} className="text-xs text-red-400 hover:text-red-300 transition-colors mt-1">Çıkış Yap</button>
               </div>
