@@ -142,7 +142,11 @@ export default function MessagesPage() {
           const idx = prev.findIndex(c => c.id === convId)
           if (idx >= 0) {
             const updated = [...prev]
-            updated[idx] = { ...updated[idx], lastContent: msg.content, lastMessageAt: msg.createdAt, count: (msg.direction !== 'outgoing' ? 1 : 0) + (updated[idx].count || 0) }
+            if (msg.direction === 'outgoing') {
+              updated[idx] = { ...updated[idx], lastContent: msg.content, lastMessageAt: msg.createdAt, count: 0 }
+            } else {
+              updated[idx] = { ...updated[idx], lastContent: msg.content, lastMessageAt: msg.createdAt, count: 1 + (updated[idx].count || 0) }
+            }
             updated.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
             return updated
           }
@@ -161,9 +165,9 @@ export default function MessagesPage() {
   useEffect(() => { if (msgsEndRef.current) msgsEndRef.current.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   const selectConv = async (id: string) => {
-    setSelectedConv(id); setMobileView('chat'); fetchMessages(id); markAsRead(id)
-    setConversations(prev => prev.map(c => c.id === id ? { ...c, count: 0 } : c))
+    setSelectedConv(id); setMobileView('chat'); fetchMessages(id)
     const [platform, from] = id.split(':')
+    markAsRead(id)
     if (platform === 'whatsapp' || platform === 'instagram') {
       try {
         const res = await fetch(`/api/${platform}/ai/status?from=${encodeURIComponent(from)}`, { credentials: 'include' })
