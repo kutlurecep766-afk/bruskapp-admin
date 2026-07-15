@@ -268,74 +268,84 @@ export default function MessagesPage() {
       <div className={'flex-1 flex flex-col overflow-hidden relative ' + (mobileView === 'list' ? 'hidden md:flex' : 'flex')} style={{ backgroundColor: selectedConv ? (themeBg[messages[0]?.platform] || '#0a0e14') : '#0a0e14' }}>
         {selectedConv ? (
           <>
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-white/[0.02] backdrop-blur-xl">
-              <button onClick={() => { setMobileView('list'); setSelectedConv(null) }} className="md:hidden text-white/70 hover:text-white mr-1"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
-              <div className={'w-9 h-9 rounded-full flex items-center justify-center shadow-lg ' + platformColor(messages[0]?.platform)}>{platformIcon(messages[0]?.platform, 'w-4 h-4 ' + platformIconColor(messages[0]?.platform))}</div>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.03] bg-[#0a0e14]/80 backdrop-blur-xl shadow-sm">
+              <button onClick={() => { setMobileView('list'); setSelectedConv(null) }} className="md:hidden text-white/60 hover:text-white transition-colors mr-1"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
+              <div className={'w-10 h-10 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/[0.06] ' + platformColor(messages[0]?.platform)}>{platformIcon(messages[0]?.platform, 'w-4.5 h-4.5 ' + platformIconColor(messages[0]?.platform))}</div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold text-sm truncate">{messages.find(m => m.direction === 'incoming')?.fromName || selectedConv.split(':')[1]}</h3>
-                <p className="text-[11px] text-white/50">{messages.length} mesaj</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-white font-semibold text-sm truncate">{messages.find(m => m.direction === 'incoming')?.fromName || selectedConv.split(':')[1]}</h3>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 flex-shrink-0" />
+                </div>
+                <p className="text-[11px] text-white/40">{messages.length} mesaj</p>
               </div>
               {['whatsapp', 'instagram'].includes(selectedConv.split(':')[0]) && (
-                <button onClick={() => toggleAiPause(selectedConv)} disabled={aiToggling === selectedConv} className={'text-xs font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all backdrop-blur-sm border border-white/10 ' + (aiPausedMap[selectedConv] ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/20' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20')}>
-                  {aiToggling === selectedConv ? <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                    : aiPausedMap[selectedConv] ? <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> AI'yi Devral</>
-                      : <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> AI Durdur</>
+                <button onClick={() => toggleAiPause(selectedConv)} disabled={aiToggling === selectedConv} className={'text-xs font-semibold flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all backdrop-blur-sm border ' + (aiPausedMap[selectedConv] ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20')}>
+                  {aiToggling === selectedConv ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    : aiPausedMap[selectedConv] ? <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Devral</>
+                      : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> AI Durdur</>
                   }
                 </button>
               )}
             </div>
-            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-0.5 scrollbar-thin scrollbar-thumb-white/5 scrollbar-track-transparent" style={{ backgroundColor: themeChatBg[messages[0]?.platform] || '#0a0e14' }}>
+            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-0.5 scrollbar-thin scrollbar-thumb-white/[0.06] scrollbar-track-transparent chat-area" style={{ backgroundColor: themeChatBg[messages[0]?.platform] || '#0a0e14' }}>
+              <div className="absolute inset-0 pointer-events-none opacity-[0.015]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Ccircle cx=\'1\' cy=\'1\' r=\'0.5\'/%3E%3C/g%3E%3C/svg%3E")' }} />
               {msgLoading ? (
-                <div className="space-y-4 p-4">{Array.from({ length: 5 }).map((_, i) => <div key={i} className={'flex ' + (i % 2 === 0 ? 'justify-start' : 'justify-end')}><div className={'h-10 rounded-2xl animate-pulse ' + (i % 2 === 0 ? 'w-48 bg-white/5' : 'w-36 bg-white/5')} /></div>)}</div>
+                <div className="space-y-4 p-4 relative z-10">{Array.from({ length: 5 }).map((_, i) => <div key={i} className={'flex ' + (i % 2 === 0 ? 'justify-start' : 'justify-end')}><div className={'h-12 rounded-2xl animate-pulse ' + (i % 2 === 0 ? 'w-52 bg-white/[0.04]' : 'w-40 bg-white/[0.04]')} /></div>)}</div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                  <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 border border-white/5">
-                    <svg className="w-7 h-7 text-white/15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 relative z-10">
+                  <div className="w-20 h-20 rounded-full bg-white/[0.02] flex items-center justify-center mb-5 border border-white/[0.04]">
+                    <svg className="w-8 h-8 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                   </div>
-                  <p className="text-gray-500 text-sm mb-1">Henuz mesaj yok</p>
-                  <p className="text-gray-600 text-xs">Karsidan mesaj gelince burada gorunecek</p>
+                  <p className="text-white/20 text-sm font-medium mb-1.5">Henuz mesaj yok</p>
+                  <p className="text-white/10 text-xs">Karsidan mesaj gelince burada gorunecek</p>
                 </div>
-              ) : messages.map((msg: any, idx: number) => {
+              ) : (<div className="relative z-10">
+                {messages.map((msg: any, idx: number) => {
                 const divider = getDateDivider(msg, idx)
                 const isOut = msg.direction === 'outgoing'; const platform = messages[0]?.platform
                 const showAvatar = !isOut && (idx === 0 || messages[idx - 1]?.direction === 'outgoing')
                 const isFirstMsg = idx === 0 || messages[idx - 1]?.direction !== msg.direction
+                const isLastInSeq = idx === messages.length - 1 || messages[idx + 1]?.direction !== msg.direction
                 return <div key={msg.id} className="animate-fadeIn">
-                  {divider && <div className="flex items-center gap-3 py-2"><div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" /><span className="text-[11px] text-white/25 font-medium px-3 py-0.5 rounded-full bg-white/[0.03]">{divider}</span><div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" /></div>}
+                  {divider && <div className="flex items-center justify-center py-3 relative"><div className="absolute inset-0 flex items-center"><div className="w-full h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" /></div><span className="relative text-[11px] text-white/20 font-medium px-4 py-1 rounded-full bg-[#0a0e14]/80 backdrop-blur-sm border border-white/[0.04]">{divider}</span></div>}
                   <div className={'flex items-end gap-2 py-0.5 group ' + (isOut ? 'justify-end' : 'justify-start')}>
-                    {!isOut && <div className={'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-200 ' + (showAvatar ? platformColor(platform) + ' shadow-sm' : 'opacity-0 scale-0')}>{showAvatar && platformIcon(platform, 'w-3.5 h-3.5 ' + platformIconColor(platform))}</div>}
-                    <div className={'max-w-[82%] md:max-w-[68%] px-3.5 py-2.5 text-sm leading-relaxed transition-all duration-150 ' + (isOut ? 'text-white rounded-2xl rounded-br-md group-hover:brightness-110' : 'text-gray-100 rounded-2xl rounded-bl-md group-hover:brightness-110') + (isOut ? ' shadow-sm' : ' shadow-sm')} style={{ backgroundColor: isOut ? themeOutgoingBg[platform] || '#2563eb' : themeIncomingBg[platform] || '#1a2332' }}>
-                      {!isOut && isFirstMsg && msg.fromName && <p className="text-[11px] font-semibold text-white/60 mb-0.5">{msg.fromName}</p>}
-                      <p className="break-words whitespace-pre-wrap">{msg.content}</p>
-                      <div className={'flex items-center gap-1 mt-1 ' + (isOut ? 'justify-end' : 'justify-start')}>
-                        <span className={'text-[10px] ' + (isOut ? 'text-white/40' : 'text-white/30')}>{formatTime(msg.createdAt)}</span>
-                        {isOut && <span className="flex items-center">{msg.status === 'read' ? <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : msg.status === 'delivered' ? <svg className="w-3.5 h-3.5 text-white/60" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : <svg className="w-3.5 h-3.5 text-white/50" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/></svg>}</span>
-                        }
+                    {!isOut && <div className={'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-200 ' + (showAvatar ? platformColor(platform) + ' shadow-sm ring-2 ring-white/[0.04]' : 'opacity-0 scale-0')}>{showAvatar && platformIcon(platform, 'w-3.5 h-3.5 ' + platformIconColor(platform))}</div>}
+                    <div className={'max-w-[82%] md:max-w-[68%] text-sm leading-relaxed transition-all duration-150 hover:brightness-110 ' + (isOut ? 'shadow-sm' : 'shadow-sm') + (isLastInSeq ? (isOut ? ' rounded-2xl rounded-br-sm' : ' rounded-2xl rounded-bl-sm') : (isOut ? ' rounded-2xl rounded-br-md' : ' rounded-2xl rounded-bl-md'))} style={{ backgroundColor: isOut ? themeOutgoingBg[platform] || '#2563eb' : themeIncomingBg[platform] || '#1a2332' }}>
+                      <div className={'px-3.5 py-2.5 ' + (isOut ? 'text-white' : 'text-gray-100')}>
+                        {!isOut && isFirstMsg && msg.fromName && <p className="text-[11px] font-semibold text-white/50 mb-0.5 tracking-wide">{msg.fromName}</p>}
+                        <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+                        <div className={'flex items-center gap-1 mt-1 ' + (isOut ? 'justify-end' : 'justify-start')}>
+                          <span className={'text-[10px] ' + (isOut ? 'text-white/35' : 'text-white/25')}>{formatTime(msg.createdAt)}</span>
+                          {isOut && <span className="flex items-center ml-0.5">{msg.status === 'read' ? <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : msg.status === 'delivered' ? <svg className="w-3.5 h-3.5 text-white/50" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : <svg className="w-3.5 h-3.5 text-white/35" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/></svg>}</span>
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               })}
+              </div>)}
               <div ref={msgsEndRef} />
             </div>
-            <div className="border-t border-white/5 bg-white/[0.02] backdrop-blur-xl px-4 py-3">
-              <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5" style={{ backgroundColor: themeInputBg[messages[0]?.platform] || '#1a2332' }}>
-                <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply() } }} placeholder="Mesaj yaz..." className="flex-1 bg-transparent text-white text-sm outline-none placeholder-white/40" disabled={sending} />
-                <button onClick={sendReply} disabled={sending || !replyText.trim()} className={'p-1.5 rounded-lg transition-all ' + (sending || !replyText.trim() ? 'text-white/20' : 'text-white/80 hover:scale-110 hover:text-blue-400')}>
-                  {sending ? <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                    : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>}
+            <div className="border-t border-white/[0.03] bg-[#0a0e14]/80 backdrop-blur-xl px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-2.5 rounded-2xl px-4 py-3" style={{ backgroundColor: themeInputBg[messages[0]?.platform] || '#1a2332' }}>
+                <button className="flex-shrink-0 text-white/30 hover:text-white/60 transition-colors"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg></button>
+                <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply() } }} placeholder="Mesaj yaz..." className="flex-1 bg-transparent text-white text-sm outline-none placeholder-white/30" disabled={sending} />
+                <button onClick={sendReply} disabled={sending || !replyText.trim()} className={'flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 ' + (sending || !replyText.trim() ? 'text-white/20' : 'text-white hover:bg-white/[0.1]')}>
+                  {sending ? <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    : <svg className="w-4.5 h-4.5 -rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>}
                 </button>
               </div>
             </div>
           </>
         ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-b from-transparent via-white/[0.01] to-transparent">
+          <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-b from-transparent via-white/[0.005] to-transparent">
             <div className="text-center max-w-xs">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#1a2332] to-[#0d1117] flex items-center justify-center mb-5 shadow-inner border border-white/[0.03]">
-                <svg className="w-9 h-9 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-[#1a2332] to-[#0d1117] flex items-center justify-center mb-6 shadow-inner border border-white/[0.03]">
+                <svg className="w-10 h-10 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
               </div>
-              <h3 className="text-white/40 text-sm font-medium mb-1">Mesajlar</h3>
-              <p className="text-gray-600 text-xs leading-relaxed">Soldan bir konusma secin veya yeni bir konusma baslatmak icin kisi arayin</p>
+              <h3 className="text-white/30 text-sm font-medium mb-2">Mesajlar</h3>
+              <p className="text-white/15 text-xs leading-relaxed">Soldan bir konusma secin veya yeni bir konusma baslatmak icin kisi arayin</p>
             </div>
           </div>
         )}
