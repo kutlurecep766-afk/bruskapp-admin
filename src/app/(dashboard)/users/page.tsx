@@ -5,32 +5,27 @@ import { Users, Plus, Pencil, Trash2, X, Shield, ShieldOff, Check, Search, UserP
 const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'customers', label: 'Müşteriler' },
-  { key: 'products', label: 'Ürünler' },
-  { key: 'ai-chatbots', label: 'AI Chatbotlar' },
-  { key: 'voice-assistants', label: 'Sesli AI Asistanlar' },
-  { key: 'qr-menu', label: 'QR Menu' },
   { key: 'messages', label: 'Mesajlar' },
   { key: 'notifications', label: 'Bildirimler' },
   { key: 'orders', label: 'Siparişler' },
   { key: 'reservations', label: 'Rezervasyonlar' },
-  { key: 'virtual-pos', label: 'Sanal POS' },
-  { key: 'payments', label: 'Ödemeler' },
   { key: 'analytics', label: 'Analitik' },
-  { key: 'telegram', label: 'Sistem Kontrol' },
   { key: 'settings', label: 'Ayarlar' },
   { key: 'leads', label: 'Potansiyel Müşteriler' },
   { key: 'webchat', label: 'Chatbot Ayarları' },
-  { key: 'kargo', label: 'Kargo' },
-  { key: 'e-fatura', label: 'e-Fatura' },
-  { key: 'stok', label: 'Stok Yönetimi' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar' },
 ]
 
-const VIRTUAL_POS_PROVIDERS = [
-  { key: 'virtual-pos-paytr', label: 'PayTR' },
-  { key: 'virtual-pos-iyzico', label: 'İyzico' },
-  { key: 'virtual-pos-sipay', label: 'Sipay' },
+const CHATBOT_PLATFORMS = [
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'facebook', label: 'Facebook Messenger' },
+  { key: 'telegram', label: 'Telegram' },
+  { key: 'webchat', label: 'Web Chat' },
+  { key: 'trendyol', label: 'Trendyol' },
+  { key: 'hepsiburada', label: 'Hepsiburada' },
+  { key: 'n11', label: 'n11' },
 ]
 
 export default function UsersPage() {
@@ -172,7 +167,7 @@ export default function UsersPage() {
         </div>
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs text-gray-500 font-medium">Modul Yetkileri</label>
+            <label className="text-xs text-gray-500 font-medium">Genel Modul Yetkileri</label>
             <div className="flex gap-2">
               <button onClick={selectAllNew} className="text-xs text-blue-400 hover:text-blue-300">Tumunu Sec</button>
               <button onClick={selectNoneNew} className="text-xs text-gray-500 hover:text-gray-400">Temizle</button>
@@ -189,20 +184,22 @@ export default function UsersPage() {
               )
             })}
           </div>
-          {newPerms.includes('virtual-pos') && (
-            <div className="mt-3 bg-[#080b12]/40 border border-[#1a2332] rounded-xl p-4 space-y-2">
-              <label className="text-xs text-gray-500 font-medium">Sanal POS Saglayicilari</label>
-              <div className="flex flex-wrap gap-2">{VIRTUAL_POS_PROVIDERS.map(p => {
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs text-gray-500 font-medium">Chatbot Platformlari</label>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {CHATBOT_PLATFORMS.map(p => {
                 const active = newPerms.includes(p.key)
                 return (
                   <button key={p.key} onClick={() => toggleNewPerm(p.key)}
-                    className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#0d1117]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
+                    className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#080b12]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
                     {active ? <Check size={11} /> : <div className="w-[11px]" />}{p.label}
                   </button>
                 )
-              })}</div>
+              })}
             </div>
-          )}
+          </div>
         </div>
         {newError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{newError}</p></div>}
         {newSuccess && <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3"><p className="text-emerald-400 text-xs">{newSuccess}</p></div>}
