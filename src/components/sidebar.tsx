@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, QrCode,
-  MessageSquare, Bell, ShoppingCart, CalendarCheck, CreditCard,
+  MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
   Package, Store, Truck, Sun, Moon, Crown, Link2, Radio, Megaphone
 } from 'lucide-react'
@@ -20,7 +20,7 @@ const ALL_MODULES = [
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
   { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
   { key: 'kargo', label: 'Kargo', icon: Truck, href: '/kargo', perm: 'kargo' },
-  { key: 'payments', label: 'Ödemeler', icon: CreditCard, href: '/payments', perm: 'payments' },
+
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
   { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, href: '/whatsapp', perm: 'whatsapp' },
   { key: 'instagram', label: 'Instagram', icon: MessageCircle, href: '/instagram', perm: 'instagram' },
