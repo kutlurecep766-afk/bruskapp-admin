@@ -22,7 +22,7 @@ const CHATBOT_PLATFORMS = [
   { key: 'instagram', label: 'Instagram' },
   { key: 'facebook', label: 'Facebook Messenger' },
   { key: 'telegram', label: 'Telegram' },
-  { key: 'webchat', label: 'Web Chat' },
+  { key: 'webchat-widget', label: 'Web Chat' },
   { key: 'trendyol', label: 'Trendyol' },
   { key: 'hepsiburada', label: 'Hepsiburada' },
   { key: 'n11', label: 'n11' },
@@ -184,22 +184,24 @@ export default function UsersPage() {
               )
             })}
           </div>
-          <div className="mt-3">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-gray-500 font-medium">Chatbot Platformlari</label>
+          {newPerms.includes('chatbot-integrations') && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs text-gray-500 font-medium">Chatbot Platformlari</label>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {CHATBOT_PLATFORMS.map(p => {
+                  const active = newPerms.includes(p.key)
+                  return (
+                    <button key={p.key} onClick={() => toggleNewPerm(p.key)}
+                      className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#080b12]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
+                      {active ? <Check size={11} /> : <div className="w-[11px]" />}{p.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {CHATBOT_PLATFORMS.map(p => {
-                const active = newPerms.includes(p.key)
-                return (
-                  <button key={p.key} onClick={() => toggleNewPerm(p.key)}
-                    className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#080b12]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
-                    {active ? <Check size={11} /> : <div className="w-[11px]" />}{p.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          )}
         </div>
         {newError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{newError}</p></div>}
         {newSuccess && <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3"><p className="text-emerald-400 text-xs">{newSuccess}</p></div>}
