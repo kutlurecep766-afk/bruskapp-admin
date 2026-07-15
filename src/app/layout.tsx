@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr">
       <head>
-        <link rel="manifest" href="/brk-mgmt/manifest.json" />
+        <link rel="manifest" href="/api/push/manifest.json" />
       </head>
       <body className={inter.className}>
         <ThemeProvider>
