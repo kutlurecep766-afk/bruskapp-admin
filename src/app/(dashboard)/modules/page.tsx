@@ -3,18 +3,20 @@ import { useState, useEffect } from 'react'
 import { Check, X as XIcon, Loader2, Save } from 'lucide-react'
 
 const ALL_MODULES = [
-  { key: 'qr-menu', label: 'QR Menü', desc: 'Masa QR kodları ile sipariş alma', emoji: '📱' },
-  { key: 'adisyon', label: 'Adisyon Sistemi', desc: 'Garson paneli ve yazıcı entegrasyonu', emoji: '🧾' },
+  { key: 'messages', label: 'Mesajlaşma', desc: 'Tüm platformlardan gelen mesajlar', emoji: '💬' },
   { key: 'orders', label: 'Sipariş Yönetimi', desc: 'Siparişleri takip etme ve yönetme', emoji: '📦' },
-  { key: 'products', label: 'Ürün Yönetimi', desc: 'Ürün ekleme, düzenleme ve kategoriler', emoji: '🏷️' },
-  { key: 'customers', label: 'Müşteri Yönetimi', desc: 'Müşteri takibi ve geçmiş siparişler', emoji: '👥' },
-  { key: 'payments', label: 'Ödeme İşlemleri', desc: 'Sanal POS ve ödeme geçmişi', emoji: '💳' },
-  { key: 'ai-chatbots', label: 'AI Chatbotlar', desc: 'Yapay zeka destekli sohbet botları', emoji: '🤖' },
-  { key: 'analytics', label: 'Analitik & Raporlar', desc: 'Satış, müşteri ve stok raporları', emoji: '📊' },
-  { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', desc: "WhatsApp, Instagram, FB Messenger, Telegram bağlantısı", emoji: '🔗' },
-  { key: 'kargo', label: 'Kargo Entegrasyonu', desc: 'Kargo takibi ve gönderi yönetimi', emoji: '🚚' },
-  { key: 'messages', label: 'Mesajlaşma', desc: 'Müşteri mesajları ve bildirimler', emoji: '💬' },
-  { key: 'settings', label: 'Ayarlar', desc: 'Mağaza ve sistem ayarları', emoji: '⚙️' },
+  { key: 'customers', label: 'Müşteri Yönetimi', desc: 'Müşteriler ve konuşma geçmişi', emoji: '👥' },
+  { key: 'analytics', label: 'Analitik & Raporlar', desc: 'Kullanım istatistikleri ve raporlar', emoji: '📊' },
+  { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', desc: "WhatsApp, Instagram, Messenger, Telegram bağlantısı", emoji: '🔗' },
+  { key: 'whatsapp', label: 'WhatsApp', desc: 'WhatsApp Business entegrasyonu', emoji: '💚' },
+  { key: 'instagram', label: 'Instagram', desc: 'Instagram mesajlaşma entegrasyonu', emoji: '💗' },
+  { key: 'facebook', label: 'Facebook Messenger', desc: 'Facebook Messenger entegrasyonu', emoji: '💙' },
+  { key: 'telegram', label: 'Telegram', desc: 'Telegram bot entegrasyonu', emoji: '✈️' },
+  { key: 'webchat', label: 'Web Chat', desc: 'Web sitenize entegre sohbet widget', emoji: '🌐' },
+  { key: 'trendyol', label: 'Trendyol', desc: 'Trendyol mesajlarına AI cevap', emoji: '🛒' },
+  { key: 'hepsiburada', label: 'Hepsiburada', desc: 'Hepsiburada mesajlarına AI cevap', emoji: '🛍️' },
+  { key: 'n11', label: 'n11', desc: 'n11 mesajlarına AI cevap', emoji: '🏪' },
+  { key: 'settings', label: 'Ayarlar', desc: 'İşletme ayarları ve tercihler', emoji: '⚙️' },
 ]
 
 export default function ModulesPage() {
@@ -118,7 +120,7 @@ export default function ModulesPage() {
         <div className="space-y-2 text-xs text-gray-400">
           <p>• Aktif modüller işletmenizin panelde göreceği özellikleri belirler</p>
           <p>• Pasif modüller menüden gizlenir, kullanıcılar tarafından görülmez</p>
-          <p>• Garson rollü kullanıcılar sadece Adisyon, Sipariş ve Ürün modüllerini görür</p>
+          <p>• Kullanıcı yetkileri Kullanıcı Yönetimi sayfasından ayarlanabilir</p>
         </div>
       </div>
     </div>

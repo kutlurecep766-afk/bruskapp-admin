@@ -8,9 +8,9 @@ const PLATFORM_SVGS: Record<string, string> = {
   instagram: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" fill="currentColor"/></svg>`,
   facebook: `<svg viewBox="0 0 24 24" fill="none"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="currentColor"/></svg>`,
   telegram: `<svg viewBox="0 0 24 24" fill="none"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" fill="currentColor"/></svg>`,
-  trendyol: `<svg viewBox="0 0 48 48" fill="none"><path d="M8 14h32v24H8V14z" fill="#F28C00"/><text x="16" y="33" font-family="Arial" font-weight="900" font-size="22" fill="white">t</text><path d="M28 23l6-2v10c-2 1-6 0-6-4v-4z" fill="#fff" opacity="0.3"/></svg>`,
-  hepsiburada: `<svg viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="28" rx="4" fill="#6B21A8"/><rect x="10" y="14" width="28" height="20" rx="2" fill="white"/><text x="14" y="30" font-family="Arial" font-weight="900" font-size="18" fill="#6B21A8">H</text><text x="26" y="30" font-family="Arial" font-weight="900" font-size="18" fill="#6B21A8">B</text></svg>`,
-  n11: `<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" fill="#E11D48"/><text x="17" y="31" font-family="Arial" font-weight="900" font-size="18" fill="white">n</text><text x="26" y="31" font-family="Arial" font-weight="900" font-size="14" fill="white" opacity="0.8">11</text></svg>`,
+  trendyol: `<svg viewBox="0 0 48 48" fill="none"><rect x="2" y="2" width="44" height="44" rx="10" fill="#FF8200"/><text x="24" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="30" text-anchor="middle" fill="white" letter-spacing="-1">t</text></svg>`,
+  hepsiburada: `<svg viewBox="0 0 48 48" fill="none"><rect x="4" y="8" width="40" height="32" rx="6" fill="#5B2C8E"/><rect x="8" y="12" width="32" height="24" rx="3" fill="white"/><path d="M14 20h20M14 26h14" stroke="#5B2C8E" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="28" r="5" fill="#5B2C8E" opacity="0.15"/><text x="17" y="31" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="9" text-anchor="middle" fill="#5B2C8E">HB</text></svg>`,
+  n11: `<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="22" fill="#E60023"/><text x="16" y="33" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="20" fill="white">n</text><text x="25" y="33" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="15" fill="white" opacity="0.9">11</text></svg>`,
   webchat: `<svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M9 10h6M9 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
 }
 
@@ -54,6 +54,7 @@ export default function ChatbotIntegrationsPage() {
   const [tenantSlug, setTenantSlug] = useState<string>('')
   const [webchatConnected, setWebchatConnected] = useState(false)
   const [webchatModal, setWebchatModal] = useState(false)
+  const [webchatCode, setWebchatCode] = useState('')
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message })
@@ -136,7 +137,14 @@ export default function ChatbotIntegrationsPage() {
       return
     }
     if (type === 'webchat') {
-      if (!tenantSlug) await getTenantId()
+      let slug = tenantSlug
+      if (!slug) {
+        try {
+          const res = await fetch('/api/tenants/me', { credentials: 'include' })
+          if (res.ok) { const json = await res.json(); slug = json.slug || ''; setTenantSlug(slug) }
+        } catch {}
+      }
+      setWebchatCode(slug ? `<script src="https://bruskapp.com/embed.js" data-tenant="${slug}"></script>` : '')
       setWebchatModal(true)
       return
     }
@@ -278,10 +286,6 @@ export default function ChatbotIntegrationsPage() {
     return (connections?.platforms || []).some((p: any) => p.platform === key)
   }
 
-  const embedCode = tenantSlug
-    ? `<script src="https://bruskapp.com/embed.js" data-tenant="${tenantSlug}"></script>`
-    : ''
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     setCopied(true)
@@ -357,11 +361,11 @@ export default function ChatbotIntegrationsPage() {
               <div className="bg-[#080b12] border border-[#1a2332] rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs text-gray-500 font-medium">Embed Kodu</label>
-                  <button onClick={() => copyToClipboard(embedCode)} className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                  <button onClick={() => copyToClipboard(webchatCode)} className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
                     {copied ? <><Check size={12} className="text-green-400" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                   </button>
                 </div>
-                <code className="block text-xs text-gray-300 font-mono bg-[#0d1117] rounded-lg p-3 border border-[#1a2332] break-all">{embedCode || 'Sayfa yükleniyor...'}</code>
+                <code className="block text-xs text-gray-300 font-mono bg-[#0d1117] rounded-lg p-3 border border-[#1a2332] break-all">{webchatCode || 'Yükleniyor...'}</code>
               </div>
 
               <div className="flex gap-3">
