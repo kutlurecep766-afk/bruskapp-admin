@@ -18,12 +18,12 @@ function TrendyolIcon({ className }: { className?: string }) {
 }
 
 const PLATFORMS = [
-  { key: '', label: 'Tumu', icon: null, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-  { key: 'whatsapp', label: 'WhatsApp', icon: WAIcon, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' },
-  { key: 'instagram', label: 'Instagram', icon: IGAcon, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/30' },
-  { key: 'telegram', label: 'Telegram', icon: TGIcon, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-  { key: 'trendyol', label: 'Trendyol', icon: TrendyolIcon, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
-  { key: 'hepsiburada', label: 'Hepsiburada', icon: HepsiburadaIcon, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+  { key: '', label: 'Tumu', icon: null, color: 'text-white', bg: 'bg-blue-500/20' },
+  { key: 'whatsapp', label: 'WhatsApp', icon: WAIcon, color: 'text-green-300', bg: 'bg-green-500/20' },
+  { key: 'instagram', label: 'Instagram', icon: IGAcon, color: 'text-pink-300', bg: 'bg-pink-500/20' },
+  { key: 'telegram', label: 'Telegram', icon: TGIcon, color: 'text-blue-300', bg: 'bg-blue-500/20' },
+  { key: 'trendyol', label: 'Trendyol', icon: TrendyolIcon, color: 'text-orange-300', bg: 'bg-orange-500/20' },
+  { key: 'hepsiburada', label: 'Hepsiburada', icon: HepsiburadaIcon, color: 'text-purple-300', bg: 'bg-purple-500/20' },
 ]
 
 const platformColor = (p: string) => {
@@ -125,6 +125,11 @@ export default function MessagesPage() {
     } catch {} finally { setMsgLoading(false) }
   }, [])
 
+  const markAsRead = useCallback(async (convId: string) => {
+    const [platform, from] = convId.split(':')
+    try { await fetch('/api/messages/read?platform=' + platform + '&from=' + encodeURIComponent(from), { method: 'POST', credentials: 'include' }) } catch {}
+  }, [])
+
   useEffect(() => { fetchConversations() }, [fetchConversations])
 
   useEffect(() => {
@@ -156,7 +161,8 @@ export default function MessagesPage() {
   useEffect(() => { if (msgsEndRef.current) msgsEndRef.current.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   const selectConv = async (id: string) => {
-    setSelectedConv(id); setMobileView('chat'); fetchMessages(id)
+    setSelectedConv(id); setMobileView('chat'); fetchMessages(id); markAsRead(id)
+    setConversations(prev => prev.map(c => c.id === id ? { ...c, count: 0 } : c))
     const [platform, from] = id.split(':')
     if (platform === 'whatsapp' || platform === 'instagram') {
       try {
@@ -222,7 +228,7 @@ export default function MessagesPage() {
           <div className="flex gap-1.5 flex-wrap">
             {PLATFORMS.map(p => {
               const Icon = p.icon
-              return <button key={p.key} onClick={() => setPlatformFilter(p.key)} className={'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ' + (platformFilter === p.key ? (p.color || 'text-white') + ' ' + (p.bg || 'bg-blue-500/20') + ' ' + (p.border || 'border-blue-500/30') + ' border' : 'text-gray-400 hover:text-gray-200 bg-[#1a2332]/50')}>
+              return                 <button key={p.key} onClick={() => setPlatformFilter(p.key)} className={'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 ' + (platformFilter === p.key ? p.color + ' ' + p.bg + ' shadow-sm' : 'text-gray-500 hover:text-white bg-[#1a2332]/30 hover:bg-[#1a2332]/60')}>
                 {Icon && <Icon className="w-3.5 h-3.5" />}{p.label}
               </button>
             })}
@@ -239,7 +245,7 @@ export default function MessagesPage() {
           ) : (
             filteredConvs.map((conv: any) => {
               const badge = platformBadge(conv.platform)
-              return <button key={conv.id} onClick={() => selectConv(conv.id)} className={'w-full text-left px-4 py-3 border-b border-[#1a2332]/30 hover:bg-white/[0.03] transition-all relative group ' + (selectedConv === conv.id ? 'bg-blue-500/5' : '')}>
+              return <button key={conv.id} onClick={() => selectConv(conv.id)} className={'w-full text-left px-4 py-3.5 border-b border-[#1a2332]/20 transition-all relative group ' + (selectedConv === conv.id ? 'bg-blue-500/[0.06] shadow-[inset_3px_0_0_#3b82f6]' : 'hover:bg-white/[0.02]')}>
                 <div className="flex items-start gap-3">
                   <div className="relative flex-shrink-0">
                     <div className={'w-10 h-10 rounded-full flex items-center justify-center ' + platformColor(conv.platform)}>{platformIcon(conv.platform, 'w-4.5 h-4.5 ' + platformIconColor(conv.platform))}</div>
@@ -247,12 +253,12 @@ export default function MessagesPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-white truncate">{conv.fromName || conv.from}</span>
+                      <span className={'text-sm font-medium truncate ' + (selectedConv === conv.id ? 'text-white' : 'text-gray-200 group-hover:text-white')}>{conv.fromName || conv.from}</span>
                       <span className="text-[11px] text-gray-500 flex-shrink-0 ml-2">{formatTime(conv.lastMessageAt)}</span>
                     </div>
-                    <p className="text-xs text-gray-500 truncate mt-0.5 leading-relaxed">{conv.lastContent}</p>
+                    <p className={'text-xs truncate mt-0.5 leading-relaxed ' + ((conv.count || 0) > 0 ? 'text-gray-300' : 'text-gray-500')}>{conv.lastContent}</p>
                   </div>
-                  {(conv.count || 0) > 0 && <div className="w-5 h-5 rounded-full bg-blue-500 text-[10px] font-bold text-white flex items-center justify-center flex-shrink-0 mt-1">{conv.count > 9 ? '9+' : conv.count}</div>}
+                  {(conv.count || 0) > 0 && <div className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-blue-500 text-[10px] font-bold text-white flex items-center justify-center flex-shrink-0 mt-1 shadow-lg shadow-blue-500/30">{conv.count}</div>}
                 </div>
               </button>
             })
@@ -282,20 +288,28 @@ export default function MessagesPage() {
               {msgLoading ? (
                 <div className="space-y-4 p-4">{Array.from({ length: 5 }).map((_, i) => <div key={i} className={'flex ' + (i % 2 === 0 ? 'justify-start' : 'justify-end')}><div className={'h-10 rounded-2xl animate-pulse ' + (i % 2 === 0 ? 'w-48 bg-white/5' : 'w-36 bg-white/5')} /></div>)}</div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-6"><p className="text-gray-500 text-sm">Henuz mesaj yok</p></div>
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                  <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 border border-white/5">
+                    <svg className="w-7 h-7 text-white/15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                  </div>
+                  <p className="text-gray-500 text-sm mb-1">Henuz mesaj yok</p>
+                  <p className="text-gray-600 text-xs">Karsidan mesaj gelince burada gorunecek</p>
+                </div>
               ) : messages.map((msg: any, idx: number) => {
                 const divider = getDateDivider(msg, idx)
                 const isOut = msg.direction === 'outgoing'; const platform = messages[0]?.platform
                 const showAvatar = !isOut && (idx === 0 || messages[idx - 1]?.direction === 'outgoing')
-                return <div key={msg.id}>
-                  {divider && <div className="flex items-center gap-3 py-3"><div className="flex-1 h-px bg-white/5" /><span className="text-[11px] text-white/30 font-medium px-2">{divider}</span><div className="flex-1 h-px bg-white/5" /></div>}
-                  <div className={'flex items-end gap-2 py-0.5 ' + (isOut ? 'justify-end' : 'justify-start') + (platform === 'whatsapp' ? ' whatsapp-msg' : '')}>
-                    {!isOut && <div className={'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center transition-opacity ' + (showAvatar ? platformColor(platform) : 'opacity-0')}>{showAvatar && platformIcon(platform, 'w-3.5 h-3.5 ' + platformIconColor(platform))}</div>}
-                    <div className={'max-w-[82%] md:max-w-[68%] px-3.5 py-2.5 text-sm leading-relaxed shadow-sm backdrop-blur-sm ' + (isOut ? 'text-white rounded-2xl rounded-br-md' : 'text-gray-100 rounded-2xl rounded-bl-md') + (platform === 'whatsapp' && !isOut ? ' whatsapp-incoming' : '')} style={{ backgroundColor: isOut ? themeOutgoingBg[platform] || '#2563eb' : themeIncomingBg[platform] || '#1a2332' }}>
+                const isFirstMsg = idx === 0 || messages[idx - 1]?.direction !== msg.direction
+                return <div key={msg.id} className="animate-fadeIn">
+                  {divider && <div className="flex items-center gap-3 py-2"><div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" /><span className="text-[11px] text-white/25 font-medium px-3 py-0.5 rounded-full bg-white/[0.03]">{divider}</span><div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" /></div>}
+                  <div className={'flex items-end gap-2 py-0.5 group ' + (isOut ? 'justify-end' : 'justify-start')}>
+                    {!isOut && <div className={'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-200 ' + (showAvatar ? platformColor(platform) + ' shadow-sm' : 'opacity-0 scale-0')}>{showAvatar && platformIcon(platform, 'w-3.5 h-3.5 ' + platformIconColor(platform))}</div>}
+                    <div className={'max-w-[82%] md:max-w-[68%] px-3.5 py-2.5 text-sm leading-relaxed transition-all duration-150 ' + (isOut ? 'text-white rounded-2xl rounded-br-md group-hover:brightness-110' : 'text-gray-100 rounded-2xl rounded-bl-md group-hover:brightness-110') + (isOut ? ' shadow-sm' : ' shadow-sm')} style={{ backgroundColor: isOut ? themeOutgoingBg[platform] || '#2563eb' : themeIncomingBg[platform] || '#1a2332' }}>
+                      {!isOut && isFirstMsg && msg.fromName && <p className="text-[11px] font-semibold text-white/60 mb-0.5">{msg.fromName}</p>}
                       <p className="break-words whitespace-pre-wrap">{msg.content}</p>
                       <div className={'flex items-center gap-1 mt-1 ' + (isOut ? 'justify-end' : 'justify-start')}>
-                        <span className={'text-[10px] ' + (isOut ? 'text-white/50' : 'text-gray-500')}>{formatTime(msg.createdAt)}</span>
-                        {isOut && <span className="flex items-center gap-0.5">{msg.status === 'read' ? <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : msg.status === 'delivered' ? <svg className="w-3.5 h-3.5 text-white/60" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : <svg className="w-3.5 h-3.5 text-white/50" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/></svg>}</span>
+                        <span className={'text-[10px] ' + (isOut ? 'text-white/40' : 'text-white/30')}>{formatTime(msg.createdAt)}</span>
+                        {isOut && <span className="flex items-center">{msg.status === 'read' ? <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : msg.status === 'delivered' ? <svg className="w-3.5 h-3.5 text-white/60" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/><path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-1.011-1.054a.05.05 0 0 0-.011.016l.522.544c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z" opacity="0.9"/></svg> : <svg className="w-3.5 h-3.5 text-white/50" viewBox="0 0 16 11" fill="currentColor"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.343.145.515.515 0 0 0-.14.337c0 .136.051.264.14.366l2.394 2.49c.1.104.228.158.367.153a.477.477 0 0 0 .367-.178l6.53-8.056a.515.515 0 0 0 .102-.343.487.487 0 0 0-.167-.382z"/></svg>}</span>
                         }
                       </div>
                     </div>
@@ -315,12 +329,13 @@ export default function MessagesPage() {
             </div>
           </>
         ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-[#1a2332] flex items-center justify-center mb-4 shadow-inner">
-                <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+          <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-b from-transparent via-white/[0.01] to-transparent">
+            <div className="text-center max-w-xs">
+              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#1a2332] to-[#0d1117] flex items-center justify-center mb-5 shadow-inner border border-white/[0.03]">
+                <svg className="w-9 h-9 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
               </div>
-              <p className="text-gray-500 text-sm">Bir konusma secin</p>
+              <h3 className="text-white/40 text-sm font-medium mb-1">Mesajlar</h3>
+              <p className="text-gray-600 text-xs leading-relaxed">Soldan bir konusma secin veya yeni bir konusma baslatmak icin kisi arayin</p>
             </div>
           </div>
         )}
