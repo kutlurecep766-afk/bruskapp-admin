@@ -22,7 +22,7 @@ const CHATBOT_PLATFORMS = [
   { key: 'instagram', label: 'Instagram' },
   { key: 'facebook', label: 'Facebook Messenger' },
   { key: 'telegram', label: 'Telegram' },
-  { key: 'webchat', label: 'Web Chat' },
+  { key: 'webchat-widget', label: 'Web Chat' },
   { key: 'trendyol', label: 'Trendyol' },
   { key: 'hepsiburada', label: 'Hepsiburada' },
   { key: 'n11', label: 'n11' },

@@ -24,6 +24,7 @@ const ALL_MODULES = [
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'zernio-accounts' },
+  { key: 'webchat', label: 'Chatbot Ayarları', icon: MessageCircle, href: '/webchat', perm: 'webchat' },
   { key: 'errors', label: 'Hata Kayıtları', icon: AlertTriangle, href: '/errors', perm: 'errors' },
 ]
 
@@ -101,12 +102,6 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             <Link href="/leads" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/leads') ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <Users size={18} className={isActive('/leads') ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'} />
               {!collapsed && <span>Potansiyel Müşteriler</span>}
-            </Link>
-          )}
-          {isSuperAdmin && (
-            <Link href="/webchat" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/webchat') ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
-              <MessageCircle size={18} className={isActive('/webchat') ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'} />
-              {!collapsed && <span>Chatbot Ayarları</span>}
             </Link>
           )}
           {isSuperAdmin && (

@@ -59,6 +59,11 @@ export default function ChatbotIntegrationsPage() {
   const [userPerms, setUserPerms] = useState<string[]>([])
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
 
+  const hasPlatformPerm = (key: string) => {
+    const permMap: Record<string, string> = { webchat: 'webchat-widget' }
+    return userPerms.includes(permMap[key] || key)
+  }
+
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message })
     setTimeout(() => setToast(null), 5000)
@@ -438,16 +443,16 @@ export default function ChatbotIntegrationsPage() {
       {features && Object.keys(features).length > 0 && (
         <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-4 flex items-center gap-2 text-sm">
           <span className="text-gray-500">Aktif modüller:</span>
-          {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || userPerms.includes(p.key))).map(p => (
+          {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
             <span key={p.key} className={'px-2.5 py-1 rounded-lg text-xs font-medium ' + p.bg + ' ' + p.color}>{p.label}</span>
           ))}
-          {platforms.filter(p => features[p.key] === false && (isSuperAdmin || userPerms.includes(p.key))).map(p => (
+          {platforms.filter(p => features[p.key] === false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
             <span key={p.key} className="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-500/10 text-gray-600 line-through">{p.label}</span>
           ))}
         </div>
       )}
       <div className="grid md:grid-cols-2 gap-4">
-        {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || userPerms.includes(p.key))).map((p) => {
+        {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map((p) => {
           const isConnected = isPlatformConnected(p.key, p.type)
           return (
             <div key={p.key} className={'bg-[#0d1117]/80 backdrop-blur-xl border rounded-2xl p-6 transition-all ' + (isConnected ? 'border-green-500/20' : 'border-[#1a2332] hover:border-blue-500/30')}>
