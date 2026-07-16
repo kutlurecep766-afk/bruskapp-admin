@@ -31,6 +31,7 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
   const pathname = usePathname()
   const basePath = '/brk-mgmt'
   const [user, setUser] = useState<any>(null)
+  const [features, setFeatures] = useState<Record<string, any>>({})
 
   useEffect(() => {
     async function loadUser() {
@@ -44,7 +45,14 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
         if (res.ok) setUser(await res.json())
       } catch {}
     }
+    async function loadFeatures() {
+      try {
+        const res = await fetch('/api/tenants/me', { credentials: 'include' })
+        if (res.ok) { const json = await res.json(); const t = json?.tenant || json; if (t?.features) setFeatures(t.features) }
+      } catch {}
+    }
     loadUser()
+    loadFeatures()
   }, [])
 
   const isActive = (href: string) => pathname === basePath + (href === '/' ? '' : href)
@@ -54,9 +62,8 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
   const userPermissions = user?.permissions || []
   const initial = (user?.name || user?.email || '?')[0].toUpperCase()
 
-  const visibleItems = isSuperAdmin
-    ? ALL_MODULES
-    : ALL_MODULES.filter(m => userPermissions.includes(m.perm))
+  const visibleItems = (isSuperAdmin ? ALL_MODULES : ALL_MODULES.filter(m => userPermissions.includes(m.perm)))
+    .filter(m => features[m.key] !== false)
 
   return (
     <>
