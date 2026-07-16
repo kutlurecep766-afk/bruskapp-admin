@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
       {hasMessages && filteredPlatforms.length > 0 && (
         <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
           <h3 className="text-white font-semibold mb-4">Platform Bazinda Mesajlar</h3>
-          {connectedPlatforms.length > 0 && connectedPlatforms.map((platform: string) => {
+          {(connectedPlatforms.length > 0 ? connectedPlatforms : filteredPlatforms.map((p: any) => p.platform)).map((platform: string) => {
             const msgData = filteredPlatforms.find((p: any) => p.platform === platform)
             const count = msgData?.count || 0
             const colors = PLATFORM_COLORS[platform] || { bg: 'bg-gray-500/20', text: 'text-gray-400' }
