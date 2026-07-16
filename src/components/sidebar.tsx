@@ -22,9 +22,9 @@ const ALL_MODULES = [
   { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, href: '/whatsapp', perm: 'whatsapp' },
   { key: 'instagram', label: 'Instagram', icon: MessageCircle, href: '/instagram', perm: 'instagram' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
-  { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonlar\u0131', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
+  { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'chatbot-integrations' },
-  { key: 'errors', label: 'Hata Kay\u0131tlar\u0131', icon: AlertTriangle, href: '/errors', perm: 'errors' },
+  { key: 'errors', label: 'Hata Kayıtları', icon: AlertTriangle, href: '/errors', perm: 'errors' },
 ]
 
 export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; toggle: () => void }) {
@@ -109,7 +109,7 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
           {isSuperAdmin && (
             <Link href="/announcements" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/announcements') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <Megaphone size={18} className={isActive('/announcements') ? 'text-amber-400' : 'text-gray-500 group-hover:text-gray-300'} />
-              {!collapsed && <span>Duyuru Yonetimi</span>}
+              {!collapsed &&               <span>Duyuru Yönetimi</span>}
             </Link>
           )}
           {isSuperAdmin && (
@@ -146,7 +146,7 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white truncate">{user?.name || user?.email || ''}</p>
-                <p className="text-xs text-gray-500">{isSuperAdmin ? 'Super Admin' : user?.role === 'ADMIN' ? 'Admin' : 'Kullanici'}</p>
+                <p className="text-xs text-gray-500">{isSuperAdmin ? 'Süper Admin' : user?.role === 'ADMIN' ? 'Admin' : 'Kullanıcı'}</p>
                 <button onClick={async () => { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); window.location.href = '/brk-mgmt/login'; }} className="text-xs text-red-400 hover:text-red-300 transition-colors mt-1">Çıkış Yap</button>
               </div>
             )}

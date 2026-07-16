@@ -37,6 +37,7 @@ export default function UsersPage() {
   const [tenants, setTenants] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [saveError, setSaveError] = useState('')
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -49,21 +50,22 @@ export default function UsersPage() {
   const [newSuccess, setNewSuccess] = useState('')
 
   const fetchUsers = async () => {
-      try {
-        let res = await fetch('/api/users', { credentials: 'include' })
-        if (res.status === 401) {
-          const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-          if (refreshRes.ok) res = await fetch('/api/users', { credentials: 'include' })
-          else { setLoading(false); return }
-        }
-        if (res.ok) setUsers(await res.json())
-      } catch {}
-      finally { setLoading(false) }
+    try {
+      let res = await fetch('/api/users', { credentials: 'include' })
+      if (res.status === 401) {
+        const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
+        if (refreshRes.ok) res = await fetch('/api/users', { credentials: 'include' })
+        else { setLoading(false); return }
+      }
+      if (res.ok) setUsers(await res.json())
+    } catch {}
+    finally { setLoading(false) }
   }
 
   useEffect(() => {
     fetchUsers()
     fetch('/api/tenants', { credentials: 'include' }).then(r => { if (r.ok) r.json().then(setTenants) })
+    fetch('/api/users/me', { credentials: 'include' }).then(r => { if (r.ok) r.json().then(setCurrentUser) })
   }, [])
 
   const openCreate = () => {
@@ -74,7 +76,7 @@ export default function UsersPage() {
 
   const openEdit = (u: any) => {
     setEditingUser(u); setSaveError('')
-    setForm({ email: u.email, password: '', name: u.name || '', role: u.role, permissions: [], tenantId: u.tenantId || '' })
+    setForm({ email: u.email, password: '', name: u.name || '', role: u.role, permissions: u.permissions || [], tenantId: u.tenantId || '' })
     setShowModal(true)
   }
 
@@ -85,18 +87,24 @@ export default function UsersPage() {
   const selectAllNew = () => setNewPerms(ALL_MODULES.map(m => m.key))
   const selectNoneNew = () => setNewPerms([])
 
+  const ROLE_OPTIONS = [
+    { value: 'USER', label: 'Kullanıcı' },
+    { value: 'BUSINESS_OWNER', label: 'İşletme Sahibi' },
+    { value: 'ADMIN', label: 'Admin' },
+  ]
+
   const save = async () => {
     setLoading(true); setSaveError('')
     try {
       let res
       if (editingUser) {
-        const body: any = { name: form.name, role: form.role }
+        const body: any = { name: form.name, role: form.role, permissions: form.permissions }
         res = await fetch('/api/users/' + editingUser.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) })
       } else {
-        const payload: any = { email: form.email, password: form.password, name: form.name, role: form.role, permissions: [], tenantId: form.tenantId || undefined }
+        const payload: any = { email: form.email, password: form.password, name: form.name, role: form.role, permissions: form.permissions, tenantId: form.tenantId || undefined }
         res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) })
       }
-      if (!res.ok) { setSaveError('Kayit basarisiz (' + res.status + ')'); return }
+      if (!res.ok) { setSaveError('Kayıt başarısız (' + res.status + ')'); return }
       setShowModal(false)
       fetchUsers()
     } catch (e: any) { setSaveError('Hata: ' + (e.message || 'Bilinmeyen')) }
@@ -119,17 +127,21 @@ export default function UsersPage() {
       if (created) {
         await fetch('/api/users/' + created.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ role: newRole, name: newName, permissions: newPerms }) })
       }
-      setNewSuccess('Isletme olusturuldu! Slug: ' + slug)
+      setNewSuccess('İşletme oluşturuldu! Slug: ' + slug)
       setNewEmail(''); setNewPassword(''); setNewName(''); setNewRole('BUSINESS_OWNER'); setNewPerms(ALL_MODULES.map(m => m.key)); setNewTenantId('')
       fetchUsers()
-    } catch { setNewError('Baglanti hatasi') }
+    } catch { setNewError('Bağlantı hatası') }
     finally { setNewLoading(false) }
   }
 
   const remove = async (id: string) => {
-    if (!confirm('Kullaniciyi silmek istediginize emin misiniz?')) return
+    if (!confirm('Kullanıcıyı silmek istediğinize emin misiniz?')) return
     await fetch('/api/users/' + id, { method: 'DELETE', credentials: 'include' })
     fetchUsers()
+  }
+
+  const togglePerm = (key: string) => {
+    setForm(f => ({ ...f, permissions: f.permissions.includes(key) ? f.permissions.filter(x => x !== key) : [...f.permissions, key] }))
   }
 
   const filtered = users.filter(u => u.email.includes(search) || u.name?.includes(search) || u.role?.includes(search))
@@ -138,38 +150,37 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Kullanici Yonetimi</h1>
-          <p className="text-gray-500 text-sm mt-1">Kullanicilari yonetin, yetkilendirin</p>
+          <h1 className="text-2xl font-bold text-white">Kullanıcı Yönetimi</h1>
+          <p className="text-gray-500 text-sm mt-1">Kullanıcıları yönetin, yetkilendirin</p>
         </div>
       </div>
 
       <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20"><UserPlus size={20} /></div>
-          <div><h3 className="text-white font-semibold">Yeni Kullanici Olustur</h3><p className="text-xs text-gray-500">Rol ve modul yetkileriyle birlikte olusturun</p></div>
+          <div><h3 className="text-white font-semibold">Yeni Kullanıcı Oluştur</h3><p className="text-xs text-gray-500">Rol ve modül yetkileriyle birlikte oluşturun</p></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ad Soyad" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
           <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="E-posta" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
           <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Parola" className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" />
           <select value={newRole} onChange={e => setNewRole(e.target.value)} className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all">
-            <option value="USER">Kullanici</option>
-            <option value="BUSINESS_OWNER">Isletme Sahibi</option>
+            <option value="USER">Kullanıcı</option>
+            <option value="BUSINESS_OWNER">İşletme Sahibi</option>
             <option value="ADMIN">Admin</option>
-            <option value="SUPER_ADMIN">Super Admin</option>
           </select>
           {newRole === 'BUSINESS_OWNER' && (
             <select value={newTenantId} onChange={e => setNewTenantId(e.target.value)} className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all">
-              <option value="">Isletme secin</option>
+              <option value="">İşletme seçin</option>
               {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           )}
         </div>
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs text-gray-500 font-medium">Genel Modul Yetkileri</label>
+            <label className="text-xs text-gray-500 font-medium">Genel Modül Yetkileri</label>
             <div className="flex gap-2">
-              <button onClick={selectAllNew} className="text-xs text-blue-400 hover:text-blue-300">Tumunu Sec</button>
+              <button onClick={selectAllNew} className="text-xs text-blue-400 hover:text-blue-300">Tümünü Seç</button>
               <button onClick={selectNoneNew} className="text-xs text-gray-500 hover:text-gray-400">Temizle</button>
             </div>
           </div>
@@ -187,7 +198,7 @@ export default function UsersPage() {
           {newPerms.includes('chatbot-integrations') && (
             <div className="mt-3">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs text-gray-500 font-medium">Chatbot Platformlari</label>
+                <label className="text-xs text-gray-500 font-medium">Chatbot Platformları</label>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {CHATBOT_PLATFORMS.map(p => {
@@ -205,7 +216,7 @@ export default function UsersPage() {
         </div>
         {newError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{newError}</p></div>}
         {newSuccess && <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3"><p className="text-emerald-400 text-xs">{newSuccess}</p></div>}
-        <button onClick={handleCreateUser} disabled={newLoading || !newEmail || !newPassword} className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">{newLoading ? 'Olusturuluyor...' : 'Kullanici Olustur'}</button>
+        <button onClick={handleCreateUser} disabled={newLoading || !newEmail || !newPassword} className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">{newLoading ? 'Oluşturuluyor...' : 'Kullanıcı Oluştur'}</button>
       </div>
 
       <div className="relative max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Ara..." className="w-full bg-[#0d1117]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>
@@ -215,48 +226,103 @@ export default function UsersPage() {
       ) : (
         <div className="glass rounded-2xl border border-[#1a2332] overflow-hidden">
           <table className="w-full">
-            <thead><tr className="border-b border-[#1a2332]"><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">Ad</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">E-posta</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">Rol</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">Yetkiler</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">Isletme</th><th className="text-right text-xs text-gray-500 font-medium px-5 py-3">Islem</th></tr></thead>
+            <thead><tr className="border-b border-[#1a2332]"><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">Ad</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">E-posta</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">Rol</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">Yetkiler</th><th className="text-left text-xs text-gray-500 font-medium px-5 py-3">İşletme</th><th className="text-right text-xs text-gray-500 font-medium px-5 py-3">İşlem</th></tr></thead>
             <tbody>{filtered.map(u => (
               <tr key={u.id} className="border-b border-[#1a2332] last:border-0 hover:bg-white/[0.02] transition-colors">
                 <td className="px-5 py-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">{(u.name || u.email)[0].toUpperCase()}</div><span className="text-white text-sm font-medium">{u.name || '-'}</span></div></td>
                 <td className="px-5 py-4 text-sm text-gray-400">{u.email}</td>
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-1.5">
-                    <span className={'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium ' + (u.role === 'SUPER_ADMIN' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : u.role === 'ADMIN' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : u.role === 'BUSINESS_OWNER' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20')}><Shield size={12} />{u.role === 'SUPER_ADMIN' ? 'Super Admin' : u.role === 'ADMIN' ? 'Admin' : u.role === 'BUSINESS_OWNER' ? 'Isletme' : 'Kullanici'}</span>
-                    {u.status === 'restricted' && <span className="px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] rounded-md border border-red-500/20 font-medium">Kisitli</span>}
+                    <span className={'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium ' + (u.role === 'SUPER_ADMIN' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : u.role === 'ADMIN' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : u.role === 'BUSINESS_OWNER' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20')}><Shield size={12} />{u.role === 'SUPER_ADMIN' ? 'Süper Admin' : u.role === 'ADMIN' ? 'Admin' : u.role === 'BUSINESS_OWNER' ? 'İşletme' : 'Kullanıcı'}</span>
+                    {u.status === 'restricted' && <span className="px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] rounded-md border border-red-500/20 font-medium">Kısıtlı</span>}
                   </div>
                 </td>
                 <td className="px-5 py-4"><div className="flex flex-wrap gap-1">{((u.permissions || []).slice(0, 3)).map((p: string) => <span key={p} className="px-2 py-0.5 bg-blue-500/5 text-blue-400 text-[10px] rounded-md border border-blue-500/10">{ALL_MODULES.find(m => m.key === p)?.label || p}</span>)}{(u.permissions?.length || 0) > 3 && <span className="px-2 py-0.5 text-gray-500 text-[10px]">+{u.permissions.length - 3}</span>}</div></td>
                 <td className="px-5 py-4 text-sm text-gray-500">{u.tenant?.name || '-'}</td>
                 <td className="px-5 py-4 text-right"><div className="flex items-center justify-end gap-2">
-                  {u.role !== 'SUPER_ADMIN' && (
+                  {u.role !== 'SUPER_ADMIN' && u.id !== currentUser?.id && (
                     u.status === 'restricted'
-                      ? <button onClick={async () => { await fetch('/api/users/' + u.id + '/unrestrict', { method: 'PATCH', credentials: 'include' }); fetchUsers() }} className="p-2 rounded-lg hover:bg-white/5 text-emerald-500 hover:text-emerald-400 transition-all" title="Kisitlamayi Kaldir"><Check size={14} /></button>
-                      : <button onClick={async () => { await fetch('/api/users/' + u.id + '/restrict', { method: 'PATCH', credentials: 'include' }); fetchUsers() }} className="p-2 rounded-lg hover:bg-white/5 text-red-500 hover:text-red-400 transition-all" title="Hesabi Kisitla"><ShieldOff size={14} /></button>
+                      ? <button onClick={async () => { await fetch('/api/users/' + u.id + '/unrestrict', { method: 'PATCH', credentials: 'include' }); fetchUsers() }} className="p-2 rounded-lg hover:bg-white/5 text-emerald-500 hover:text-emerald-400 transition-all" title="Kısıtlamayı Kaldır"><Check size={14} /></button>
+                      : <button onClick={async () => { await fetch('/api/users/' + u.id + '/restrict', { method: 'PATCH', credentials: 'include' }); fetchUsers() }} className="p-2 rounded-lg hover:bg-white/5 text-red-500 hover:text-red-400 transition-all" title="Hesabı Kısıtla"><ShieldOff size={14} /></button>
                   )}
                   <button onClick={() => openEdit(u)} className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-blue-400 transition-all"><Pencil size={14} /></button>
-                  <button onClick={() => remove(u.id)} className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-red-400 transition-all"><Trash2 size={14} /></button>
+                  {u.role !== 'SUPER_ADMIN' && u.id !== currentUser?.id && (
+                    <button onClick={() => remove(u.id)} className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-red-400 transition-all"><Trash2 size={14} /></button>
+                  )}
                 </div></td>
               </tr>
             ))}</tbody>
           </table>
-          {filtered.length === 0 && <div className="text-center py-16 text-gray-500 text-sm">Kullanici bulunamadi</div>}
+          {filtered.length === 0 && <div className="text-center py-16 text-gray-500 text-sm">Kullanıcı bulunamadı</div>}
         </div>
       )}
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative w-full max-w-lg bg-[#0d1117] border border-[#1a2332] rounded-2xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">{editingUser ? 'Kullanici Duzenle' : 'Basit Kullanici Ekle'}</h3><button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/5 text-gray-500"><X size={18} /></button></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="text-xs text-gray-500 block mb-1.5">Ad Soyad</label><input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Kullanici adi" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>
-              <div><label className="text-xs text-gray-500 block mb-1.5">E-posta</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ornek@email.com" disabled={!!editingUser} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all disabled:opacity-50" /></div>
-              {!editingUser && <div><label className="text-xs text-gray-500 block mb-1.5">Parola</label><input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="En az 6 karakter" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>}
-              <div><label className="text-xs text-gray-500 block mb-1.5">Rol</label><select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} disabled={editingUser?.role === 'SUPER_ADMIN'} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all disabled:opacity-50"><option value="USER">Kullanici</option><option value="BUSINESS_OWNER">Isletme Sahibi</option><option value="ADMIN">Admin</option><option value="SUPER_ADMIN">Super Admin</option></select></div>
+          <div className="relative w-full max-w-2xl bg-[#0d1117] border border-[#1a2332] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-[#1a2332]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20"><Pencil size={20} /></div>
+                <div><h3 className="text-lg font-semibold text-white">{editingUser ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'}</h3><p className="text-xs text-gray-500">{editingUser?.email || ''}</p></div>
+              </div>
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/5 text-gray-500"><X size={18} /></button>
             </div>
-            {saveError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{saveError}</p></div>}
-            <div className="flex gap-3 justify-end pt-2"><button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-all">Iptal</button><button onClick={save} disabled={loading || !form.email || (!editingUser && !form.password)} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">{loading ? 'Kaydediliyor...' : 'Kaydet'}</button></div>
+            <div className="p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="text-xs text-gray-500 block mb-1.5">Ad Soyad</label><input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Kullanıcı adı" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>
+                <div><label className="text-xs text-gray-500 block mb-1.5">E-posta</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ornek@email.com" disabled={!!editingUser} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all disabled:opacity-50" /></div>
+                {!editingUser && <div><label className="text-xs text-gray-500 block mb-1.5">Parola</label><input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="En az 6 karakter" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>}
+                <div><label className="text-xs text-gray-500 block mb-1.5">Rol</label>
+                  <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} disabled={editingUser?.role === 'SUPER_ADMIN'} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all disabled:opacity-50">
+                    {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    {editingUser?.role === 'SUPER_ADMIN' && <option value="SUPER_ADMIN">Süper Admin</option>}
+                  </select>
+                  {editingUser?.role === 'SUPER_ADMIN' && <p className="text-xs text-amber-400 mt-1">Süper Admin rolü değiştirilemez</p>}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs text-gray-500 font-medium">Modül Yetkileri</label>
+                  <div className="flex gap-2">
+                    <button onClick={() => setForm(f => ({ ...f, permissions: ALL_MODULES.map(m => m.key) }))} className="text-xs text-blue-400 hover:text-blue-300">Tümünü Seç</button>
+                    <button onClick={() => setForm(f => ({ ...f, permissions: [] }))} className="text-xs text-gray-500 hover:text-gray-400">Temizle</button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {ALL_MODULES.map(m => {
+                    const active = form.permissions.includes(m.key)
+                    return (
+                      <button key={m.key} onClick={() => togglePerm(m.key)}
+                        className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-[#080b12]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
+                        {active ? <Check size={11} /> : <div className="w-[11px]" />}{m.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              {form.permissions.includes('chatbot-integrations') && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs text-gray-500 font-medium">Chatbot Platformları</label>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {CHATBOT_PLATFORMS.map(p => {
+                      const active = form.permissions.includes(p.key)
+                      return (
+                        <button key={p.key} onClick={() => togglePerm(p.key)}
+                          className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ' + (active ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#080b12]/50 border-[#1a2332] text-gray-500 hover:text-gray-300')}>
+                          {active ? <Check size={11} /> : <div className="w-[11px]" />}{p.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {saveError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{saveError}</p></div>}
+              <div className="flex gap-3 justify-end pt-2"><button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-all">İptal</button><button onClick={save} disabled={loading || !form.email || (!editingUser && !form.password)} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">{loading ? 'Kaydediliyor...' : 'Kaydet'}</button></div>
+            </div>
           </div>
         </div>
       )}
