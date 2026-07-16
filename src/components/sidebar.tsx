@@ -19,8 +19,6 @@ const ALL_MODULES = [
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
   { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
-  { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, href: '/whatsapp', perm: 'whatsapp' },
-  { key: 'instagram', label: 'Instagram', icon: MessageCircle, href: '/instagram', perm: 'instagram' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'zernio-accounts' },
@@ -108,6 +106,18 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             <Link href="/announcements" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/announcements') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <Megaphone size={18} className={isActive('/announcements') ? 'text-amber-400' : 'text-gray-500 group-hover:text-gray-300'} />
               {!collapsed &&               <span>Duyuru Yönetimi</span>}
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link href="/whatsapp" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/whatsapp') ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+              <MessageCircle size={18} className={isActive('/whatsapp') ? 'text-green-400' : 'text-gray-500 group-hover:text-gray-300'} />
+              {!collapsed && <span>WhatsApp</span>}
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link href="/instagram" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/instagram') ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+              <MessageCircle size={18} className={isActive('/instagram') ? 'text-pink-400' : 'text-gray-500 group-hover:text-gray-300'} />
+              {!collapsed && <span>Instagram</span>}
             </Link>
           )}
           {isSuperAdmin && (
