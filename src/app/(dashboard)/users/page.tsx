@@ -48,18 +48,23 @@ export default function UsersPage() {
   const [newLoading, setNewLoading] = useState(false)
   const [newError, setNewError] = useState('')
   const [newSuccess, setNewSuccess] = useState('')
+  const [fetchError, setFetchError] = useState('')
 
   const fetchUsers = async () => {
-    try {
-      let res = await fetch('/api/users', { credentials: 'include' })
-      if (res.status === 401) {
-        const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-        if (refreshRes.ok) res = await fetch('/api/users', { credentials: 'include' })
-        else { setLoading(false); return }
-      }
-      if (res.ok) setUsers(await res.json())
-    } catch {}
-    finally { setLoading(false) }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        let res = await fetch('/api/users', { credentials: 'include' })
+        if (res.status === 401) {
+          const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
+          if (refreshRes.ok) res = await fetch('/api/users', { credentials: 'include' })
+          else { setLoading(false); setFetchError('Oturum süresi doldu, yeniden giriş yapın'); return }
+        }
+        if (res.ok) { setUsers(await res.json()); setFetchError(''); return }
+        setFetchError('API hatası (' + res.status + ')')
+      } catch (e) { setFetchError('Bağlantı hatası') }
+      await new Promise(r => setTimeout(r, 1500))
+    }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -220,6 +225,7 @@ export default function UsersPage() {
       </div>
 
       <div className="relative max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Ara..." className="w-full bg-[#0d1117]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" /></div>
+      {fetchError && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"><p className="text-red-400 text-xs">{fetchError}</p></div>}
 
       {loading ? (
         <div className="text-center py-20"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" /></div>

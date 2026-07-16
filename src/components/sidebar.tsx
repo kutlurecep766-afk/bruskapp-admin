@@ -149,7 +149,7 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white truncate">{user?.name || user?.email || ''}</p>
-                <p className="text-xs text-gray-500">{isSuperAdmin ? 'Süper Admin' : user?.role === 'ADMIN' ? 'Admin' : 'Kullanıcı'}</p>
+                <p className="text-xs text-gray-500">{isSuperAdmin ? 'Süper Admin' : user?.role === 'TENANT_ADMIN' ? 'İşletme Admin' : user?.role === 'ADMIN' ? 'Admin' : user?.role === 'BUSINESS_OWNER' ? 'İşletme Sahibi' : 'Kullanıcı'}</p>
                 <button onClick={async () => { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); window.location.href = '/brk-mgmt/login'; }} className="text-xs text-red-400 hover:text-red-300 transition-colors mt-1">Çıkış Yap</button>
               </div>
             )}
