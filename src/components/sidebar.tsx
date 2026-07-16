@@ -62,13 +62,8 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
   const userPermissions = user?.permissions || []
   const initial = (user?.name || user?.email || '?')[0].toUpperCase()
 
-  const FEATURE_GATE: Record<string, string> = { customers:'customers', messages:'messages', orders:'orders', analytics:'analytics', whatsapp:'whatsapp', instagram:'instagram', settings:'settings', 'chatbot-integrations':'chatbot-integrations', 'zernio-accounts':'chatbot-integrations' }
   const visibleItems = (isSuperAdmin ? ALL_MODULES : ALL_MODULES.filter(m => userPermissions.includes(m.perm)))
-    .filter(m => {
-      if (isSuperAdmin) return true
-      const featKey = FEATURE_GATE[m.key]
-      return !featKey || Object.keys(features).length === 0 || features[featKey] === true
-    })
+    .filter(m => features[m.key] !== false)
 
   return (
     <>
