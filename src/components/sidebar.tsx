@@ -6,7 +6,8 @@ import {
   LayoutDashboard, Users,
   MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
-  Sun, Moon, Crown, Link2, Radio, Megaphone
+  Sun, Moon, Crown, Link2, Radio, Megaphone,
+  AlertTriangle
 } from 'lucide-react'
 import { useTheme } from './theme-provider'
 
@@ -23,6 +24,7 @@ const ALL_MODULES = [
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonlar\u0131', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'chatbot-integrations' },
+  { key: 'errors', label: 'Hata Kay\u0131tlar\u0131', icon: AlertTriangle, href: '/errors', perm: 'errors' },
 ]
 
 export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; toggle: () => void }) {
@@ -101,6 +103,12 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             <Link href="/announcements" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/announcements') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <Megaphone size={18} className={isActive('/announcements') ? 'text-amber-400' : 'text-gray-500 group-hover:text-gray-300'} />
               {!collapsed && <span>Duyuru Yonetimi</span>}
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link href="/errors" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/errors') ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+              <AlertTriangle size={18} className={isActive('/errors') ? 'text-red-400' : 'text-gray-500 group-hover:text-gray-300'} />
+              {!collapsed && <span>Hata Kayıtları</span>}
             </Link>
           )}
           {visibleItems.map((item) => {
