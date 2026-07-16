@@ -89,7 +89,7 @@ export default function ModulesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {ALL_MODULES.map(mod => {
-          const active = Object.keys(features).length === 0 || features[mod.key] === true
+          const active = features[mod.key] !== false
           return (
             <div key={mod.key} onClick={() => toggle(mod.key)} className={`relative bg-[#0d1117]/80 backdrop-blur-xl border rounded-2xl p-5 cursor-pointer transition-all hover:shadow-lg ${active ? 'border-emerald-500/20 hover:border-emerald-500/40' : 'border-[#1a2332] hover:border-gray-600'}`}>
               <div className="flex items-start justify-between mb-3">
