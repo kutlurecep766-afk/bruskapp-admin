@@ -70,7 +70,7 @@ export default function ChatbotIntegrationsPage() {
       const t = json?.tenant || json
       const id = t?.id
       if (id) setCurrentTenantId(id)
-      if (t?.slug) { setTenantSlug(t.slug); return t.slug }
+      if (t?.slug) setTenantSlug(t.slug)
       return id
     } catch { return null }
   }
@@ -87,7 +87,7 @@ export default function ChatbotIntegrationsPage() {
   }
 
   const checkTelegramStatus = async () => {
-    const tid = await getTenantId()
+    const tid = currentTenantId || await getTenantId()
     if (!tid) return
     try {
       const res = await fetch('/api/telegram/tenant-status', {
