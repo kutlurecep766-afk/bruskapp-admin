@@ -59,7 +59,7 @@ export default function UsersPage() {
           if (refreshRes.ok) res = await fetch('/api/users', { credentials: 'include' })
           else { setLoading(false); setFetchError('Oturum süresi doldu, yeniden giriş yapın'); return }
         }
-        if (res.ok) { setUsers(await res.json()); setFetchError(''); return }
+        if (res.ok) { setLoading(false); setUsers(await res.json()); setFetchError(''); return }
         setFetchError('API hatası (' + res.status + ')')
       } catch (e) { setFetchError('Bağlantı hatası') }
       await new Promise(r => setTimeout(r, 1500))
