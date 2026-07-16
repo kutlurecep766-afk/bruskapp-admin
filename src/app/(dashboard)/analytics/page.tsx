@@ -29,10 +29,15 @@ export default function AnalyticsPage() {
   const [scheduleEnabled, setScheduleEnabled] = useState(false)
 
   useEffect(() => {
-    fetch('/api/analytics/dashboard', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
+    const fetchData = () => {
+      fetch('/api/analytics/dashboard', { credentials: 'include' })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setData(d); setLoading(false) })
+        .catch(() => setLoading(false))
+    }
+    fetchData()
+    const interval = setInterval(fetchData, 5000)
+    return () => clearInterval(interval)
   }, [])
 
   const sendReport = async () => {
