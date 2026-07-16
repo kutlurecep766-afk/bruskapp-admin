@@ -35,15 +35,18 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
 
   useEffect(() => {
     async function loadUser() {
-      try {
-        let res = await fetch('/api/users/me', { credentials: 'include' })
-        if (res.status === 401) {
-          const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-          if (refreshRes.ok) res = await fetch('/api/users/me', { credentials: 'include' })
-          else { window.location.href = '/brk-mgmt/login'; return }
-        }
-        if (res.ok) setUser(await res.json())
-      } catch {}
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          let res = await fetch('/api/users/me', { credentials: 'include' })
+          if (res.status === 401) {
+            const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
+            if (refreshRes.ok) res = await fetch('/api/users/me', { credentials: 'include' })
+            else { window.location.href = '/brk-mgmt/login'; return }
+          }
+          if (res.ok) { setUser(await res.json()); return }
+        } catch {}
+        await new Promise(r => setTimeout(r, 1000))
+      }
     }
     async function loadFeatures() {
       try {
@@ -62,8 +65,8 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
   const userPermissions = user?.permissions || []
   const initial = (user?.name || user?.email || '?')[0].toUpperCase()
 
-  const visibleItems = (isSuperAdmin ? ALL_MODULES : ALL_MODULES.filter(m => userPermissions.includes(m.perm)))
-    .filter(m => features[m.key] !== false)
+  const visibleItems = (isSuperAdmin || !user ? ALL_MODULES : ALL_MODULES.filter(m => userPermissions.includes(m.perm)))
+    .filter(m => !user || isSuperAdmin || features[m.key] !== false)
 
   return (
     <>
