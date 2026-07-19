@@ -50,11 +50,12 @@ export default function SettingsPage() {
     try {
       const updated = { ...prefs, [key]: value }
       const res = await fetch('/api/notifications/preferences', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify(updated) })
-      if (res.ok) {
+      const body = await res.json()
+      if (body?.success) {
         setPrefs(updated)
         setPrefResult({ ok: true, msg: 'Kaydedildi' })
       } else {
-        setPrefResult({ ok: false, msg: 'Kaydedilemedi' })
+        setPrefResult({ ok: false, msg: body?.message || 'Kaydedilemedi' })
       }
     } catch { setPrefResult({ ok: false, msg: 'Hata' }) } finally {
       setTimeout(() => setPrefResult(null), 2000)

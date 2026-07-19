@@ -107,11 +107,12 @@ export default function NotificationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
       })
-      if (res.ok) {
+      const body = await res.json()
+      if (body?.success) {
         setPrefs(updated)
         setPrefResult({ ok: true, msg: 'Tercihler kaydedildi' })
       } else {
-        setPrefResult({ ok: false, msg: 'Kaydedilemedi' })
+        setPrefResult({ ok: false, msg: body?.message || 'Kaydedilemedi' })
       }
     } catch { setPrefResult({ ok: false, msg: 'Hata' }) } finally {
       setTimeout(() => setPrefResult(null), 2000)
