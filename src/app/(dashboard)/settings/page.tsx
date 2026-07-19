@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { Shield, Bell, Send, Clock, Settings, CheckCircle, XCircle, Link2, Unlink, MessageCircle, Calendar, Download, RefreshCw, Eye, EyeOff, Smartphone } from 'lucide-react'
 
 export default function SettingsPage() {
   const [show2faSetup, setShow2faSetup] = useState(false)
@@ -11,64 +12,47 @@ export default function SettingsPage() {
   const [verifyLoading, setVerifyLoading] = useState(false)
   const [error, setError] = useState('')
   const [verifyError, setVerifyError] = useState('')
-  const [show2faSection, setShow2faSection] = useState(false)
 
-  const [prefs, setPrefs] = useState<{ newOrder: boolean; lowStock: boolean; newMessage: boolean }>({ newOrder: true, lowStock: true, newMessage: true })
-  const [prefResult, setPrefResult] = useState<{ ok: boolean; msg: string } | null>(null)
+  // Telegram
+  const [tgConnected, setTgConnected] = useState(false)
+  const [tgBotName, setTgBotName] = useState('')
+  const [tgLoading, setTgLoading] = useState(false)
+  const [showTgModal, setShowTgModal] = useState(false)
+  const [tgToken, setTgToken] = useState('')
+  const [tgError, setTgError] = useState('')
+  const [tgTesting, setTgTesting] = useState(false)
+
+  // Report Schedule
+  const [reportEnabled, setReportEnabled] = useState(false)
+  const [reportTime, setReportTime] = useState('20:00')
+  const [reportSending, setReportSending] = useState(false)
+  const [reportResult, setReportResult] = useState('')
 
   const h = { 'Content-Type': 'application/json' }
 
   useEffect(() => {
-    if (sessionStorage.getItem('2fa_setup') === 'true') {
-      setVerified(true)
-      return
-    }
+    if (sessionStorage.getItem('2fa_setup') === 'true') { setVerified(true) }
     ;(async () => {
       try {
         let res = await fetch('/api/auth/2fa/status', { credentials: 'include' })
-        if (res.status === 401) {
-          await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-          res = await fetch('/api/auth/2fa/status', { credentials: 'include' })
-        }
+        if (res.status === 401) { await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }); res = await fetch('/api/auth/2fa/status', { credentials: 'include' }) }
         const d = await res.json()
-        if (d.setup) {
-          sessionStorage.setItem('2fa_setup', 'true')
-          setVerified(true)
-        }
+        if (d.setup) { sessionStorage.setItem('2fa_setup', 'true'); setVerified(true) }
       } catch {}
     })()
-
-    // Load notification preferences
-    fetch('/api/notifications/preferences', { credentials: 'include' })
-      .then(r => r.json())
-      .then(d => { if (d) setPrefs(d) })
-      .catch(() => {})
+    // Load telegram config
+    fetch('/api/telegram/tenant-status', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d) { setTgConnected(d.connected); setTgBotName(d.botInfo?.username || '') } }).catch(() => {})
+    // Load report schedule
+    fetch('/api/report-schedule', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d) { setReportEnabled(d.enabled); setReportTime(d.time || '20:00') } }).catch(() => {})
   }, [])
-
-  const savePreference = async (key: string, value: boolean) => {
-    setPrefResult(null)
-    try {
-      const updated = { ...prefs, [key]: value }
-      const res = await fetch('/api/notifications/preferences', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify(updated) })
-      const body = await res.json()
-      if (body?.success) {
-        setPrefs(updated)
-        setPrefResult({ ok: true, msg: 'Kaydedildi' })
-      } else {
-        setPrefResult({ ok: false, msg: body?.message || 'Kaydedilemedi' })
-      }
-    } catch { setPrefResult({ ok: false, msg: 'Hata' }) } finally {
-      setTimeout(() => setPrefResult(null), 2000)
-    }
-  }
 
   const handleSetup2fa = async () => {
     setLoading(true); setError('')
     try {
       const res = await fetch('/api/auth/2fa/setup', { method: 'POST', credentials: 'include', headers: h })
       if (res.ok) { const d = await res.json(); setQrCode(d.qrCode); setSecret(d.secret); setShow2faSetup(true) }
-      else { const txt = await res.text(); setError('Setup: ' + res.status + ' ' + txt) }
-    } catch { setError('Baglanti hatasi') }
+      else setError('Hata ' + res.status)
+    } catch { setError('Bağlantı hatası') }
     finally { setLoading(false) }
   }
 
@@ -76,105 +60,237 @@ export default function SettingsPage() {
     setVerifyLoading(true); setVerifyError('')
     try {
       let res = await fetch('/api/auth/2fa/verify', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify({ token: verifyToken }) })
-      if (res.status === 401) {
-        await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-        res = await fetch('/api/auth/2fa/verify', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify({ token: verifyToken }) })
-      }
-      if (res.ok) {
-        sessionStorage.setItem('2fa_setup', 'true')
-        sessionStorage.setItem('2fa_verified', 'true')
-        setVerified(true)
-      }
-      else { const txt = await res.text(); setVerifyError('Hata ' + res.status + ': ' + txt) }
-    } catch { setVerifyError('Baglanti hatasi') }
+      if (res.status === 401) { await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }); res = await fetch('/api/auth/2fa/verify', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify({ token: verifyToken }) }) }
+      if (res.ok) { sessionStorage.setItem('2fa_setup', 'true'); sessionStorage.setItem('2fa_verified', 'true'); setVerified(true) }
+      else setVerifyError('Hata ' + res.status)
+    } catch { setVerifyError('Bağlantı hatası') }
     finally { setVerifyLoading(false) }
   }
 
-  const header = (
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-white">Ayarlar</h1>
-      <p className="text-sm text-gray-500 mt-1">Sistem yapilandirmasi</p>
-    </div>
-  )
+  const connectTelegram = async () => {
+    if (!tgToken.trim()) return
+    setTgTesting(true); setTgError('')
+    try {
+      const res = await fetch('/api/telegram/tenant-connect', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify({ token: tgToken }) })
+      if (res.ok) {
+        setTgConnected(true); setShowTgModal(false); setTgToken('')
+        fetch('/api/telegram/tenant-status', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d) setTgBotName(d.botInfo?.username || '') })
+      } else {
+        const txt = await res.text()
+        setTgError(txt.includes('Unauthorized') ? 'Geçersiz bot token' : txt.slice(0, 100))
+      }
+    } catch { setTgError('Bağlantı hatası') }
+    finally { setTgTesting(false) }
+  }
 
-  if (show2faSetup) {
+  const disconnectTelegram = async () => {
+    await fetch('/api/telegram/tenant-disconnect', { method: 'POST', credentials: 'include', headers: h })
+    setTgConnected(false)
+  }
+
+  const saveReportSchedule = async () => {
+    await fetch('/api/report-schedule', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify({ enabled: reportEnabled, time: reportTime }) })
+  }
+
+  const sendReportNow = async () => {
+    setReportSending(true); setReportResult('')
+    try {
+      const res = await fetch('/api/analytics/report', { method: 'POST', credentials: 'include' })
+      const json = await res.json()
+      setReportResult(json.message || (json.success ? 'Rapor gönderildi' : 'Gönderilemedi'))
+    } catch { setReportResult('Bağlantı hatası') }
+    finally { setReportSending(false); setTimeout(() => setReportResult(''), 4000) }
+  }
+
+  function Section({ icon, title, desc, children }: any) {
     return (
-      <div className="space-y-6 max-w-lg mx-auto">
-        {header}
-        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
-          <h3 className="text-white font-semibold mb-4 text-center">2FA Kurulumu</h3>
-          <p className="text-sm text-gray-500 mb-4 text-center">Google Authenticator ile QR kodu taratin:</p>
-          {qrCode && <div className="flex justify-center mb-4"><img src={qrCode} alt="QR" className="w-48 h-48 rounded-xl bg-white p-2" /></div>}
-          {secret && <div className="mb-4"><p className="text-xs text-gray-500 mb-1">Yedek kod:</p><p className="text-sm font-mono text-blue-400 bg-[#080b12] p-2 rounded-xl text-center select-all">{secret}</p></div>}
-          <p className="text-sm text-gray-500 mb-3 text-center">6 haneli kodu girin:</p>
-          <div className="space-y-3">
-            <input type="text" value={verifyToken} onChange={(e) => setVerifyToken(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000 000" className="w-full text-center text-xl tracking-[0.5em] bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 transition-all font-mono" maxLength={6} inputMode="numeric" />
-            {verifyError && <p className="text-red-400 text-xs break-all text-center">{verifyError}</p>}
-            <button onClick={handleVerify2fa} disabled={verifyLoading || verifyToken.length < 6} className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/20 transition-all disabled:opacity-50">{verifyLoading ? 'Dogrulaniyor...' : 'Kodu Dogrula'}</button>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 transition-all duration-300 hover:border-blue-500/20">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl" />
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">{icon}</div>
+            <div><h3 className="text-white font-semibold">{title}</h3><p className="text-xs text-gray-500 mt-0.5">{desc}</p></div>
           </div>
+          {children}
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="space-y-6 max-w-lg mx-auto">
-      {header}
+  function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+    return (
+      <button onClick={() => onChange(!value)}
+        className={'relative inline-flex h-6 w-11 items-center rounded-full transition-all flex-shrink-0 ' + (value ? 'bg-blue-500' : 'bg-gray-600')}>
+        <span className={'inline-block h-4 w-4 transform rounded-full bg-white transition-all ' + (value ? 'translate-x-6' : 'translate-x-1')} />
+      </button>
+    )
+  }
 
-
-      {/* Bildirim Tercihleri */}
-      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-indigo-400" />
-            <h3 className="text-white font-semibold">Bildirim Tercihleri</h3>
+  if (show2faSetup) {
+    return (
+      <div className="space-y-6 max-w-2xl mx-auto pb-12">
+        <Section icon={<Shield size={20} className="text-white" />} title="İki Adımlı Doğrulama Kurulumu" desc="Google Authenticator ile QR kodu taratın">
+          {qrCode && <div className="flex justify-center mb-4"><img src={qrCode} alt="QR" className="w-48 h-48 rounded-xl bg-white p-2 shadow-lg" /></div>}
+          {secret && <div className="mb-4 bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-3"><p className="text-xs text-gray-500 mb-1">Yedek kod:</p><p className="text-sm font-mono text-blue-400 select-all text-center">{secret}</p></div>}
+          <p className="text-sm text-gray-500 mb-3">6 haneli kodu girin:</p>
+          <div className="flex gap-3 items-center">
+            <input type="text" value={verifyToken} onChange={e => setVerifyToken(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="flex-1 text-center text-xl tracking-[0.5em] bg-[#080b12] border border-[#1a2332] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500/50 font-mono" maxLength={6} inputMode="numeric" />
+            <button onClick={handleVerify2fa} disabled={verifyLoading || verifyToken.length < 6} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">{verifyLoading ? 'Doğrulanıyor...' : 'Doğrula'}</button>
           </div>
-          {prefResult && <span className={'text-xs ' + (prefResult.ok ? 'text-green-400' : 'text-red-400')}>{prefResult.msg}</span>}
+          {verifyError && <p className="text-red-400 text-xs mt-2">{verifyError}</p>}
+        </Section>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-6 lg:p-8">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="relative flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><Settings size={24} className="text-white" /></div>
+          <div><h1 className="text-xl font-bold text-white">Ayarlar</h1><p className="text-sm text-gray-500 mt-0.5">Sistem yapılandırması ve bildirimler</p></div>
         </div>
-        <div className="space-y-3">
-          {[
-            { key: 'newOrder', label: 'Yeni Sipariş', desc: 'Yeni sipariş alındığında bildirim gönder' },
-            { key: 'lowStock', label: 'Düşük Stok Uyarısı', desc: 'Stok eşik değerin altına düştüğünde uyarı' },
-            { key: 'newMessage', label: 'Yeni Mesaj', desc: 'WhatsApp/Instagram/Telegram\'dan yeni mesaj geldiğinde bildirim' },
-          ].map(item => (
-            <div key={item.key} className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-sm text-white">{item.label}</p>
-                <p className="text-xs text-gray-500">{item.desc}</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Telegram Bildirimleri */}
+        <Section icon={<Send size={20} className="text-white" />} title="Telegram Bildirimleri" desc="Anlık bildirimleri Telegram üzerinden alın">
+          {tgConnected ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <CheckCircle size={18} className="text-emerald-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-white font-medium">Telegram bağlı</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{tgBotName ? '@' + tgBotName : 'Bot aktif'}</p>
+                </div>
               </div>
-              <button onClick={() => savePreference(item.key, !(prefs as any)[item.key])}
-                className={'relative inline-flex h-5 w-9 items-center rounded-full transition-all ' + ((prefs as any)[item.key] ? 'bg-indigo-500' : 'bg-gray-600')}>
-                <span className={'inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-all ' + ((prefs as any)[item.key] ? 'translate-x-4.5' : 'translate-x-1')} />
+              <button onClick={disconnectTelegram} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all"><Unlink size={14} />Bağlantıyı Kes</button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                <p className="text-sm text-amber-400 font-medium">Telegram bağlı değil</p>
+                <p className="text-xs text-gray-500 mt-2">Bağlantı için kendi Telegram botunuzu oluşturmanız gerekiyor:</p>
+                <ol className="text-xs text-gray-400 mt-2 space-y-1.5 list-decimal list-inside">
+                  <li>Telegram'da <strong className="text-white">@BotFather</strong> hesabını aratın</li>
+                  <li><strong className="text-white">/newbot</strong> komutunu gönderin</li>
+                  <li>Botunuz için bir ad ve kullanıcı adı belirleyin</li>
+                  <li>BotFather size bir <strong className="text-white">token</strong> verecek</li>
+                  <li>Bu token'ı aşağıya yapıştırın ve bağlanın</li>
+                </ol>
+              </div>
+              <button onClick={() => setShowTgModal(true)} disabled={tgLoading} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-sky-500 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-sky-500/25 transition-all disabled:opacity-50">
+                {tgLoading ? 'Bağlanıyor...' : <><Link2 size={16} />Telegram'ı Bağla</>}
               </button>
             </div>
-          ))}
-        </div>
+          )}
+        </Section>
+
+        {/* Gün Sonu Rapor & Analiz */}
+        <Section icon={<Download size={20} className="text-white" />} title="Gün Sonu Rapor & Analiz" desc="Otomatik rapor gönderimi ve analiz">
+          <div className="space-y-4">
+            {!tgConnected && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2">
+                <XCircle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-400">Rapor gönderimi için Telegram bağlantısı gereklidir.</p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between p-3 bg-[#080b12]/60 border border-[#1a2332] rounded-xl">
+              <div className="flex items-center gap-3">
+                <Calendar size={16} className="text-blue-400" />
+                <div>
+                  <p className="text-sm text-white font-medium">Otomatik Rapor</p>
+                  <p className="text-xs text-gray-500">Her gün belirtilen saatte gönder</p>
+                </div>
+              </div>
+              <Toggle value={reportEnabled} onChange={v => { setReportEnabled(v); setTimeout(() => saveReportSchedule(), 100) }} />
+            </div>
+
+            {reportEnabled && (
+              <div className="flex items-center gap-3 p-3 bg-[#080b12]/60 border border-[#1a2332] rounded-xl">
+                <Clock size={16} className="text-purple-400" />
+                <span className="text-sm text-gray-400">Gönderim saati:</span>
+                <input type="time" value={reportTime} onChange={e => { setReportTime(e.target.value); setTimeout(() => saveReportSchedule(), 100) }} className="bg-[#1a2332] border border-[#2a3a4a] rounded-lg px-3 py-1.5 text-sm text-white" />
+              </div>
+            )}
+
+            <button onClick={sendReportNow} disabled={reportSending || !tgConnected}
+              className={'w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ' + (tgConnected ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-lg hover:shadow-emerald-500/25' : 'bg-[#1a2332] text-gray-500 cursor-not-allowed')}>
+              {reportSending ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+              {reportSending ? 'Gönderiliyor...' : 'Şimdi Rapor Gönder'}
+            </button>
+
+            {reportResult && (
+              <div className={'text-xs text-center py-2 px-3 rounded-lg ' + (reportResult.includes('gönderildi') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{reportResult}</div>
+            )}
+          </div>
+        </Section>
+
+        {/* İki Adımlı Doğrulama */}
+        <Section icon={<Shield size={20} className="text-white" />} title="İki Adımlı Doğrulama" desc="Hesap güvenliğini artırın">
+          {verified ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <CheckCircle size={18} className="text-emerald-400 flex-shrink-0" />
+                <div><p className="text-sm text-white font-medium">2FA Aktif</p><p className="text-xs text-gray-500">Google Authenticator ile korunuyor</p></div>
+              </div>
+              <button onClick={async () => {
+                if (!confirm('2FA\'yı devre dışı bırakmak istediğinize emin misiniz?')) return
+                const r = await fetch('/api/auth/2fa/disable', { method: 'POST', credentials: 'include' })
+                if (r.ok) { sessionStorage.removeItem('2fa_setup'); sessionStorage.removeItem('2fa_verified'); setVerified(false) }
+              }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all"><XCircle size={14} />2FA'yı Devre Dışı Bırak</button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">Hesabınızı iki adımlı doğrulama ile koruyun.</p>
+              {error && <p className="text-red-400 text-xs">{error}</p>}
+              <button onClick={handleSetup2fa} disabled={loading} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">
+                {loading ? 'Kuruluyor...' : <><Shield size={16} />2FA Kur</>}
+              </button>
+            </div>
+          )}
+        </Section>
+
+        {/* Bildirim Tercihleri */}
+        <Section icon={<Bell size={20} className="text-white" />} title="Bildirim Tercihleri" desc="Hangi bildirimleri almak istediğinizi seçin">
+          <div className="space-y-4">
+            {[
+              { key: 'newOrder', label: 'Yeni Sipariş', desc: 'Yeni sipariş alındığında Telegram bildirimi gönder' },
+              { key: 'newMessage', label: 'Yeni Mesaj', desc: 'WhatsApp/Instagram/Telegram\'dan yeni mesaj geldiğinde bildirim' },
+            ].map(item => (
+              <div key={item.key} className="flex items-center justify-between p-3 bg-[#080b12]/60 border border-[#1a2332] rounded-xl">
+                <div><p className="text-sm text-white">{item.label}</p><p className="text-xs text-gray-500 mt-0.5">{item.desc}</p></div>
+                <div className="w-9 h-6 bg-gray-600 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </Section>
       </div>
 
-      {/* 2FA */}
-      <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className={'w-3 h-3 rounded-full ' + (verified ? 'bg-emerald-400' : 'bg-gray-500')} />
-          <h3 className="text-white font-semibold">Iki Faktorlu Dogrulama</h3>
-          {verified && <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Aktif</span>}
+      {/* Telegram Token Modal */}
+      {showTgModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTgModal(false)} />
+          <div className="relative w-full max-w-md bg-[#0d1117] border border-[#1a2332] rounded-2xl shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20"><Send size={20} className="text-white" /></div>
+              <div><h3 className="text-white font-semibold">Telegram Bağlantısı</h3><p className="text-xs text-gray-500">Bot token'ınızı girin</p></div>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">BotFather'da oluşturduğunuz botun token'ını girin: <a href="https://t.me/BotFather" target="_blank" className="text-blue-400 hover:text-blue-300">@BotFather</a></p>
+            <input value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none focus:border-sky-500/50" />
+            {tgError && <p className="text-red-400 text-xs mt-2">{tgError}</p>}
+            <div className="flex gap-3 mt-4">
+              <button onClick={connectTelegram} disabled={tgTesting || !tgToken.trim()} className="flex-1 py-2.5 bg-gradient-to-r from-sky-500 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-sky-500/25 transition-all disabled:opacity-50">
+                {tgTesting ? 'Doğrulanıyor...' : 'Bağlan'}
+              </button>
+              <button onClick={() => setShowTgModal(false)} className="px-5 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm hover:text-white transition-all">İptal</button>
+            </div>
+          </div>
         </div>
-        {verified ? (
-          <div>
-            <p className="text-sm text-gray-500 mb-4">Google Authenticator ile korunuyor.</p>
-            <button onClick={async () => {
-              if (!confirm('2FA\'yi devre disi birakmak istediginize emin misiniz?')) return
-              const r = await fetch('/api/auth/2fa/disable', { method: 'POST', credentials: 'include' })
-              if (r.ok) { sessionStorage.removeItem('2fa_setup'); sessionStorage.removeItem('2fa_verified'); setVerified(false) }
-            }} className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all">2FA'yi Devre Disi Birak</button>
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-sm text-gray-500 mb-4">Hesabinizi 2FA ile koruyun.</p>
-            {error && <p className="text-red-400 text-xs mb-3 break-all">{error}</p>}
-            <button onClick={handleSetup2fa} disabled={loading} className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/20 transition-all disabled:opacity-50">{loading ? 'Kuruluyor...' : '2FA Kur'}</button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }

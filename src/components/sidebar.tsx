@@ -6,8 +6,9 @@ import {
   LayoutDashboard, Users,
   MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
-  Sun, Moon, Crown, Link2, Radio, Megaphone,
-  AlertTriangle
+  Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Sun, Moon, Crown,
+  Zap, Sparkles, HeartHandshake,
+
 } from 'lucide-react'
 import { useTheme } from './theme-provider'
 
@@ -15,15 +16,19 @@ const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/', perm: 'dashboard' },
   { key: 'customers', label: 'Müşteriler', icon: Users, href: '/customers', perm: 'customers' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
-  { key: 'notifications', label: 'Bildirimler', icon: Bell, href: '/notifications', perm: 'notifications' },
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
   { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
+  { key: 'appointments', label: 'Randevular', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'zernio-accounts' },
   { key: 'webchat', label: 'Chatbot Ayarları', icon: MessageCircle, href: '/webchat', perm: 'webchat' },
   { key: 'errors', label: 'Hata Kayıtları', icon: AlertTriangle, href: '/errors', perm: 'errors' },
+  { key: 'bulk-messages', label: 'Toplu Mesaj', icon: Send, href: '/bulk-messages', perm: 'bulk-messages' },
+  { key: 'reminder-templates', label: 'Hatırlatma Şablonları', icon: Bell, href: '/reminder-templates', perm: 'reminder-templates' },
+  { key: 'support', label: '7/24 Destek', icon: HeartHandshake, href: '/support', perm: 'support' },
+
 ]
 
 export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; toggle: () => void }) {
@@ -118,12 +123,6 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             <Link href="/instagram" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/instagram') ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <MessageCircle size={18} className={isActive('/instagram') ? 'text-pink-400' : 'text-gray-500 group-hover:text-gray-300'} />
               {!collapsed && <span>Instagram</span>}
-            </Link>
-          )}
-          {isSuperAdmin && (
-            <Link href="/errors" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/errors') ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
-              <AlertTriangle size={18} className={isActive('/errors') ? 'text-red-400' : 'text-gray-500 group-hover:text-gray-300'} />
-              {!collapsed && <span>Hata Kayıtları</span>}
             </Link>
           )}
           {visibleItems.map((item) => {

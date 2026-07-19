@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { MessageCircle, Plus, Trash2, Save } from 'lucide-react'
+import { MessageCircle, Plus, Trash2, Save, Zap } from 'lucide-react'
 
 interface Product {
   name: string
@@ -31,9 +31,35 @@ export default function WebchatPage() {
   const [config, setConfig] = useState<Config | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [webcampaigns, setWebcampaigns] = useState<any[]>([])
+  const [showCampaignForm, setShowCampaignForm] = useState(false)
+  const [campaignTitle, setCampaignTitle] = useState('')
+  const [campaignDiscount, setCampaignDiscount] = useState('')
+  const [campaignDesc, setCampaignDesc] = useState('')
+
+  const saveWebCampaign = async () => {
+    if (!campaignTitle) return
+    await fetch('/api/campaigns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ title: campaignTitle, description: campaignDesc, type: 'discount', discount: campaignDiscount ? parseInt(campaignDiscount) : null, status: 'active' }) })
+    setShowCampaignForm(false)
+    setCampaignTitle(''); setCampaignDiscount(''); setCampaignDesc('')
+    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns)
+  }
+
+  const deleteCampaign = async (id: string) => {
+    if (!confirm('Kampanyayi silmek istediginize emin misiniz?')) return
+    await fetch('/api/campaigns/' + id, { method: 'DELETE', credentials: 'include' })
+    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns)
+  }
+
+  const toggleCampaign = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'passive' : 'active'
+    await fetch('/api/campaigns/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ status: newStatus }) })
+    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns)
+  }
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
+    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns).catch(() => {})
     fetch('/api/webchat/config', { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setConfig(d) })
@@ -229,6 +255,62 @@ export default function WebchatPage() {
           className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 resize-y font-mono leading-relaxed"
           placeholder={'Örneğin işletmenizle ilgili her şeyi buraya yazın/kopyalayın:\n\n- Şirket tarihçesi\n- Tüm hizmet detayları\n- Fiyatlandırma bilgileri\n- Paket içerikleri\n- Referanslar\n- İletişim politikası\n- Sık yapılan hatalar ve çözümleri\n- vb.'}
         />
+      </div>
+
+      {/* Kampanya Modulu */}
+      <div className="glass rounded-2xl border border-[#1a2332] p-6 space-y-4 mt-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-500/20"><Zap size={20} className="text-white" /></div>
+          <div>
+            <h3 className="text-white font-semibold">Kampanya Modülü</h3>
+            <p className="text-xs text-gray-500">AI asistanın kampanyalara göre yanıt vermesi için kampanya oluşturun</p>
+          </div>
+        </div>
+
+        {webcampaigns.length > 0 && (
+          <div className="space-y-2">
+            {webcampaigns.map((c: any) => (
+              <div key={c.id} className="bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-white text-sm font-medium">{c.title}</h4>
+                    {c.description && <p className="text-xs text-gray-500 mt-0.5">{c.description}</p>}
+                    <div className="flex gap-2 mt-2">
+                      {c.discount && <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 rounded text-[10px]">%{c.discount}</span>}
+                      {c.code && <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px]">{c.code}</span>}
+                      <span className={'px-2 py-0.5 rounded text-[10px] ' + (c.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-400')}>{c.status === 'active' ? 'Aktif' : 'Pasif'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+                    <button onClick={() => toggleCampaign(c.id, c.status)} className={'p-1.5 rounded-lg hover:bg-white/5 transition-all ' + (c.status === 'active' ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300')} title={c.status === 'active' ? 'Devre Disi Birak' : 'Aktiflestir'}>
+                      {c.status === 'active' ? '🔴' : '🟢'}
+                    </button>
+                    <button onClick={() => deleteCampaign(c.id)} className="p-1.5 rounded-lg hover:bg-white/5 text-gray-500 hover:text-red-400 transition-all" title="Sil">🗑️</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showCampaignForm && (
+          <div className="bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-4 space-y-3">
+            <h4 className="text-white text-sm font-semibold">Yeni Kampanya</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input value={campaignTitle} onChange={e => setCampaignTitle(e.target.value)} placeholder="Kampanya adı" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm" />
+              <input value={campaignDiscount} onChange={e => setCampaignDiscount(e.target.value)} placeholder="İndirim %" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm" />
+            </div>
+            <input value={campaignDesc} onChange={e => setCampaignDesc(e.target.value)} placeholder="Açıklama (AI'nin kampanyayı anlatması için)" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm" />
+            <div className="flex gap-2">
+              <button onClick={saveWebCampaign} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-rose-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-pink-500/25 transition-all">Kaydet</button>
+              <button onClick={() => setShowCampaignForm(false)} className="px-4 py-2 border border-[#1a2332] text-gray-400 rounded-lg text-sm hover:text-white">İptal</button>
+            </div>
+          </div>
+        )}
+
+        <button onClick={() => setShowCampaignForm(true)} className="w-full py-3 border-2 border-dashed border-[#1a2332] text-gray-500 rounded-xl text-sm hover:text-white hover:border-pink-500/30 transition-all flex items-center justify-center gap-2">
+          <Plus size={16} /> Kampanya Ekle
+        </button>
       </div>
     </div>
   )
