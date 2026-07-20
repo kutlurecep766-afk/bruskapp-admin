@@ -373,33 +373,6 @@ export default function ChatbotIntegrationsPage() {
         ))}
       </div>
 
-      {/* Premium Modules Bar */}
-      {features && Object.keys(features).length > 0 && (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1117] via-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.02] via-transparent to-purple-500/[0.02]" />
-          <div className="relative flex items-center flex-wrap gap-2">
-            <div className="flex items-center gap-2 mr-3">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Link2 size={13} className="text-white" />
-              </div>
-              <span className="text-xs font-semibold text-gray-400 tracking-wide">Aktif Modüller</span>
-            </div>
-            <div className="w-px h-6 bg-[#1a2332] mr-2" />
-            {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
-              <span key={p.key} className={'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold tracking-wide ' + p.bg + ' ' + p.color + ' border ' + p.border + ' shadow-sm'}>
-                <span className={'w-1.5 h-1.5 rounded-full ' + (isPlatformConnected(p.key, p.type) ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-600')} />
-                {p.label}
-              </span>
-            ))}
-            {platforms.filter(p => features[p.key] === false).map(p => (
-              <span key={p.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-gray-500/10 text-gray-600 border border-gray-500/20 line-through">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
-                {p.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Platform Cards by Category */}
       {PLATFORM_CATEGORIES.map(cat => {
