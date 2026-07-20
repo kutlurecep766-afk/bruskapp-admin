@@ -84,8 +84,7 @@ export default function MessagesPage() {
     return (
       <div className="space-y-6 pb-12">
         <h1 className="text-2xl font-bold text-white">Mesajlar</h1>
-        <div className="flex gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">{T('messages', 'Mesajlar')}{T('comments', 'Yorumlar')}{T('leads', 'Lead Yonetimi')}</div>
-        {tab === 'comments' && <CommentsView />}
+        <div className="flex gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">{T('messages', 'Mesajlar')}{T('leads', 'Lead Yonetimi')}</div>
         {tab === 'leads' && <LeadsView />}
       </div>
     )
@@ -99,7 +98,7 @@ export default function MessagesPage() {
       <div className={'w-full md:w-80 md:flex-shrink-0 border-r border-[#1a2332] flex flex-col bg-[#0d1117]/90 ' + (mobileView === 'chat' ? 'hidden md:flex' : 'flex')}>
         <div className="p-4 border-b border-[#1a2332] space-y-3">
           <div className="flex items-center gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">
-            {T('messages', 'Mesajlar')}{T('comments', 'Yorumlar')}{T('leads', 'Lead')}
+            {T('messages', 'Mesajlar')}{T('leads', 'Lead')}
           </div>
           <div className="flex items-center justify-between px-1">
             <span className="text-[10px] text-gray-500 uppercase tracking-wider">AI Asistan</span>
@@ -210,140 +209,6 @@ export default function MessagesPage() {
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-// ====== Yorumlar (Comments) ======
-function CommentsView() {
-  const [comments, setComments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<any>(null)
-  const [replyText, setReplyText] = useState('')
-  const [mobileView, setMobileView] = useState('list')
-  const endRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const load = () => fetch('/api/comments', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(d => { setComments(d.filter((x: any) => x.status !== 'deleted')); setLoading(false) }).catch(() => setLoading(false))
-    load(); const interval = setInterval(load, 5000); return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [selected])
-
-  const updateStatus = async (id: string, status: string) => {
-    await fetch('/api/comments/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ status }) })
-    setComments(prev => prev.map(c => c.id === id ? { ...c, status } : c))
-  }
-
-  const sendReply = async () => {
-    if (!replyText.trim() || !selected) return
-    await fetch('/api/comments/' + selected.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ reply: replyText }) })
-    setReplyText('')
-    setComments(prev => prev.map(c => c.id === selected.id ? { ...c, reply: replyText } : c))
-  }
-
-  const ps = (p: string) => PLATFORM_MAP[p] || { label: p, color: 'text-gray-400', bg: 'bg-gray-500/10', icon: null }
-
-  if (loading) return <div className="text-center py-12"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" /></div>
-
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-500/20"><MessageCircle size={20} className="text-white" /></div>
-        <div><h2 className="text-white font-semibold">Yorumlar</h2><p className="text-xs text-gray-500">{comments.length} yorum</p></div>
-      </div>
-
-      {comments.length === 0 ? (
-        <div className="text-center py-12"><MessageCircle size={40} className="mx-auto text-gray-700 mb-3" /><p className="text-gray-500 text-sm">Henüz yorum bulunmuyor</p></div>
-      ) : (
-        <div className="h-[calc(100vh-12rem)] flex gap-0 relative overflow-hidden rounded-2xl border border-[#1a2332] bg-[#0a0e14]">
-          {/* Comment List */}
-          <div className={'w-full md:w-72 md:flex-shrink-0 border-r border-[#1a2332] flex flex-col bg-[#0d1117]/90 ' + (mobileView === 'detail' ? 'hidden md:flex' : 'flex')}>
-            <div className="flex-1 overflow-y-auto">
-              {comments.map(c => {
-                const p = ps(c.platform)
-                const Icon = p.icon
-                return (
-                  <div key={c.id} onClick={() => { setSelected(c); setMobileView('detail') }}
-                    className={'flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-[#1a2332]/50 hover:bg-white/[0.02] ' + (selected?.id === c.id ? 'bg-pink-500/5' : '')}>
-                    <div className="relative flex-shrink-0">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-xs font-bold">{c.author?.[0] || '?'}</div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-white font-medium truncate">{c.author}</span>
-                        <span className={'px-2 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0 ' + (c.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : c.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400')}>{c.status === 'approved' ? 'Onay' : c.status === 'rejected' ? 'Red' : 'Bek'}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate mt-0.5">{c.content}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        {Icon && <Icon className={'w-3 h-3 ' + p.color} />}
-                        <span className={'text-[10px] ' + p.color}>{p.label}</span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Comment Detail */}
-          <div className={'flex-1 flex flex-col bg-[#0d1117]/50 ' + (mobileView === 'detail' ? 'flex' : 'hidden md:flex')}>
-            {selected ? (
-              <>
-                <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#1a2332] bg-[#0d1117]/95">
-                  <button onClick={() => setMobileView('list')} className="md:hidden p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"><ChevronLeft size={18} /></button>
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-xs font-bold">{selected.author?.[0] || '?'}</div>
-                  <div className="flex-1">
-                    <p className="text-sm text-white font-medium">{selected.author}</p>
-                    <p className="text-[10px] text-gray-500">{ps(selected.platform).label} · {new Date(selected.createdAt).toLocaleDateString('tr-TR')}</p>
-                  </div>
-                  <select value={selected.status} onChange={e => updateStatus(selected.id, e.target.value)}
-                    className={'text-xs px-3 py-1.5 rounded-lg border font-medium cursor-pointer ' + (selected.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : selected.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20')}>
-                    <option value="pending">Bekliyor</option><option value="approved">Onayla</option><option value="rejected">Reddet</option>
-                  </select>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {/* Original Comment */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{selected.author?.[0] || '?'}</div>
-                    <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-[#1a2332] text-gray-200 border border-[#2a3a4a]">
-                      <p className="text-sm">{selected.content}</p>
-                      <p className="text-[10px] text-gray-600 mt-1.5">{new Date(selected.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
-                  </div>
-                  {/* Reply */}
-                  {selected.reply && (
-                    <div className="flex items-start gap-3 justify-end">
-                      <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-pink-600 text-white rounded-br-md">
-                        <p className="text-sm">{selected.reply}</p>
-                        <p className="text-[10px] text-pink-200 mt-1.5 text-right">Yanıtınız</p>
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">B</div>
-                    </div>
-                  )}
-                  <div ref={endRef} />
-                </div>
-                <div className="p-3.5 border-t border-[#1a2332] bg-[#0d1117]/95">
-                  <div className="flex gap-2.5">
-                    <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendReply()}
-                      className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-pink-500/50 placeholder-gray-600 transition-all" placeholder="Yoruma yanıt yazın..." />
-                    <button onClick={sendReply} disabled={!replyText.trim()}
-                      className="px-5 py-3 bg-gradient-to-r from-pink-600 to-rose-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-pink-500/25 transition-all duration-300 disabled:opacity-50 flex items-center gap-2 active:scale-[0.98]"><Send size={16} /></button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center max-w-xs">
-                  <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#1a2332] to-[#0d1117] flex items-center justify-center mb-6 shadow-inner border border-white/[0.03]"><MessageCircle size={32} className="text-gray-600" /></div>
-                  <h3 className="text-white/30 text-sm font-medium mb-2">Yorumlar</h3>
-                  <p className="text-white/15 text-xs">Soldan bir yorum seçin</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -466,8 +331,8 @@ function LeadsView() {
                     <div key={l.id} className="bg-[#080b12]/80 backdrop-blur-sm rounded-xl p-3 border border-[#1a2332] hover:border-white/20 hover:shadow-lg hover:shadow-black/20 transition-all duration-300 group">
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-md">{l.name?.[0] || '?'}</div>
-                          <span className="text-xs text-white font-semibold truncate max-w-[90px]">{l.name || 'Isimsiz'}</span>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-md">{l.name?.[0] || (l.source === 'webchat' ? 'W' : l.source?.[0]?.toUpperCase() || '?')}</div>
+                          <span className="text-xs text-white font-semibold truncate max-w-[90px]">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</span>
                         </div>
                         <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
                           className="text-[9px] px-1.5 py-0.5 rounded-lg border bg-[#0d1117]/80 cursor-pointer text-gray-400 border-[#1a2332] hover:text-white hover:border-white/20 transition-all">
@@ -479,6 +344,7 @@ function LeadsView() {
                         <div className="flex items-center gap-2.5">
                           {l.phone && <span className="flex items-center gap-1"><Phone size={9} />{l.phone}</span>}
                           <span className="flex items-center gap-1"><Calendar size={9} />{new Date(l.createdAt).toLocaleDateString('tr-TR')}</span>
+                          {l.source && PLATFORM_MAP[l.source] && (() => { const Icon = PLATFORM_MAP[l.source].icon; return <span className="flex items-center gap-1">{Icon ? <Icon className={'w-2.5 h-2.5 ' + PLATFORM_MAP[l.source].color} /> : null}{PLATFORM_MAP[l.source].label}</span> })()}
                         </div>
                         <div className="flex items-center gap-2">
                           {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">AI</span>}
@@ -517,12 +383,12 @@ function LeadsView() {
                 return (
                   <div key={l.id} className="flex items-start gap-4 p-5 hover:bg-white/[0.02] transition-all duration-300 group">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-emerald-500/10">{l.name?.[0] || '?'}</div>
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-emerald-500/10">{l.name?.[0] || (l.source === 'webchat' ? 'W' : l.source?.[0]?.toUpperCase() || '?')}</div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-white font-bold text-sm">{l.name || 'Isimsiz'}</h3>
+                          <h3 className="text-white font-bold text-sm">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</h3>
                           {l.phone && <a href={'tel:' + l.phone} className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-emerald-400 transition-all bg-[#080b12]/60 px-2.5 py-1 rounded-lg border border-[#1a2332] group-hover:border-white/10"><Phone size={10} />{l.phone}</a>}
                           {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AI Yanıtlandı</span>}
                         </div>
@@ -541,7 +407,10 @@ function LeadsView() {
                         </div>
                         <div className="flex-shrink-0 space-y-1.5 text-right">
                           <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><Calendar size={11} className="text-gray-500" />{new Date(l.createdAt).toLocaleDateString('tr-TR')}</div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><Filter size={11} className="text-gray-500" />{l.source || 'Web Chat'}</div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                            {l.source && PLATFORM_MAP[l.source] && (() => { const Icon = PLATFORM_MAP[l.source].icon; return Icon ? <Icon className={'w-3 h-3 ' + PLATFORM_MAP[l.source].color} /> : <Filter size={11} className="text-gray-500" /> })()}
+                            {l.source && PLATFORM_MAP[l.source] ? PLATFORM_MAP[l.source].label : (l.source || 'Web Chat')}
+                          </div>
                           <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><span className={'inline-block w-2 h-2 rounded-full ' + si.bar} />{si.label}</div>
                         </div>
                       </div>
