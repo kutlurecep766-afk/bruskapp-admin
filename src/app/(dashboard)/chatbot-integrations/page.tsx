@@ -352,56 +352,52 @@ export default function ChatbotIntegrationsPage() {
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-blue-500/30">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-blue-500/10" />
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3"><Link2 size={16} className="text-blue-400" /></div>
-            <p className="text-2xl font-bold text-white tracking-tight">{platforms.length}</p>
-            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Toplam Platform</p>
+      {/* Premium Stats Bento */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Toplam Platform', value: platforms.length, icon: Link2, color: 'from-blue-500 to-indigo-600', glow: 'shadow-blue-500/20' },
+          { label: 'Bağlı Platform', value: connectedCount, icon: Plug, color: 'from-emerald-500 to-teal-600', glow: 'shadow-emerald-500/20' },
+          { label: 'Kullanılabilir', value: availableCount, icon: Shield, color: 'from-purple-500 to-pink-600', glow: 'shadow-purple-500/20' },
+          { label: 'Bağlanmamış', value: platforms.length - connectedCount, icon: Activity, color: 'from-amber-500 to-orange-600', glow: 'shadow-amber-500/20' },
+        ].map((stat, i) => (
+          <div key={stat.label} className="group relative overflow-hidden rounded-2xl bg-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 hover:scale-[1.02] hover:border-white/20">
+            <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-gradient-to-br opacity-[0.07] blur-2xl transition-all duration-700 group-hover:opacity-[0.15] group-hover:scale-150" style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }} />
+            <div className="relative">
+              <div className={'w-9 h-9 rounded-xl bg-gradient-to-br ' + stat.color + ' flex items-center justify-center mb-3 shadow-lg ' + stat.glow}>
+                <stat.icon size={15} className="text-white" />
+              </div>
+              <p className="text-2xl font-bold text-white tracking-tight">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider font-medium">{stat.label}</p>
+            </div>
           </div>
-        </div>
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-emerald-500/30">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-emerald-500/10" />
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3"><Plug size={16} className="text-emerald-400" /></div>
-            <p className="text-2xl font-bold text-white tracking-tight">{connectedCount}</p>
-            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Bağlı Platform</p>
-          </div>
-        </div>
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-purple-500/30">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-purple-500/10" />
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3"><Shield size={16} className="text-purple-400" /></div>
-            <p className="text-2xl font-bold text-white tracking-tight">{availableCount}</p>
-            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Kullanılabilir</p>
-          </div>
-        </div>
-        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-amber-500/30">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-amber-500/10" />
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3"><Activity size={16} className="text-amber-400" /></div>
-            <p className="text-2xl font-bold text-white tracking-tight">{platforms.length - connectedCount}</p>
-            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Bağlanmamış</p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Active Modules Chips */}
+      {/* Premium Modules Bar */}
       {features && Object.keys(features).length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap bg-[#080b12]/60 border border-[#1a2332] rounded-2xl px-5 py-3">
-          <span className="text-xs text-gray-500 font-medium mr-1">Aktif modüller:</span>
-          {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
-            <span key={p.key} className={'inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-medium ' + p.bg + ' ' + p.color + ' border ' + p.border}>
-              {p.label}
-            </span>
-          ))}
-          {platforms.filter(p => features[p.key] === false).map(p => (
-            <span key={p.key} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-medium bg-gray-500/10 text-gray-600 border border-gray-500/20 line-through">
-              {p.label}
-            </span>
-          ))}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1117] via-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.02] via-transparent to-purple-500/[0.02]" />
+          <div className="relative flex items-center flex-wrap gap-2">
+            <div className="flex items-center gap-2 mr-3">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Link2 size={13} className="text-white" />
+              </div>
+              <span className="text-xs font-semibold text-gray-400 tracking-wide">Aktif Modüller</span>
+            </div>
+            <div className="w-px h-6 bg-[#1a2332] mr-2" />
+            {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
+              <span key={p.key} className={'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold tracking-wide ' + p.bg + ' ' + p.color + ' border ' + p.border + ' shadow-sm'}>
+                <span className={'w-1.5 h-1.5 rounded-full ' + (isPlatformConnected(p.key, p.type) ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-600')} />
+                {p.label}
+              </span>
+            ))}
+            {platforms.filter(p => features[p.key] === false).map(p => (
+              <span key={p.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-gray-500/10 text-gray-600 border border-gray-500/20 line-through">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+                {p.label}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
