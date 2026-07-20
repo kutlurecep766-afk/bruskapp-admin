@@ -1,12 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Sun, Moon } from 'lucide-react'
-import { useTheme } from './theme-provider'
-
 export default function Topbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const [showNotifications, setShowNotifications] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const { theme, toggle: toggleTheme } = useTheme()
 
   useEffect(() => {
     async function loadUser() {
@@ -75,9 +71,6 @@ export default function Topbar({ toggleSidebar }: { toggleSidebar: () => void })
             <p className="text-sm text-white leading-tight">{user?.name || user?.email || '...'}</p>
             <p className="text-xs text-gray-500">{isSuperAdmin ? 'Super Admin' : user?.role === 'ADMIN' ? 'Admin' : 'Kullanici'}</p>
           </div>
-        </button>
-        <button onClick={toggleTheme} className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-white/5 rounded-lg transition-colors" title={theme === 'dark' ? 'Açık Tema' : 'Koyu Tema'}>
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
     </header>

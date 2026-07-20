@@ -6,11 +6,10 @@ import {
   LayoutDashboard, Users,
   MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
-  Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Sun, Moon, Crown,
+  Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Crown,
   Zap, Sparkles, HeartHandshake,
 
 } from 'lucide-react'
-import { useTheme } from './theme-provider'
 
 const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/', perm: 'dashboard' },

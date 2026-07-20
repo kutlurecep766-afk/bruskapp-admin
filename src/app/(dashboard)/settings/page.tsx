@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Shield, Bell, Send, Clock, Settings, CheckCircle, XCircle, Link2, Unlink, MessageCircle, Calendar, Download, RefreshCw, Eye, EyeOff, Smartphone } from 'lucide-react'
+import { Shield, Bell, Send, Clock, Settings, CheckCircle, XCircle, Link2, Unlink, MessageCircle, Calendar, Download, RefreshCw, Eye, EyeOff, Smartphone, Lock, KeyRound } from 'lucide-react'
 
 export default function SettingsPage() {
   const [show2faSetup, setShow2faSetup] = useState(false)
@@ -22,6 +22,14 @@ export default function SettingsPage() {
   const [tgError, setTgError] = useState('')
   const [tgTesting, setTgTesting] = useState(false)
 
+  // Password Change
+  const [pwCurrent, setPwCurrent] = useState('')
+  const [pwNew, setPwNew] = useState('')
+  const [pwConfirm, setPwConfirm] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
+  const [pwShow, setPwShow] = useState(false)
+
   // Report Schedule
   const [reportEnabled, setReportEnabled] = useState(false)
   const [reportTime, setReportTime] = useState('20:00')
@@ -40,8 +48,17 @@ export default function SettingsPage() {
         if (d.setup) { sessionStorage.setItem('2fa_setup', 'true'); setVerified(true) }
       } catch {}
     })()
-    // Load telegram config
-    fetch('/api/telegram/tenant-status', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d) { setTgConnected(d.connected); setTgBotName(d.botInfo?.username || '') } }).catch(() => {})
+    // Load telegram config (with localStorage fallback)
+    const cachedTg = localStorage.getItem('bruskapp_tg_connected')
+    const cachedBot = localStorage.getItem('bruskapp_tg_botname')
+    if (cachedTg === 'true') { setTgConnected(true); if (cachedBot) setTgBotName(cachedBot) }
+    fetch('/api/telegram/tenant-status', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
+      if (d) {
+        setTgConnected(d.connected); setTgBotName(d.botInfo?.username || '')
+        localStorage.setItem('bruskapp_tg_connected', d.connected ? 'true' : 'false')
+        if (d.botInfo?.username) localStorage.setItem('bruskapp_tg_botname', d.botInfo.username)
+      }
+    }).catch(() => {})
     // Load report schedule
     fetch('/api/report-schedule', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d) { setReportEnabled(d.enabled); setReportTime(d.time || '20:00') } }).catch(() => {})
   }, [])
@@ -74,7 +91,8 @@ export default function SettingsPage() {
       const res = await fetch('/api/telegram/tenant-connect', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify({ token: tgToken }) })
       if (res.ok) {
         setTgConnected(true); setShowTgModal(false); setTgToken('')
-        fetch('/api/telegram/tenant-status', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d) setTgBotName(d.botInfo?.username || '') })
+        localStorage.setItem('bruskapp_tg_connected', 'true')
+        fetch('/api/telegram/tenant-status', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d) { setTgBotName(d.botInfo?.username || ''); if (d.botInfo?.username) localStorage.setItem('bruskapp_tg_botname', d.botInfo.username) } })
       } else {
         const txt = await res.text()
         setTgError(txt.includes('Unauthorized') ? 'Geçersiz bot token' : txt.slice(0, 100))
@@ -86,6 +104,21 @@ export default function SettingsPage() {
   const disconnectTelegram = async () => {
     await fetch('/api/telegram/tenant-disconnect', { method: 'POST', credentials: 'include', headers: h })
     setTgConnected(false)
+    localStorage.removeItem('bruskapp_tg_connected')
+    localStorage.removeItem('bruskapp_tg_botname')
+  }
+
+  const changePassword = async () => {
+    if (!pwCurrent || !pwNew) { setPwMsg('Mevcut ve yeni sifre gerekli'); return }
+    if (pwNew.length < 6) { setPwMsg('Yeni sifre en az 6 karakter olmali'); return }
+    if (pwNew !== pwConfirm) { setPwMsg('Yeni sifreler eslesmiyor'); return }
+    setPwSaving(true); setPwMsg('')
+    try {
+      const res = await fetch('/api/auth/change-password', { method: 'POST', credentials: 'include', headers: h, body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }) })
+      if (res.ok) { setPwMsg('Sifre basariyla degistirildi!'); setPwCurrent(''); setPwNew(''); setPwConfirm('') }
+      else { const t = await res.text(); setPwMsg(t.includes('Unauthorized') || res.status === 401 ? 'Mevcut sifre yanlis' : 'Hata: ' + res.status) }
+    } catch { setPwMsg('Baglanti hatasi') }
+    finally { setPwSaving(false) }
   }
 
   const saveReportSchedule = async () => {
@@ -203,7 +236,7 @@ export default function SettingsPage() {
                 <Calendar size={16} className="text-blue-400" />
                 <div>
                   <p className="text-sm text-white font-medium">Otomatik Rapor</p>
-                  <p className="text-xs text-gray-500">Her gün belirtilen saatte gönder</p>
+                  <p className="text-xs text-gray-500">Her gün belirtilen saatte Telegram'a gönder</p>
                 </div>
               </div>
               <Toggle value={reportEnabled} onChange={v => { setReportEnabled(v); setTimeout(() => saveReportSchedule(), 100) }} />
@@ -217,6 +250,12 @@ export default function SettingsPage() {
               </div>
             )}
 
+            <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl">
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Rapor içeriği: <strong className="text-white">Bugünkü mesaj istatistikleri (gelen/giden), kredi kullanımı, platform bazlı dağılım ve analiz özeti</strong> — Türkçe olarak Telegram'a gönderilir.
+              </p>
+            </div>
+
             <button onClick={sendReportNow} disabled={reportSending || !tgConnected}
               className={'w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ' + (tgConnected ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-lg hover:shadow-emerald-500/25' : 'bg-[#1a2332] text-gray-500 cursor-not-allowed')}>
               {reportSending ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
@@ -224,8 +263,28 @@ export default function SettingsPage() {
             </button>
 
             {reportResult && (
-              <div className={'text-xs text-center py-2 px-3 rounded-lg ' + (reportResult.includes('gönderildi') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{reportResult}</div>
+              <div className={'text-xs text-center py-2 px-3 rounded-lg ' + (reportResult.includes('gönderildi') || reportResult.includes('başarılı') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{reportResult}</div>
             )}
+          </div>
+        </Section>
+
+        {/* Şifre Değiştir */}
+        <Section icon={<Lock size={20} className="text-white" />} title="Şifre Değiştir" desc="Hesap şifrenizi güncelleyin">
+          <div className="space-y-4">
+            <div className="relative">
+              <input type={pwShow ? 'text' : 'password'} value={pwCurrent} onChange={e => setPwCurrent(e.target.value)} placeholder="Mevcut şifre" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 pr-10" />
+              <button onClick={() => setPwShow(!pwShow)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"><Eye size={16} /></button>
+            </div>
+            <input type="password" value={pwNew} onChange={e => setPwNew(e.target.value)} placeholder="Yeni şifre (en az 6 karakter)" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
+            <input type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} placeholder="Yeni şifre tekrar" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
+            {pwMsg && (
+              <div className={'text-xs py-2 px-3 rounded-lg ' + (pwMsg.includes('başarıyla') || pwMsg.includes('degistirildi') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400')}>{pwMsg}</div>
+            )}
+            <button onClick={changePassword} disabled={pwSaving || !pwCurrent || !pwNew || !pwConfirm}
+              className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50">
+              {pwSaving ? <RefreshCw size={16} className="animate-spin" /> : <KeyRound size={16} />}
+              {pwSaving ? 'Değiştiriliyor...' : 'Şifreyi Değiştir'}
+            </button>
           </div>
         </Section>
 

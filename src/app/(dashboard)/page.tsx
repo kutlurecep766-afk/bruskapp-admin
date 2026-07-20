@@ -66,6 +66,13 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [])
 
+  const refreshWheel = async () => {
+    try {
+      const res = await fetch('/api/tenant/weekly-wheel', { credentials: 'include' })
+      if (res.ok) setWheelData(await res.json())
+    } catch {}
+  }
+
   useEffect(() => {
     if (!wheelData?.nextAvailableAt || wheelData?.hasActive) return
     const interval = setInterval(() => {
@@ -73,8 +80,9 @@ export default function DashboardPage() {
       const target = new Date(wheelData.nextAvailableAt).getTime()
       const diff = target - now
       if (diff <= 0) {
-        setCountdown('Kullanıma hazır')
+        setCountdown('')
         clearInterval(interval)
+        refreshWheel()
         return
       }
       const days = Math.floor(diff / (1000 * 60 * 60 * 24))

@@ -34,14 +34,28 @@ export default function MessagesPage() {
   const [search, setSearch] = useState('')
   const [newMsg, setNewMsg] = useState('')
   const [mobileView, setMobileView] = useState('list')
+  const [aiEnabled, setAiEnabled] = useState(true)
+  const [aiConvOverride, setAiConvOverride] = useState<Record<string, boolean>>({})
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const saved = localStorage.getItem('bruskapp_ai_global')
+    if (saved === 'false') setAiEnabled(false)
     fetch('/api/messages/conversations', { credentials: 'include' })
       .then(r => r.ok ? r.json() : [])
       .then(d => { setConvos(d); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
+
+  const toggleAiGlobal = async (val: boolean) => {
+    setAiEnabled(val)
+    localStorage.setItem('bruskapp_ai_global', val ? 'true' : 'false')
+    await fetch('/api/tenant/ai-toggle', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: val }) }).catch(() => {})
+  }
+
+  const toggleAiConv = (from: string, active: boolean) => {
+    setAiConvOverride(prev => ({ ...prev, [from]: active }))
+  }
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs])
 
@@ -86,6 +100,13 @@ export default function MessagesPage() {
         <div className="p-4 border-b border-[#1a2332] space-y-3">
           <div className="flex items-center gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">
             {T('messages', 'Mesajlar')}{T('comments', 'Yorumlar')}{T('leads', 'Lead')}
+          </div>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] text-gray-500 uppercase tracking-wider">AI Asistan</span>
+            <button onClick={() => toggleAiGlobal(!aiEnabled)}
+              className={'relative inline-flex h-5 w-9 items-center rounded-full transition-all ' + (aiEnabled ? 'bg-emerald-500' : 'bg-gray-600')}>
+              <span className={'inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-all ' + (aiEnabled ? 'translate-x-5' : 'translate-x-1')} />
+            </button>
           </div>
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
@@ -146,6 +167,10 @@ export default function MessagesPage() {
                 <p className="text-sm text-white font-medium">{selected.fromName || selected.from}</p>
                 <p className={'text-[10px] ' + (ps(selected.platform).color || 'text-gray-500')}>{ps(selected.platform).label}</p>
               </div>
+              <button onClick={() => toggleAiConv(selected.from, !(aiConvOverride[selected.from] ?? true))}
+                className={'px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all flex items-center gap-1.5 ' + ((aiConvOverride[selected.from] ?? true) ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20')}>
+                {(aiConvOverride[selected.from] ?? true) ? '🤖 AI Aktif' : '👤 Devralındı'}
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(99,102,241,0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(168,85,247,0.03) 0%, transparent 50%)' }}>
               {msgs.map((m: any, i: number) => {
@@ -325,11 +350,11 @@ function CommentsView() {
 
 // ====== CRM Lead Yonetimi ======
 const CRM_STAGES = [
-  { key: 'yeni', label: 'Yeni Lead', icon: '🆕', desc: 'Yeni gelen müşteri adayı', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', bar: 'bg-blue-500' },
-  { key: 'gorusuldu', label: 'İletişime Geçildi', icon: '📞', desc: 'Telefon veya mesaj ile görüşüldü', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', bar: 'bg-amber-500' },
-  { key: 'mql', label: 'MQL - Pazarlama Onaylı', icon: '📊', desc: 'Pazarlama onaylı aday, takip ediliyor', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', bar: 'bg-sky-500' },
-  { key: 'sql', label: 'SQL - Satış Hazır', icon: '🎯', desc: 'Satışa hazır aday, teklif verilecek', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', bar: 'bg-violet-500' },
-  { key: 'musteri', label: 'Müşteri', icon: '✅', desc: 'Satış tamamlandı, müşteri kazanıldı', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', bar: 'bg-emerald-500' },
+  { key: 'yeni', label: 'Yeni Lead', icon: '🆕', desc: 'AI yanıt vermedi, bekliyor', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', bar: 'bg-blue-500' },
+  { key: 'gorusuldu', label: 'İletişime Geçildi', icon: '📞', desc: 'AI yanıt verdi veya manuel görüşüldü', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', bar: 'bg-amber-500' },
+  { key: 'mql', label: 'MQL', icon: '📊', desc: 'Pazarlama onaylı aday', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', bar: 'bg-sky-500' },
+  { key: 'sql', label: 'SQL', icon: '🎯', desc: 'Satışa hazır aday', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', bar: 'bg-violet-500' },
+  { key: 'musteri', label: 'Müşteri', icon: '✅', desc: 'Satış tamamlandı', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', bar: 'bg-emerald-500' },
   { key: 'lost', label: 'Kayıp', icon: '❌', desc: 'Satış gerçekleşmedi', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', bar: 'bg-red-500' },
 ]
 
@@ -344,7 +369,13 @@ function LeadsView() {
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    fetch('/api/leads', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(d => { setLeads(d); setLoading(false) }).catch(() => setLoading(false))
+    fetch('/api/leads', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(d => {
+      // Auto-move: if lead has AI response, move to goruldu
+      setLeads(d.map((l: any) => {
+        if (l.status === 'yeni' && l.hasAiReply) return { ...l, status: 'gorusuldu' }
+        return l
+      })); setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
   const updateStatus = async (id: number, status: string) => {
@@ -387,14 +418,14 @@ function LeadsView() {
           const count = stageCounts[s.key] || 0
           return (
             <div key={s.key} onClick={() => setSelectedStage(selectedStage === s.key ? '' : s.key)}
-              className={'relative overflow-hidden rounded-2xl border p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] ' + s.bg + ' ' + s.border + (selectedStage === s.key ? ' ring-2 ring-white/20' : '')}>
+              className={'relative overflow-hidden rounded-2xl border p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-' + (s.key === 'yeni' ? 'blue' : s.key === 'gorusuldu' ? 'amber' : s.key === 'musteri' ? 'emerald' : s.key === 'lost' ? 'red' : 'purple') + '-500/10 ' + s.bg + ' ' + s.border + (selectedStage === s.key ? ' ring-2 ring-white/20' : '')}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-lg">{s.icon}</span>
+                <span className="text-xl">{s.icon}</span>
                 <span className={'text-lg font-bold ' + s.color}>{count}</span>
               </div>
-              <p className="text-xs text-white font-medium">{s.label}</p>
-              <p className="text-[9px] text-gray-500 mt-0.5 leading-tight">{s.desc}</p>
-              <div className="mt-2 h-1.5 bg-[#1a2332] rounded-full overflow-hidden">
+              <p className="text-xs text-white font-semibold">{s.label}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{s.desc}</p>
+              <div className="mt-3 h-1.5 bg-[#1a2332] rounded-full overflow-hidden">
                 <div className={'h-full rounded-full transition-all duration-700 ' + s.bar} style={{ width: Math.min(100, (count / Math.max(...Object.values(stageCounts).map((v: any) => v), 1)) * 100) + '%' }} />
               </div>
             </div>
@@ -409,8 +440,8 @@ function LeadsView() {
           <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Musteri adi, telefon veya ihtiyac ile ara..." className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
         </div>
         <div className="flex gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">
-          <button onClick={() => setViewMode('pipeline')} className={'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ' + (viewMode === 'pipeline' ? 'bg-emerald-500/10 text-emerald-400' : 'text-gray-500 hover:text-white')}>Pipeline</button>
-          <button onClick={() => setViewMode('list')} className={'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ' + (viewMode === 'list' ? 'bg-emerald-500/10 text-emerald-400' : 'text-gray-500 hover:text-white')}>Liste</button>
+          <button onClick={() => setViewMode('pipeline')} className={'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ' + (viewMode === 'pipeline' ? 'bg-emerald-500/10 text-emerald-400 shadow-sm' : 'text-gray-500 hover:text-white')}>Pipeline</button>
+          <button onClick={() => setViewMode('list')} className={'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ' + (viewMode === 'list' ? 'bg-emerald-500/10 text-emerald-400 shadow-sm' : 'text-gray-500 hover:text-white')}>Liste</button>
         </div>
       </div>
 
@@ -432,24 +463,33 @@ function LeadsView() {
                   {stageLeads.length === 0 ? (
                     <div className="text-center py-6 text-gray-600 text-[10px]">Henuz kayit yok</div>
                   ) : stageLeads.map((l: any) => (
-                    <div key={l.id} className="bg-[#080b12]/80 rounded-xl p-3 border border-[#1a2332] hover:border-white/10 transition-all group">
+                    <div key={l.id} className="bg-[#080b12]/80 backdrop-blur-sm rounded-xl p-3 border border-[#1a2332] hover:border-white/20 hover:shadow-lg hover:shadow-black/20 transition-all duration-300 group">
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{l.name?.[0] || '?'}</div>
-                          <span className="text-xs text-white font-medium truncate max-w-[80px]">{l.name || 'Isimsiz'}</span>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-md">{l.name?.[0] || '?'}</div>
+                          <span className="text-xs text-white font-semibold truncate max-w-[90px]">{l.name || 'Isimsiz'}</span>
                         </div>
                         <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
-                          className="text-[9px] px-1.5 py-0.5 rounded border bg-transparent cursor-pointer text-gray-400 border-[#1a2332] hover:text-white">
-                          {CRM_STAGES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                          className="text-[9px] px-1.5 py-0.5 rounded-lg border bg-[#0d1117]/80 cursor-pointer text-gray-400 border-[#1a2332] hover:text-white hover:border-white/20 transition-all">
+                          {CRM_STAGES.map(s => <option key={s.key} value={s.key}>{s.icon + ' ' + s.label}</option>)}
                         </select>
                       </div>
-                      {l.needs && <p className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed mb-1.5">{l.needs}</p>}
-                      <div className="flex items-center justify-between text-[9px] text-gray-600">
-                        <div className="flex items-center gap-2">
-                          {l.phone && <span>{l.phone}</span>}
-                          <span>{new Date(l.createdAt).toLocaleDateString('tr-TR')}</span>
+                      {l.needs && <div className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed mb-2 bg-[#0a0e14]/60 rounded-lg px-2.5 py-1.5 border border-[#1a2332]/50">{l.needs}</div>}
+                      <div className="flex items-center justify-between text-[10px] text-gray-600">
+                        <div className="flex items-center gap-2.5">
+                          {l.phone && <span className="flex items-center gap-1"><Phone size={9} />{l.phone}</span>}
+                          <span className="flex items-center gap-1"><Calendar size={9} />{new Date(l.createdAt).toLocaleDateString('tr-TR')}</span>
                         </div>
-                        {l.phone && <a href={'tel:' + l.phone} className="text-emerald-400 hover:text-emerald-300 font-medium">Ara</a>}
+                        <div className="flex items-center gap-2">
+                          {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">AI</span>}
+                          {l.phone && <a href={'tel:' + l.phone} className="text-emerald-400 hover:text-emerald-300 font-semibold text-[10px] transition-all">Ara</a>}
+                        </div>
+                      </div>
+                      <div className="mt-2 flex gap-0.5">
+                        {CRM_STAGES.map((s, i) => {
+                          const idx = stageIndex(l.status)
+                          return <div key={s.key} className={'flex-1 h-1 rounded-full transition-all duration-300 ' + (i <= idx ? s.bar : 'bg-[#1a2332]')} />
+                        })}
                       </div>
                     </div>
                   ))}
@@ -462,10 +502,10 @@ function LeadsView() {
 
       {/* List View */}
       {viewMode === 'list' && (
-        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl overflow-hidden">
-          <div className="p-4 border-b border-[#1a2332] flex items-center justify-between">
-            <p className="text-sm text-gray-400">{filtered.length} kayit</p>
-            {selectedStage && <button onClick={() => setSelectedStage('')} className="text-xs text-gray-500 hover:text-white px-2 py-1 rounded-lg hover:bg-white/5 transition-all">Filtreyi Temizle</button>}
+        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl overflow-hidden shadow-xl shadow-black/10">
+          <div className="p-4 border-b border-[#1a2332] flex items-center justify-between bg-[#0a0e14]/80">
+            <p className="text-sm text-gray-400 font-medium">{filtered.length} kayit</p>
+            {selectedStage && <button onClick={() => setSelectedStage('')} className="text-xs text-gray-500 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all border border-[#1a2332]">Filtreyi Temizle</button>}
           </div>
           {filtered.length === 0 ? (
             <div className="text-center py-16"><User size={40} className="mx-auto text-gray-700 mb-3" /><p className="text-gray-500 text-sm">Eslesen kayit bulunamadi</p></div>
@@ -475,39 +515,39 @@ function LeadsView() {
                 const si = stageInfo(l.status)
                 const idx = stageIndex(l.status)
                 return (
-                  <div key={l.id} className="flex items-start gap-4 p-5 hover:bg-white/[0.01] transition-all group">
+                  <div key={l.id} className="flex items-start gap-4 p-5 hover:bg-white/[0.02] transition-all duration-300 group">
                     <div className="flex-shrink-0">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold">{l.name?.[0] || '?'}</div>
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-emerald-500/10">{l.name?.[0] || '?'}</div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-white font-semibold">{l.name || 'Isimsiz'}</h3>
-                          {l.phone && <a href={'tel:' + l.phone} className="flex items-center gap-1 text-xs text-gray-500 hover:text-emerald-400 transition-all bg-[#080b12]/60 px-2.5 py-1 rounded-lg border border-[#1a2332]"><Phone size={11} />{l.phone}</a>}
+                          <h3 className="text-white font-bold text-sm">{l.name || 'Isimsiz'}</h3>
+                          {l.phone && <a href={'tel:' + l.phone} className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-emerald-400 transition-all bg-[#080b12]/60 px-2.5 py-1 rounded-lg border border-[#1a2332] group-hover:border-white/10"><Phone size={10} />{l.phone}</a>}
+                          {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AI Yanıtlandı</span>}
                         </div>
                         <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
-                          className={'text-xs px-3 py-1.5 rounded-lg border font-medium cursor-pointer transition-all ' + si.bg + ' ' + si.color + ' ' + si.border}>
+                          className={'text-xs px-3 py-1.5 rounded-lg border font-semibold cursor-pointer transition-all ' + si.bg + ' ' + si.color + ' ' + si.border}>
                           {CRM_STAGES.map(s => <option key={s.key} value={s.key} className="bg-[#0d1117]">{s.icon + ' ' + s.label}</option>)}
                         </select>
                       </div>
                       <div className="flex items-start gap-6">
                         <div className="flex-1">
                           {l.needs ? (
-                            <p className="text-xs text-gray-400 leading-relaxed bg-[#080b12]/40 rounded-lg px-3 py-2 border border-[#1a2332]">{l.needs}</p>
+                            <p className="text-xs text-gray-400 leading-relaxed bg-[#080b12]/40 rounded-xl px-3.5 py-2.5 border border-[#1a2332]/80">{l.needs}</p>
                           ) : (
                             <p className="text-xs text-gray-600 italic">Ihtiyac bilgisi yok</p>
                           )}
                         </div>
-                        <div className="flex-shrink-0 space-y-1 text-right">
-                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><Calendar size={11} />{new Date(l.createdAt).toLocaleDateString('tr-TR')}</div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><Filter size={11} />{l.source || 'Web Chat'}</div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><span className={'inline-block w-2 h-2 rounded-full ' + si.bar} />Pipeline: {idx + 1}/{CRM_STAGES.length}</div>
+                        <div className="flex-shrink-0 space-y-1.5 text-right">
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><Calendar size={11} className="text-gray-500" />{new Date(l.createdAt).toLocaleDateString('tr-TR')}</div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><Filter size={11} className="text-gray-500" />{l.source || 'Web Chat'}</div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-600"><span className={'inline-block w-2 h-2 rounded-full ' + si.bar} />{si.label}</div>
                         </div>
                       </div>
-                      {/* Stage progress bar */}
                       <div className="mt-3 flex gap-1">
                         {CRM_STAGES.map((s, i) => (
-                          <div key={s.key} className={'flex-1 h-1.5 rounded-full transition-all duration-300 ' + (i <= idx ? s.bar : 'bg-[#1a2332]')} />
+                          <div key={s.key} className={'flex-1 h-1.5 rounded-full transition-all duration-300 ' + (i <= idx ? s.bar : 'bg-[#1a2332]/50')} />
                         ))}
                       </div>
                     </div>
