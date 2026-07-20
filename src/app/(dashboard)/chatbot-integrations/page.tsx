@@ -1,7 +1,7 @@
 ﻿'use client'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Link2, CheckCircle, XCircle, Loader2, AlertCircle, CheckCircle2, Bot, X, Key, Globe, Copy, Check } from 'lucide-react'
+import { Link2, CheckCircle, XCircle, Loader2, AlertCircle, CheckCircle2, Bot, X, Key, Globe, Copy, Check, Plug, Unplug, ExternalLink, Shield, Smartphone, Monitor } from 'lucide-react'
 
 const PLATFORM_SVGS: Record<string, string> = {
   whatsapp: '<svg viewBox="0 0 24 24" fill="none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" fill="currentColor"/></svg>',
@@ -19,16 +19,22 @@ const platforms = [
   { key: 'instagram', label: 'Instagram', color: 'text-pink-400', bg: 'bg-[#E4405F]/10', border: 'border-pink-500/20', note: 'Instagram işletme hesabınızı bağlayın', type: 'zernio' as const },
   { key: 'facebook', label: 'Facebook Messenger', color: 'text-blue-400', bg: 'bg-[#0866FF]/10', border: 'border-blue-500/20', note: 'Facebook sayfanızı bağlayın', type: 'zernio' as const },
   { key: 'telegram', label: 'Telegram', color: 'text-sky-400', bg: 'bg-[#0088CC]/10', border: 'border-sky-500/20', note: "BotFather'da oluşturduğunuz botu bağlayın", type: 'telegram' as const },
-  { key: 'webchat', label: 'Web Chat', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', note: 'Web sitenize entegre edin, müşterilerinizle canlı iletişim kurun', type: 'webchat' as const },
+  { key: 'webchat', label: 'Web Chat', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', note: 'Web sitenize entegre edin', type: 'webchat' as const },
   { key: 'trendyol', label: 'Trendyol', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', note: 'Trendyol mağazanıza gelen soruları cevaplayın', type: 'apikey' as const },
   { key: 'hepsiburada', label: 'Hepsiburada', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', note: 'Hepsiburada mağazanıza gelen soruları cevaplayın', type: 'apikey' as const },
   { key: 'n11', label: 'n11', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', note: 'n11 mağazanıza gelen soruları cevaplayın', type: 'apikey' as const },
 ]
 
 const WEB_CHAT_STEPS = [
-  { title: 'Kodu Kopyalayın', desc: 'Aşağıdaki kodu kopyalayın, web sitenize ekleyeceksiniz.' },
-  { title: 'Web Sitenize Ekleyin', desc: 'WordPress, Wix, İkas vb. panelinizde "Özel Kod" veya "Header" bölümüne yapıştırın.' },
-  { title: 'Tamam!', desc: 'Müşterileriniz web sitenizde sohbet balonu görecek. Gelen mesajlar bu panele düşecek.' },
+  { title: 'Kodu Kopyalayın', desc: 'Aşağıdaki embed kodunu kopyalayın.' },
+  { title: 'Web Sitenize Ekleyin', desc: 'Panelinizde "Özel Kod" bölümüne yapıştırın.' },
+  { title: 'Tamam!', desc: 'Müşterileriniz sohbet balonunu görecek.' },
+]
+
+const PLATFORM_CATEGORIES = [
+  { label: 'Sosyal Medya & Mesajlaşma', keys: ['whatsapp', 'instagram', 'facebook', 'telegram'] },
+  { label: 'Web Siteleri', keys: ['webchat'] },
+  { label: 'Pazaryerleri', keys: ['trendyol', 'hepsiburada', 'n11'] },
 ]
 
 export default function ChatbotIntegrationsPage() {
@@ -203,11 +209,7 @@ export default function ChatbotIntegrationsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          apiKey: apiKeyForm.apiKey,
-          apiSecret: apiKeyForm.apiSecret,
-          merchantId: apiKeyForm.merchantId || undefined,
-        }),
+        body: JSON.stringify({ apiKey: apiKeyForm.apiKey, apiSecret: apiKeyForm.apiSecret, merchantId: apiKeyForm.merchantId || undefined }),
       })
       const json = await res.json()
       if (json.success) {
@@ -217,29 +219,19 @@ export default function ChatbotIntegrationsPage() {
       } else {
         setApiKeyError(json.message || 'Bağlantı başarısız')
       }
-    } catch {
-      setApiKeyError('Bağlantı hatası')
-    } finally {
-      setApiKeySaving(false)
-    }
+    } catch { setApiKeyError('Bağlantı hatası') } finally { setApiKeySaving(false) }
   }
 
   const handleApiKeyDisconnect = async (platform: string) => {
     try {
-      await fetch('/api/marketplace/' + platform + '/disconnect', {
-        method: 'POST',
-        credentials: 'include',
-      })
+      await fetch('/api/marketplace/' + platform + '/disconnect', { method: 'POST', credentials: 'include' })
       setApiKeyConnected(prev => ({ ...prev, [platform]: false }))
       showToast('success', platform + ' bağlantısı kesildi')
     } catch {}
   }
 
   const handleTelegramConnect = async () => {
-    if (!telegramToken.trim()) {
-      setTelegramError('Lütfen bot token girin')
-      return
-    }
+    if (!telegramToken.trim()) { setTelegramError('Lütfen bot token girin'); return }
     setTelegramTesting(true)
     setTelegramError('')
     try {
@@ -256,23 +248,15 @@ export default function ChatbotIntegrationsPage() {
         setTelegramBotInfo(json.botInfo)
         setTelegramModal(false)
         showToast('success', 'Telegram botu başarıyla bağlandı!')
-      } else {
-        setTelegramError(json.message || 'Bağlantı başarısız')
-      }
-    } catch { setTelegramError('Bağlantı hatası') } finally {
-      setTelegramTesting(false)
-    }
+      } else { setTelegramError(json.message || 'Bağlantı başarısız') }
+    } catch { setTelegramError('Bağlantı hatası') } finally { setTelegramTesting(false) }
   }
 
   const handleTelegramDisconnect = async () => {
     const tenantId = currentTenantId || await getTenantId()
     if (!tenantId) return
     try {
-      await fetch('/api/telegram/tenant-disconnect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId }),
-      })
+      await fetch('/api/telegram/tenant-disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId }) })
       setTelegramConnected(false)
       setTelegramBotInfo(null)
       showToast('success', 'Telegram bağlantısı kesildi')
@@ -286,11 +270,7 @@ export default function ChatbotIntegrationsPage() {
     try {
       const tenantId = currentTenantId || await getTenantId()
       if (!tenantId) return
-      await fetch('/api/zernio/disconnect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId, platform }),
-      })
+      await fetch('/api/zernio/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, platform }) })
       showToast('success', platform + ' bağlantısı kesildi')
       fetchConnections()
     } catch {}
@@ -309,6 +289,8 @@ export default function ChatbotIntegrationsPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const connectedCount = platforms.filter(p => isPlatformConnected(p.key, p.type)).length
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -318,7 +300,7 @@ export default function ChatbotIntegrationsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-8">
       {toast && (
         <div className={'fixed top-4 right-4 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border backdrop-blur-xl transition-all animate-in slide-in-from-right ' + (toast.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-300' : 'bg-red-500/10 border-red-500/20 text-red-300')}>
           {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -360,7 +342,6 @@ export default function ChatbotIntegrationsPage() {
               </div>
               <button onClick={() => { setWebchatModal(false); if (!webchatConnected) setWebchatCode('') }} className="text-gray-500 hover:text-gray-300 transition-colors"><X className="w-5 h-5" /></button>
             </div>
-
             <div className="space-y-6">
               {WEB_CHAT_STEPS.map((step, i) => (
                 <div key={i} className="flex gap-4">
@@ -374,7 +355,6 @@ export default function ChatbotIntegrationsPage() {
                   </div>
                 </div>
               ))}
-
               <div className="bg-[#080b12] border border-[#1a2332] rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs text-gray-500 font-medium">Embed Kodu</label>
@@ -384,11 +364,8 @@ export default function ChatbotIntegrationsPage() {
                 </div>
                 <code className="block text-xs text-gray-300 font-mono bg-[#0d1117] rounded-lg p-3 border border-[#1a2332] break-all">{webchatCode || 'Yükleniyor...'}</code>
               </div>
-
               <div className="flex gap-3">
-                <button onClick={() => { setWebchatModal(false) }} className="flex-1 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-all">
-                  İptal
-                </button>
+                <button onClick={() => { setWebchatModal(false) }} className="flex-1 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-all">İptal</button>
                 <button onClick={() => { setWebchatConnected(true); setWebchatModal(false); showToast('success', 'Web Chat aktifleştirildi! Kodu web sitenize ekleyin.') }} className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center gap-2">
                   <Check size={16} /> Aktifleştir
                 </button>
@@ -410,7 +387,7 @@ export default function ChatbotIntegrationsPage() {
               </div>
               <button onClick={() => setApiKeyModal(null)} className="text-gray-500 hover:text-gray-300 transition-colors"><X className="w-5 h-5" /></button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">{apiKeyModal.label} satıcı panelinizden API anahtarlarınızı alıp girin. Gelen müşteri soruları otomatik cevaplanacak.</p>
+            <p className="text-sm text-gray-500 mb-4">{apiKeyModal.label} satıcı panelinizden API anahtarlarınızı alıp girin.</p>
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-500 block mb-1.5">API Key / App Key</label>
@@ -433,58 +410,81 @@ export default function ChatbotIntegrationsPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Chatbot Entegrasyonları</h1>
-          <p className="text-sm text-gray-500 mt-1">Tüm platformları bağlayın, gelen sorular otomatik cevap alsın</p>
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-8">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-emerald-500/5 rounded-full blur-3xl" />
+        <div className="relative">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Bot className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Chatbot Bağlantıları</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Tüm platformları tek merkezden yönetin, gelen sorular otomatik cevaplansın</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-2 text-sm text-gray-400 bg-[#0a0e14]/60 border border-[#1a2332] rounded-xl px-4 py-2">
+              <Plug className="w-4 h-4 text-emerald-400" />
+              <span><span className="text-white font-semibold">{connectedCount}</span> / {platforms.length} bağlı</span>
+            </div>
+            {features && Object.keys(features).length > 0 && (
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-[#0a0e14]/60 border border-[#1a2332] rounded-xl px-4 py-2">
+                <Shield className="w-4 h-4 text-blue-400" />
+                <span>Aktif modüller: </span>
+                {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
+                  <span key={p.key} className={'px-2 py-0.5 rounded text-[10px] font-medium ' + p.bg + ' ' + p.color}>{p.label}</span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {features && Object.keys(features).length > 0 && (
-        <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-4 flex items-center gap-2 text-sm">
-          <span className="text-gray-500">Aktif modüller:</span>
-          {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
-            <span key={p.key} className={'px-2.5 py-1 rounded-lg text-xs font-medium ' + p.bg + ' ' + p.color}>{p.label}</span>
-          ))}
-          {platforms.filter(p => features[p.key] === false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
-            <span key={p.key} className="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-500/10 text-gray-600 line-through">{p.label}</span>
-          ))}
-        </div>
-      )}
-      <div className="grid md:grid-cols-2 gap-4">
-        {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map((p) => {
-          const isConnected = isPlatformConnected(p.key, p.type)
-          return (
-            <div key={p.key} className={'bg-[#0d1117]/80 backdrop-blur-xl border rounded-2xl p-6 transition-all ' + (isConnected ? 'border-green-500/20' : 'border-[#1a2332] hover:border-blue-500/30')}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={'w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden ' + p.bg}>
-                    <div className={'w-9 h-9 ' + p.color} dangerouslySetInnerHTML={{ __html: PLATFORM_SVGS[p.key] }} />
+      {/* Platform Cards by Category */}
+      {PLATFORM_CATEGORIES.map(cat => {
+        const catPlatforms = platforms.filter(p => cat.keys.includes(p.key) && features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key)))
+        if (catPlatforms.length === 0) return null
+        return (
+          <div key={cat.label}>
+            <h2 className="text-sm font-semibold text-gray-400 tracking-wide mb-4">{cat.label}</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {catPlatforms.map(p => {
+                const isConnected = isPlatformConnected(p.key, p.type)
+                return (
+                  <div key={p.key}
+                    className={'group relative bg-[#0d1117]/80 backdrop-blur-xl border rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 ' + (isConnected ? 'border-emerald-500/20 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5' : 'border-[#1a2332] hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5')}>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={'w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden ' + p.bg}>
+                          <div className={'w-9 h-9 ' + p.color} dangerouslySetInnerHTML={{ __html: PLATFORM_SVGS[p.key] }} />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold text-sm">{p.label}</h3>
+                          <p className="text-[10px] text-gray-500 mt-0.5">{isConnected ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : 'Bağlı') : 'Bağlı değil'}</p>
+                        </div>
+                      </div>
+                      <div className={'w-3 h-3 rounded-full mt-1.5 ' + (isConnected ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-600')} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isConnected ? (
+                        <button onClick={() => handleDisconnect(p.key, p.type)} className="flex-1 py-2.5 rounded-xl text-xs font-medium border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center gap-1.5">
+                          <Unplug className="w-3.5 h-3.5" /> Kes
+                        </button>
+                      ) : (
+                        <button onClick={() => handleConnect(p.key, p.type)} disabled={connecting === p.key} className="flex-1 py-2.5 rounded-xl text-xs font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5">
+                          {connecting === p.key ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Bağlanıyor</> : <><Link2 className="w-3.5 h-3.5" /> Bağla</>}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-white font-semibold">{p.label}</h3>
-                    <p className="text-xs text-gray-500">
-                      {isConnected
-                        ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : 'Bağlı')
-                        : p.note}
-                    </p>
-                  </div>
-                </div>
-                {isConnected ? <CheckCircle className="w-5 h-5 text-green-400" /> : <XCircle className="w-5 h-5 text-gray-600" />}
-              </div>
-              {isConnected ? (
-                <button onClick={() => handleDisconnect(p.key, p.type)} className="w-full py-2.5 rounded-xl text-sm font-medium border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all">
-                  Bağlantıyı Kes
-                </button>
-              ) : (
-                <button onClick={() => handleConnect(p.key, p.type)} disabled={connecting === p.key} className="w-full py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  {connecting === p.key ? <><Loader2 className="w-4 h-4 animate-spin" /> Bağlanıyor...</> : <><Link2 className="w-4 h-4" /> Hesap Bağla</>}
-                </button>
-              )}
+                )
+              })}
             </div>
-          )
-        })}
-      </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
