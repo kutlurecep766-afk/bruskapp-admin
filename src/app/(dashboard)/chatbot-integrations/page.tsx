@@ -1,7 +1,7 @@
 ﻿'use client'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Link2, CheckCircle, XCircle, Loader2, AlertCircle, CheckCircle2, Bot, X, Key, Globe, Copy, Check, Plug, Unplug, ExternalLink, Shield, Smartphone, Monitor } from 'lucide-react'
+import { Link2, CheckCircle, XCircle, Loader2, AlertCircle, CheckCircle2, Bot, X, Key, Globe, Copy, Check, Plug, Unplug, ExternalLink, Shield, Smartphone, Monitor, Activity } from 'lucide-react'
 
 const PLATFORM_SVGS: Record<string, string> = {
   whatsapp: '<svg viewBox="0 0 24 24" fill="none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" fill="currentColor"/></svg>',
@@ -290,17 +290,18 @@ export default function ChatbotIntegrationsPage() {
   }
 
   const connectedCount = platforms.filter(p => isPlatformConnected(p.key, p.type)).length
+  const availableCount = platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).length
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className="space-y-6 pb-12">
       {toast && (
         <div className={'fixed top-4 right-4 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border backdrop-blur-xl transition-all animate-in slide-in-from-right ' + (toast.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-300' : 'bg-red-500/10 border-red-500/20 text-red-300')}>
           {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -412,35 +413,80 @@ export default function ChatbotIntegrationsPage() {
 
       {/* Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-8">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-emerald-500/5 rounded-full blur-3xl" />
-        <div className="relative">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
+        <div className="relative flex items-start justify-between">
+          <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
               <Bot className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Chatbot Bağlantıları</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Tüm platformları tek merkezden yönetin, gelen sorular otomatik cevaplansın</p>
+              <h1 className="text-xl font-bold text-white">Chatbot Bağlantıları</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Tüm platformları tek merkezden yönetin</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-4">
-            <div className="flex items-center gap-2 text-sm text-gray-400 bg-[#0a0e14]/60 border border-[#1a2332] rounded-xl px-4 py-2">
-              <Plug className="w-4 h-4 text-emerald-400" />
-              <span><span className="text-white font-semibold">{connectedCount}</span> / {platforms.length} bağlı</span>
+          <div className="flex items-center gap-3 bg-[#080b12]/60 border border-[#1a2332] rounded-2xl px-5 py-3">
+            <Plug className="w-5 h-5 text-emerald-400" />
+            <div>
+              <p className="text-2xl font-bold text-emerald-400 tracking-tight">{connectedCount}</p>
+              <p className="text-[10px] text-gray-600 uppercase tracking-wider">Bağlı Platform</p>
             </div>
-            {features && Object.keys(features).length > 0 && (
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-[#0a0e14]/60 border border-[#1a2332] rounded-xl px-4 py-2">
-                <Shield className="w-4 h-4 text-blue-400" />
-                <span>Aktif modüller: </span>
-                {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
-                  <span key={p.key} className={'px-2 py-0.5 rounded text-[10px] font-medium ' + p.bg + ' ' + p.color}>{p.label}</span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-blue-500/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-blue-500/10" />
+          <div className="relative">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3"><Link2 size={16} className="text-blue-400" /></div>
+            <p className="text-2xl font-bold text-white tracking-tight">{platforms.length}</p>
+            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Toplam Platform</p>
+          </div>
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-emerald-500/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-emerald-500/10" />
+          <div className="relative">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3"><Plug size={16} className="text-emerald-400" /></div>
+            <p className="text-2xl font-bold text-white tracking-tight">{connectedCount}</p>
+            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Bağlı Platform</p>
+          </div>
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-purple-500/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-purple-500/10" />
+          <div className="relative">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3"><Shield size={16} className="text-purple-400" /></div>
+            <p className="text-2xl font-bold text-white tracking-tight">{availableCount}</p>
+            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Kullanılabilir</p>
+          </div>
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-amber-500/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl transition-all duration-700 group-hover:bg-amber-500/10" />
+          <div className="relative">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3"><Activity size={16} className="text-amber-400" /></div>
+            <p className="text-2xl font-bold text-white tracking-tight">{platforms.length - connectedCount}</p>
+            <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Bağlanmamış</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Modules Chips */}
+      {features && Object.keys(features).length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap bg-[#080b12]/60 border border-[#1a2332] rounded-2xl px-5 py-3">
+          <span className="text-xs text-gray-500 font-medium mr-1">Aktif modüller:</span>
+          {platforms.filter(p => features[p.key] !== false && (isSuperAdmin || hasPlatformPerm(p.key))).map(p => (
+            <span key={p.key} className={'inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-medium ' + p.bg + ' ' + p.color + ' border ' + p.border}>
+              {p.label}
+            </span>
+          ))}
+          {platforms.filter(p => features[p.key] === false).map(p => (
+            <span key={p.key} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-medium bg-gray-500/10 text-gray-600 border border-gray-500/20 line-through">
+              {p.label}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Platform Cards by Category */}
       {PLATFORM_CATEGORIES.map(cat => {
@@ -448,35 +494,43 @@ export default function ChatbotIntegrationsPage() {
         if (catPlatforms.length === 0) return null
         return (
           <div key={cat.label}>
-            <h2 className="text-sm font-semibold text-gray-400 tracking-wide mb-4">{cat.label}</h2>
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-sm font-semibold text-gray-300 tracking-wide">{cat.label}</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-[#1a2332] to-transparent" />
+            </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {catPlatforms.map(p => {
                 const isConnected = isPlatformConnected(p.key, p.type)
                 return (
                   <div key={p.key}
-                    className={'group relative bg-[#0d1117]/80 backdrop-blur-xl border rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 ' + (isConnected ? 'border-emerald-500/20 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5' : 'border-[#1a2332] hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5')}>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={'w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden ' + p.bg}>
-                          <div className={'w-9 h-9 ' + p.color} dangerouslySetInnerHTML={{ __html: PLATFORM_SVGS[p.key] }} />
-                        </div>
-                        <div>
-                          <h3 className="text-white font-semibold text-sm">{p.label}</h3>
-                          <p className="text-[10px] text-gray-500 mt-0.5">{isConnected ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : 'Bağlı') : 'Bağlı değil'}</p>
+                    className={'group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border p-5 transition-all duration-300 hover:scale-[1.02] ' + (isConnected ? 'border-emerald-500/20 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5' : 'border-[#1a2332] hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5')}>
+                    <div className={'absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl transition-all duration-700 ' + (isConnected ? 'opacity-50 bg-emerald-500/5' : 'opacity-0 bg-blue-500/5 group-hover:opacity-50')} />
+                    <div className="relative">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={'w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden ' + p.bg + ' border ' + p.border}>
+                            <div className={'w-9 h-9 ' + p.color} dangerouslySetInnerHTML={{ __html: PLATFORM_SVGS[p.key] }} />
+                          </div>
+                          <div>
+                            <h3 className="text-white font-semibold text-sm">{p.label}</h3>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <div className={'w-2 h-2 rounded-full ' + (isConnected ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-600')} />
+                              <p className="text-[10px] text-gray-500">{isConnected ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : 'Bağlı') : 'Bağlı değil'}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className={'w-3 h-3 rounded-full mt-1.5 ' + (isConnected ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-600')} />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isConnected ? (
-                        <button onClick={() => handleDisconnect(p.key, p.type)} className="flex-1 py-2.5 rounded-xl text-xs font-medium border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center gap-1.5">
-                          <Unplug className="w-3.5 h-3.5" /> Kes
-                        </button>
-                      ) : (
-                        <button onClick={() => handleConnect(p.key, p.type)} disabled={connecting === p.key} className="flex-1 py-2.5 rounded-xl text-xs font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5">
-                          {connecting === p.key ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Bağlanıyor</> : <><Link2 className="w-3.5 h-3.5" /> Bağla</>}
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isConnected ? (
+                          <button onClick={() => handleDisconnect(p.key, p.type)} className="flex-1 py-2.5 rounded-xl text-xs font-medium border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all flex items-center justify-center gap-1.5">
+                            <Unplug className="w-3.5 h-3.5" /> Kes
+                          </button>
+                        ) : (
+                          <button onClick={() => handleConnect(p.key, p.type)} disabled={connecting === p.key} className="flex-1 py-2.5 rounded-xl text-xs font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5">
+                            {connecting === p.key ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Bağlanıyor</> : <><Link2 className="w-3.5 h-3.5" /> Bağla</>}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )
