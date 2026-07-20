@@ -29,9 +29,7 @@ const CHATBOT_PLATFORMS = [
   { key: 'facebook', label: 'Facebook Messenger' },
   { key: 'telegram', label: 'Telegram' },
   { key: 'webchat-widget', label: 'Web Chat' },
-  { key: 'trendyol', label: 'Trendyol' },
-  { key: 'hepsiburada', label: 'Hepsiburada' },
-  { key: 'n11', label: 'n11' },
+
 ]
 
 export default function UsersPage() {
