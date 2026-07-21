@@ -119,8 +119,8 @@ export default function SystemHealthPage() {
             ))}
           </div>
         </div>
+      )}
 
-      {/* Error List */}
       {errorList && errorList.length > 0 && (
         <div className="rounded-2xl border border-[#1a2332] bg-[#0d1117]/80 p-5">
           <div className="flex items-center gap-3 mb-4">
