@@ -56,7 +56,7 @@ export default function MessagesPage() {
           .then(d => setConvos(d))
           .catch(() => {})
         // If this conversation is selected, append the message
-        setSelected(prev => {
+        setSelected((prev: any) => {
           if (prev && msg.from === prev.from && msg.platform === prev.platform) {
             setMsgs(msgsPrev => [...msgsPrev, msg])
           }
