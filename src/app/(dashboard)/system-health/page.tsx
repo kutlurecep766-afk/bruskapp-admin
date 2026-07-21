@@ -4,13 +4,15 @@ import { Activity, Database, MessageSquare, AlertTriangle, Users, Building2, Ref
 
 export default function SystemHealthPage() {
   const [data, setData] = useState<any>(null)
+  const [errorList, setErrorList] = useState<any[]>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchHealth = async () => {
     try {
       const res = await fetch('/api/system/health', { credentials: 'include' })
-      if (res.ok) setData(await res.json())
-    } catch {} finally { setLoading(false) }
+      if (res.ok) { const d = await res.json(); setData(d) }
+    } catch {} try { const er = await fetch('/api/system/health/errors', { credentials: 'include' }); if (er.ok) setErrorList(await er.json()) } catch {}
+    finally { setLoading(false) }
   }
 
   useEffect(() => { fetchHealth(); const i = setInterval(fetchHealth, 30000); return () => clearInterval(i) }, [])
@@ -115,6 +117,46 @@ export default function SystemHealthPage() {
                 <span className="text-xs text-gray-500">{p.lastmsg ? new Date(p.lastmsg).toLocaleString('tr-TR') : 'Henuz mesaj yok'}</span>
               </div>
             ))}
+          </div>
+        </div>
+
+      {/* Error List */}
+      {errorList && errorList.length > 0 && (
+        <div className="rounded-2xl border border-[#1a2332] bg-[#0d1117]/80 p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertTriangle size={20} className="text-amber-400" />
+            <span className="text-white font-semibold text-sm">Son Hatalar</span>
+            <span className="text-xs text-gray-500 ml-auto">Son 50 kayit</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#1a2332] text-gray-500 text-xs uppercase tracking-wider">
+                  <th className="text-left py-2 pr-4">Tarih</th>
+                  <th className="text-left py-2 pr-4">Isletme</th>
+                  <th className="text-left py-2 pr-4">Platform</th>
+                  <th className="text-left py-2 pr-4">Hata</th>
+                  <th className="text-right py-2">Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {errorList.map((e: any) => (
+                  <tr key={e.id} className="border-b border-[#1a2332]/50 hover:bg-[#080b12]/40 transition-colors">
+                    <td className="py-2.5 pr-4 text-gray-400 text-xs whitespace-nowrap">{new Date(e.createdAt).toLocaleString('tr-TR')}</td>
+                    <td className="py-2.5 pr-4 text-gray-300 font-medium">{e.tenantName}</td>
+                    <td className="py-2.5 pr-4"><span className="text-xs px-2 py-0.5 rounded-full bg-[#1a2332] text-gray-400">{e.platform || '-'}</span></td>
+                    <td className="py-2.5 pr-4">
+                      <div className="text-gray-200 font-medium">{e.title}</div>
+                      <div className="text-gray-500 text-xs mt-0.5 line-clamp-1">{e.message}</div>
+                    </td>
+                    <td className="py-2.5 text-right">{e.acknowledged
+                      ? <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">Cozuldu</span>
+                      : <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400">Bekliyor</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
