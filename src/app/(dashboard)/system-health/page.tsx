@@ -4,7 +4,7 @@ import { Activity, Database, MessageSquare, AlertTriangle, Users, Building2, Ref
 
 export default function SystemHealthPage() {
   const [data, setData] = useState<any>(null)
-  const [errorList, setErrorList] = useState<any[]>(null)
+  const [errorList, setErrorList] = useState<any[] | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchHealth = async () => {
