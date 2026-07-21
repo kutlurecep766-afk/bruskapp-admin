@@ -7,7 +7,7 @@ import {
   MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
   Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Crown,
-  Zap, Sparkles, HeartHandshake,
+  Zap, Sparkles, HeartHandshake, Activity,
 
 } from 'lucide-react'
 
@@ -24,6 +24,7 @@ const ALL_MODULES = [
   { key: 'zernio-accounts', label: 'Aboneler / Hesaplar', icon: Radio, href: '/zernio-accounts', perm: 'zernio-accounts' },
   { key: 'webchat', label: 'Chatbot Ayarları', icon: MessageCircle, href: '/webchat', perm: 'webchat' },
   { key: 'errors', label: 'Hata Kayıtları', icon: AlertTriangle, href: '/errors', perm: 'errors' },
+  { key: 'system-health', label: 'Sistem Durumu', icon: Activity, href: '/system-health', perm: 'system-health' },
   { key: 'bulk-messages', label: 'Toplu Mesaj', icon: Send, href: '/bulk-messages', perm: 'bulk-messages' },
   { key: 'reminder-templates', label: 'Hatırlatma Şablonları', icon: Bell, href: '/reminder-templates', perm: 'reminder-templates' },
   { key: 'support', label: '7/24 Destek', icon: HeartHandshake, href: '/support', perm: 'support' },

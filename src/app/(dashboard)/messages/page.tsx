@@ -45,6 +45,27 @@ export default function MessagesPage() {
       .then(r => r.ok ? r.json() : [])
       .then(d => { setConvos(d); setLoading(false) })
       .catch(() => setLoading(false))
+    // SSE for real-time messages
+    const evtSource = new EventSource('/api/messages/events')
+    evtSource.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        // Refresh conversations list
+        fetch('/api/messages/conversations', { credentials: 'include' })
+          .then(r => r.ok ? r.json() : [])
+          .then(d => setConvos(d))
+          .catch(() => {})
+        // If this conversation is selected, append the message
+        setSelected(prev => {
+          if (prev && msg.from === prev.from && msg.platform === prev.platform) {
+            setMsgs(msgsPrev => [...msgsPrev, msg])
+          }
+          return prev
+        })
+      } catch {}
+    }
+    evtSource.onerror = () => {}
+    return () => evtSource.close()
   }, [])
 
   const toggleAiGlobal = async (val: boolean) => {
