@@ -46,12 +46,18 @@ export default function MessagesPage() {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem('bruskapp_ai_global')
-    if (saved === 'false') setAiEnabled(false)
     Promise.all([
+      fetch('/api/tenant/ai-toggle', { credentials: 'include' }).then(r => r.ok ? r.json() : null),
       fetch('/api/messages/conversations', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
       fetch('/api/tenant/platforms', { credentials: 'include' }).then(r => r.ok ? r.json() : ['webchat']),
-    ]).then(([convosData, platformsData]) => {
+    ]).then(([aiData, convosData, platformsData]) => {
+      if (aiData?.aiEnabled !== undefined) {
+        setAiEnabled(aiData.aiEnabled)
+        localStorage.setItem('bruskapp_ai_global', aiData.aiEnabled.toString())
+      } else {
+        const saved = localStorage.getItem('bruskapp_ai_global')
+        if (saved === 'false') setAiEnabled(false)
+      }
       setConvos(convosData)
       setConnectedPlatforms(Array.isArray(platformsData) ? platformsData : ['webchat'])
     }).catch(() => {})
@@ -81,7 +87,8 @@ export default function MessagesPage() {
   const toggleAiGlobal = async (val: boolean) => {
     setAiEnabled(val)
     localStorage.setItem('bruskapp_ai_global', val ? 'true' : 'false')
-    await fetch('/api/tenant/ai-toggle', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: val }) }).catch(() => {})
+    const res = await fetch('/api/tenant/ai-toggle', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: val }) })
+    if (!res.ok) { setAiEnabled(!val); localStorage.setItem('bruskapp_ai_global', (!val).toString()) }
   }
 
   const toggleAiConv = async (convId: string, platform: string, from: string, active: boolean) => {
@@ -211,7 +218,7 @@ export default function MessagesPage() {
             const p = ps(c.platform)
             const Icon = p.icon
             const convId = c.platform + ':' + c.from
-            const isAiActive = aiConvOverride[convId] ?? true
+            const isAiActive = aiEnabled && (aiConvOverride[convId] ?? true)
             return (
               <div key={c.from} onClick={() => selectConv(c)}
                 className={'flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-[#1a2332]/30 hover:bg-white/[0.015] group relative ' + (selected?.from === c.from ? 'bg-blue-500/[0.04] border-l-[3px] border-l-blue-500' : 'border-l-[3px] border-l-transparent')}>
@@ -259,7 +266,7 @@ export default function MessagesPage() {
               <div className="flex items-center gap-2">
                 {(() => {
                   const convId = selected.platform + ':' + selected.from
-                  const isAiActive = aiConvOverride[convId] ?? true
+                  const isAiActive = aiEnabled && (aiConvOverride[convId] ?? true)
                   return (
                     <button onClick={() => toggleAiConv(convId, selected.platform, selected.from, !isAiActive)}
                       className={'px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all flex items-center gap-1.5 shadow-sm ' + (isAiActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20')}>
