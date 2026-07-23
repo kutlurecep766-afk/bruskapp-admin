@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { MessageSquare, Search, Send, ChevronLeft, CheckCircle, XCircle, Clock, Phone, Mail, MessageCircle, User, Edit3, Filter, RefreshCw, Calendar } from 'lucide-react'
+import { MessageSquare, Search, Send, ChevronLeft, Phone, User, Calendar, Bot, CheckCircle2, Filter } from 'lucide-react'
 
 function WAIcon({ className }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -13,16 +13,22 @@ function TGIcon({ className }: { className?: string }) {
 }
 
 const PLATFORM_MAP: Record<string, any> = {
-  whatsapp: { label: 'WhatsApp', icon: WAIcon, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-  instagram: { label: 'Instagram', icon: IGAcon, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
-  telegram: { label: 'Telegram', icon: TGIcon, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-  messenger: { label: 'Messenger', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
-  webchat: { label: 'Web Chat', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-  trendyol: { label: 'Trendyol', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
-  hepsiburada: { label: 'Hepsiburada', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+  whatsapp: { label: 'WhatsApp', icon: WAIcon, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20', dot: 'bg-green-400' },
+  instagram: { label: 'Instagram', icon: IGAcon, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20', dot: 'bg-pink-400' },
+  telegram: { label: 'Telegram', icon: TGIcon, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', dot: 'bg-blue-400' },
+  messenger: { label: 'Messenger', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', dot: 'bg-sky-400' },
+  webchat: { label: 'Web Chat', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', dot: 'bg-emerald-400' },
 }
 
-const ps = (p: string) => PLATFORM_MAP[p] || { label: p, color: 'text-gray-400', bg: 'bg-gray-500/10', icon: null }
+const ps = (p: string) => PLATFORM_MAP[p] || { label: p, color: 'text-gray-400', bg: 'bg-gray-500/10', icon: null, dot: 'bg-gray-400' }
+
+function timeAgo(d: string) {
+  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
+  if (s < 60) return 'simdi'
+  if (s < 3600) return Math.floor(s / 60) + 'dk'
+  if (s < 86400) return Math.floor(s / 3600) + 's'
+  return new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+}
 
 export default function MessagesPage() {
   const [tab, setTab] = useState('messages')
@@ -36,29 +42,31 @@ export default function MessagesPage() {
   const [mobileView, setMobileView] = useState('list')
   const [aiEnabled, setAiEnabled] = useState(true)
   const [aiConvOverride, setAiConvOverride] = useState<Record<string, boolean>>({})
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([])
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('bruskapp_ai_global')
     if (saved === 'false') setAiEnabled(false)
-    fetch('/api/messages/conversations', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : [])
-      .then(d => { setConvos(d); setLoading(false) })
-      .catch(() => setLoading(false))
-    // SSE for real-time messages
+    Promise.all([
+      fetch('/api/messages/conversations', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+      fetch('/api/tenant/platforms', { credentials: 'include' }).then(r => r.ok ? r.json() : ['webchat']),
+      fetch('/api/tenant/ai-override', { credentials: 'include' }).then(r => r.ok ? r.json() : { overrides: {} }),
+    ]).then(([convosData, platformsData, overridesData]) => {
+      setConvos(convosData)
+      setConnectedPlatforms(Array.isArray(platformsData) ? platformsData : ['webchat'])
+      setAiConvOverride(overridesData.overrides || {})
+      setLoading(false)
+    }).catch(() => setLoading(false))
     const evtSource = new EventSource('/api/messages/events')
     evtSource.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data)
-        // Refresh conversations list
         fetch('/api/messages/conversations', { credentials: 'include' })
-          .then(r => r.ok ? r.json() : [])
-          .then(d => setConvos(d))
-          .catch(() => {})
-        // If this conversation is selected, append the message
+          .then(r => r.ok ? r.json() : []).then(d => setConvos(d)).catch(() => {})
         setSelected((prev: any) => {
           if (prev && msg.from === prev.from && msg.platform === prev.platform) {
-            setMsgs(msgsPrev => [...msgsPrev, msg])
+            setMsgs(p => [...p, msg])
           }
           return prev
         })
@@ -74,8 +82,12 @@ export default function MessagesPage() {
     await fetch('/api/tenant/ai-toggle', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: val }) }).catch(() => {})
   }
 
-  const toggleAiConv = (from: string, active: boolean) => {
-    setAiConvOverride(prev => ({ ...prev, [from]: active }))
+  const toggleAiConv = async (convId: string, platform: string, from: string, active: boolean) => {
+    setAiConvOverride(prev => ({ ...prev, [convId]: active }))
+    await fetch('/api/tenant/ai-override', {
+      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform, from, aiEnabled: active }),
+    }).catch(() => {})
   }
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs])
@@ -84,6 +96,7 @@ export default function MessagesPage() {
     setSelected(c); setMobileView('chat')
     const res = await fetch('/api/messages?from=' + encodeURIComponent(c.from) + '&limit=50', { credentials: 'include' })
     if (res.ok) { const d = await res.json(); setMsgs((d.messages || []).reverse()) }
+    await fetch('/api/messages/read?platform=' + encodeURIComponent(c.platform) + '&from=' + encodeURIComponent(c.from), { method: 'POST', credentials: 'include' }).catch(() => {})
   }
 
   const sendMsg = async () => {
@@ -94,7 +107,14 @@ export default function MessagesPage() {
     if (res.ok) { const d = await res.json(); setMsgs((d.messages || []).reverse()) }
   }
 
-  const filteredConvos = convos.filter((c: any) => (!filter || c.platform === filter) && (!search || c.from?.includes(search) || c.fromName?.includes(search)))
+  const platformTabs: any[] = [{ key: '', label: 'Tumu' }]
+  for (const p of connectedPlatforms) {
+    if (PLATFORM_MAP[p]) platformTabs.push({ key: p, ...PLATFORM_MAP[p] })
+  }
+  const filteredConvos = convos.filter((c: any) =>
+    (!filter || c.platform === filter) &&
+    (!search || c.from?.toLowerCase().includes(search.toLowerCase()) || c.fromName?.toLowerCase().includes(search.toLowerCase()))
+  )
 
   const T = (k: string, l: string) => (
     <button key={k} onClick={() => setTab(k)}
@@ -104,41 +124,64 @@ export default function MessagesPage() {
   if (tab !== 'messages') {
     return (
       <div className="space-y-6 pb-12">
-        <h1 className="text-2xl font-bold text-white">Mesajlar</h1>
-        <div className="flex gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">{T('messages', 'Mesajlar')}{T('leads', 'Lead Yonetimi')}</div>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-6">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><MessageSquare size={26} className="text-white" /></div>
+            <div>
+              <h1 className="text-xl font-bold text-white">Mesajlar</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Tum kanallardan gelen mesajlari yonetin</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5 max-w-[280px]">
+          {T('messages', 'Mesajlar')}{T('leads', 'Lead Yonetimi')}
+        </div>
         {tab === 'leads' && <LeadsView />}
       </div>
     )
   }
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return (
+    <div className="flex items-center justify-center h-[60vh]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+        <span className="text-sm text-gray-600">Mesajlar yukleniyor...</span>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="h-[calc(100vh-5rem)] flex gap-0 relative overflow-hidden rounded-2xl border border-[#1a2332] bg-[#0a0e14]">
+    <div className="h-[calc(100vh-5rem)] flex gap-0 relative overflow-hidden rounded-2xl border border-[#1a2332] bg-[#0a0e14] shadow-xl">
       {/* Sidebar */}
-      <div className={'w-full md:w-80 md:flex-shrink-0 border-r border-[#1a2332] flex flex-col bg-[#0d1117]/90 ' + (mobileView === 'chat' ? 'hidden md:flex' : 'flex')}>
+      <div className={'w-full md:w-[340px] md:flex-shrink-0 border-r border-[#1a2332] flex flex-col bg-[#0d1117]/80 backdrop-blur-sm ' + (mobileView === 'chat' ? 'hidden md:flex' : 'flex')}>
         <div className="p-4 border-b border-[#1a2332] space-y-3">
-          <div className="flex items-center gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">
-            {T('messages', 'Mesajlar')}{T('leads', 'Lead')}
-          </div>
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-gray-500 uppercase tracking-wider">AI Asistan</span>
-            <button onClick={() => toggleAiGlobal(!aiEnabled)}
-              className={'relative inline-flex h-5 w-9 items-center rounded-full transition-all ' + (aiEnabled ? 'bg-emerald-500' : 'bg-gray-600')}>
-              <span className={'inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-all ' + (aiEnabled ? 'translate-x-5' : 'translate-x-1')} />
-            </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/10"><MessageSquare size={15} className="text-white" /></div>
+              <span className="text-sm font-bold text-white">Mesajlar</span>
+              <span className="text-[10px] text-gray-600 bg-[#080b12] px-2 py-0.5 rounded-full border border-[#1a2332]">{convos.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-gray-600 uppercase tracking-widest">AI</span>
+              <button onClick={() => toggleAiGlobal(!aiEnabled)}
+                className={'relative inline-flex h-[18px] w-[32px] items-center rounded-full transition-all duration-300 ' + (aiEnabled ? 'bg-emerald-500' : 'bg-gray-700')}>
+                <span className={'inline-block h-3 w-3 transform rounded-full bg-white transition-all duration-300 shadow-sm ' + (aiEnabled ? 'translate-x-[17px]' : 'translate-x-[2px]')} />
+              </button>
+            </div>
           </div>
           <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
-            <input value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" placeholder="Ara..." />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" placeholder="Konusma ara..." />
           </div>
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-            {[{ key: '', label: 'Tumu' }, ...Object.entries(PLATFORM_MAP).map(([k, v]) => ({ key: k, ...v }))].map(p => {
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
+            {platformTabs.map(p => {
               const Icon = p.icon
               const active = filter === p.key
               return (
                 <button key={p.key} onClick={() => setFilter(active ? '' : p.key)}
-                  className={'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ' + (active ? (p.bg + ' ' + p.border + ' ' + p.color) : 'border-[#1a2332] text-gray-500 hover:text-white hover:border-gray-600')}>
+                  className={'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border whitespace-nowrap ' + (active ? (p.bg + ' ' + p.border + ' ' + p.color) : 'border-[#1a2332] text-gray-500 hover:text-white hover:border-gray-600')}>
                   {Icon && <Icon className="w-3.5 h-3.5" />}
                   {p.label}
                 </button>
@@ -146,26 +189,38 @@ export default function MessagesPage() {
             })}
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
           {filteredConvos.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 text-sm">Henuz konusma yok</div>
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-[#080b12] border border-[#1a2332] flex items-center justify-center mb-4"><MessageSquare size={22} className="text-gray-700" /></div>
+              <p className="text-sm text-gray-500 font-medium mb-1">Henuz konusma yok</p>
+              <p className="text-[11px] text-gray-600">Musterilerinizden mesaj geldiginde burada gorunecek</p>
+            </div>
           ) : filteredConvos.map((c: any) => {
             const p = ps(c.platform)
             const Icon = p.icon
+            const convId = c.platform + ':' + c.from
+            const isAiActive = aiConvOverride[convId] ?? true
             return (
               <div key={c.from} onClick={() => selectConv(c)}
-                className={'flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-[#1a2332]/50 hover:bg-white/[0.02] group ' + (selected?.from === c.from ? 'bg-blue-500/5' : '')}>
-                <div className="relative flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">{(c.fromName?.[0] || c.from?.[0] || '?').toUpperCase()}</div>
-                  {Icon && <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#0a0e14] flex items-center justify-center"><Icon className={'w-2.5 h-2.5 ' + p.color} /></div>}
+                className={'flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-[#1a2332]/30 hover:bg-white/[0.015] group relative ' + (selected?.from === c.from ? 'bg-blue-500/[0.04] border-l-[3px] border-l-blue-500' : 'border-l-[3px] border-l-transparent')}>
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/5">{(c.fromName?.[0] || c.from?.[0] || '?').toUpperCase()}</div>
+                  {Icon && <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#0d1117] flex items-center justify-center ring-[3px] ring-[#0d1117]"><Icon className={'w-2.5 h-2.5 ' + p.color} /></div>}
+                  {c.count > 0 && <div className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center text-white text-[8px] font-bold ring-[3px] ring-[#0d1117]">{c.count > 99 ? '99+' : c.count}</div>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-white font-medium truncate">{c.fromName || c.from}</span>
-                    <span className="text-[10px] text-gray-600 flex-shrink-0">{c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleDateString('tr-TR') : ''}</span>
+                    <span className="text-[10px] text-gray-600 flex-shrink-0 font-mono">{timeAgo(c.lastMessageAt)}</span>
                   </div>
-                  <p className="text-xs text-gray-500 truncate mt-0.5">{c.lastMessage || ''}</p>
-                  {Icon && <div className="flex items-center gap-1 mt-1"><Icon className={'w-3 h-3 ' + p.color} /><span className={'text-[10px] ' + p.color}>{p.label}</span></div>}
+                  <p className="text-xs text-gray-500 truncate mt-0.5 leading-relaxed">{c.lastContent || ''}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="flex items-center gap-1"><Icon className={'w-2.5 h-2.5 ' + p.color} /><span className={'text-[9px] ' + p.color}>{p.label}</span></span>
+                    {!isAiActive && (
+                      <span className="flex items-center gap-1 text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">Devralindi</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )
@@ -174,58 +229,87 @@ export default function MessagesPage() {
       </div>
 
       {/* Chat Area */}
-      <div className={'flex-1 flex flex-col bg-gradient-to-br from-[#0a0e14] via-[#0d1117] to-[#0a0e14] ' + (mobileView === 'list' ? 'hidden md:flex' : 'flex')}>
+      <div className={'flex-1 flex flex-col ' + (mobileView === 'list' ? 'hidden md:flex' : 'flex')}>
         {selected ? (
           <>
-            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#1a2332] bg-[#0d1117]/95">
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-[#1a2332] bg-[#0d1117]/95 backdrop-blur-sm">
               <button onClick={() => setMobileView('list')} className="md:hidden p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"><ChevronLeft size={18} /></button>
               <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">{(selected.fromName?.[0] || selected.from?.[0] || '?').toUpperCase()}</div>
-                {(() => { const p = ps(selected.platform); const Icon = p.icon; return Icon ? <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#0a0e14] flex items-center justify-center"><Icon className={'w-2.5 h-2.5 ' + p.color} /></div> : null })()}
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">{(selected.fromName?.[0] || selected.from?.[0] || '?').toUpperCase()}</div>
+                {(() => { const p = ps(selected.platform); const Icon = p.icon; return Icon ? <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#0d1117] flex items-center justify-center ring-[3px] ring-[#0d1117]"><Icon className={'w-2.5 h-2.5 ' + p.color} /></div> : null })()}
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-white font-medium">{selected.fromName || selected.from}</p>
-                <p className={'text-[10px] ' + (ps(selected.platform).color || 'text-gray-500')}>{ps(selected.platform).label}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white font-medium truncate">{selected.fromName || selected.from}</p>
+                <p className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                  <span className={'inline-block w-1.5 h-1.5 rounded-full ' + ps(selected.platform).dot} />
+                  {ps(selected.platform).label}
+                </p>
               </div>
-              <button onClick={() => toggleAiConv(selected.from, !(aiConvOverride[selected.from] ?? true))}
-                className={'px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all flex items-center gap-1.5 ' + ((aiConvOverride[selected.from] ?? true) ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20')}>
-                {(aiConvOverride[selected.from] ?? true) ? '🤖 AI Aktif' : '👤 Devralındı'}
-              </button>
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const convId = selected.platform + ':' + selected.from
+                  const isAiActive = aiConvOverride[convId] ?? true
+                  return (
+                    <button onClick={() => toggleAiConv(convId, selected.platform, selected.from, !isAiActive)}
+                      className={'px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all flex items-center gap-1.5 shadow-sm ' + (isAiActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20')}>
+                      <Bot size={12} />
+                      {isAiActive ? 'AI Aktif' : 'Devralindi'}
+                    </button>
+                  )
+                })()}
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(99,102,241,0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(168,85,247,0.03) 0%, transparent 50%)' }}>
-              {msgs.map((m: any, i: number) => {
+            <div className="flex-1 overflow-y-auto p-5 space-y-3 relative" style={{ backgroundImage: 'radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.03) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, rgba(168,85,247,0.03) 0%, transparent 50%)' }}>
+              {msgs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <MessageSquare size={28} className="text-gray-700 mb-3" />
+                  <p className="text-sm text-gray-600">Henuz mesaj yok</p>
+                </div>
+              ) : msgs.map((m: any, i: number) => {
                 const prev = msgs[i - 1]
                 const showAvatar = !prev || prev.direction !== m.direction || prev.from !== m.from
+                const isOutgoing = m.direction === 'outgoing'
                 return (
-                  <div key={m.id} className={'flex items-end gap-2 ' + (m.direction === 'outgoing' ? 'justify-end' : 'justify-start')}>
-                    {m.direction === 'incoming' && showAvatar && <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">{(m.fromName?.[0] || m.from?.[0] || '?').toUpperCase()}</div>}
-                    {m.direction === 'incoming' && !showAvatar && <div className="w-7 flex-shrink-0" />}
-                    <div className={'max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ' + (m.direction === 'outgoing' ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#1a2332] text-gray-200 border border-[#2a3a4a] rounded-bl-md')}>
-                      <p>{m.content}</p>
-                      <p className={'text-[10px] mt-1.5 text-right ' + (m.direction === 'outgoing' ? 'text-blue-200' : 'text-gray-600')}>{new Date(m.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <div key={m.id} className={'flex items-end gap-2.5 ' + (isOutgoing ? 'justify-end' : 'justify-start')}>
+                    {!isOutgoing && showAvatar && (
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-md">{(m.fromName?.[0] || m.from?.[0] || '?').toUpperCase()}</div>
+                    )}
+                    {!isOutgoing && !showAvatar && <div className="w-8 flex-shrink-0" />}
+                    <div className={'max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm transition-all ' + (isOutgoing ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white rounded-br-sm' : 'bg-[#1a2332] text-gray-200 border border-[#2a3a4a]/50 rounded-bl-sm')}>
+                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      <p className={'text-[9px] mt-2 flex items-center justify-end gap-1 ' + (isOutgoing ? 'text-blue-200/70' : 'text-gray-600')}>
+                        {new Date(m.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        {isOutgoing && <CheckCircle2 size={10} className="opacity-60" />}
+                      </p>
                     </div>
-                    {m.direction === 'outgoing' && showAvatar && <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">B</div>}
-                    {m.direction === 'outgoing' && !showAvatar && <div className="w-7 flex-shrink-0" />}
+                    {isOutgoing && showAvatar && (
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-md">
+                        <Bot size={14} />
+                      </div>
+                    )}
+                    {isOutgoing && !showAvatar && <div className="w-8 flex-shrink-0" />}
                   </div>
                 )
               })}
               <div ref={endRef} />
             </div>
-            <div className="p-3.5 border-t border-[#1a2332] bg-[#0d1117]/95">
-              <div className="flex gap-2.5">
-                <input value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg()}
-                  className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" placeholder="Mesaj yazin..." />
+            <div className="p-4 border-t border-[#1a2332] bg-[#0d1117]/95 backdrop-blur-sm">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 relative">
+                  <input value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg() } }}
+                    className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all pr-10" placeholder="Mesaj yazin..." />
+                </div>
                 <button onClick={sendMsg} disabled={!newMsg.trim()}
-                  className="px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 flex items-center gap-2 active:scale-[0.98]"><Send size={16} /></button>
+                  className="px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 disabled:opacity-40 flex items-center gap-2 active:scale-[0.96]"><Send size={15} /></button>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(99,102,241,0.05) 0%, transparent 60%)' }}>
+          <div className="flex-1 flex items-center justify-center relative" style={{ backgroundImage: 'radial-gradient(ellipse at 50% 50%, rgba(99,102,241,0.05) 0%, transparent 60%)' }}>
             <div className="text-center max-w-xs">
-              <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-[#1a2332] to-[#0d1117] flex items-center justify-center mb-6 shadow-inner border border-white/[0.03]"><MessageSquare size={36} className="text-gray-600" /></div>
-              <h3 className="text-white/30 text-sm font-medium mb-2">Mesajlar</h3>
-              <p className="text-white/15 text-xs leading-relaxed">Soldan bir konusma secin</p>
+              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#1a2332] to-[#0d1117] flex items-center justify-center mb-5 shadow-inner border border-white/[0.03]"><MessageSquare size={32} className="text-gray-600" /></div>
+              <h3 className="text-white/30 text-sm font-medium mb-1.5">Mesajlar</h3>
+              <p className="text-white/15 text-xs leading-relaxed">Soldan bir konusma secin veya musteri mesaji bekleyin</p>
             </div>
           </div>
         )}
@@ -236,12 +320,12 @@ export default function MessagesPage() {
 
 // ====== CRM Lead Yonetimi ======
 const CRM_STAGES = [
-  { key: 'yeni', label: 'Yeni Lead', icon: '🆕', desc: 'AI yanıt vermedi, bekliyor', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', bar: 'bg-blue-500' },
-  { key: 'gorusuldu', label: 'İletişime Geçildi', icon: '📞', desc: 'AI yanıt verdi veya manuel görüşüldü', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', bar: 'bg-amber-500' },
-  { key: 'mql', label: 'MQL', icon: '📊', desc: 'Pazarlama onaylı aday', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', bar: 'bg-sky-500' },
-  { key: 'sql', label: 'SQL', icon: '🎯', desc: 'Satışa hazır aday', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', bar: 'bg-violet-500' },
-  { key: 'musteri', label: 'Müşteri', icon: '✅', desc: 'Satış tamamlandı', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', bar: 'bg-emerald-500' },
-  { key: 'lost', label: 'Kayıp', icon: '❌', desc: 'Satış gerçekleşmedi', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', bar: 'bg-red-500' },
+  { key: 'yeni', label: 'Yeni Lead', icon: '🆕', desc: 'AI yanit vermedi, bekliyor', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', bar: 'bg-blue-500' },
+  { key: 'gorusuldu', label: 'Iletisime Gecildi', icon: '📞', desc: 'AI yanit verdi veya manuel gorusuldu', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', bar: 'bg-amber-500' },
+  { key: 'mql', label: 'MQL', icon: '📊', desc: 'Pazarlama onayli aday', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', bar: 'bg-sky-500' },
+  { key: 'sql', label: 'SQL', icon: '🎯', desc: 'Satisa hazir aday', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', bar: 'bg-violet-500' },
+  { key: 'musteri', label: 'Musteri', icon: '✅', desc: 'Satis tamamlandi', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', bar: 'bg-emerald-500' },
+  { key: 'lost', label: 'Kayip', icon: '❌', desc: 'Satis gerceklesmedi', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', bar: 'bg-red-500' },
 ]
 
 const stageInfo = (key: string) => CRM_STAGES.find(s => s.key === key) || CRM_STAGES[0]
@@ -256,7 +340,6 @@ function LeadsView() {
 
   useEffect(() => {
     fetch('/api/leads', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(d => {
-      // Auto-move: if lead has AI response, move to goruldu
       setLeads(d.map((l: any) => {
         if (l.status === 'yeni' && l.hasAiReply) return { ...l, status: 'gorusuldu' }
         return l
@@ -284,27 +367,24 @@ function LeadsView() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-6 lg:p-8">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20"><User size={24} className="text-white" /></div>
             <div>
-              <h1 className="text-xl font-bold text-white">CRM Lead Yönetimi</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Müşteri adaylarını yönetin, puanlayın ve satışa dönüştürün</p>
+              <h1 className="text-xl font-bold text-white">CRM Lead Yonetimi</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Musteri adaylarini yonetin, puanlayin ve satisa donusturun</p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Pipeline Stages Overview */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {CRM_STAGES.map(s => {
           const count = stageCounts[s.key] || 0
           return (
             <div key={s.key} onClick={() => setSelectedStage(selectedStage === s.key ? '' : s.key)}
-              className={'relative overflow-hidden rounded-2xl border p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-' + (s.key === 'yeni' ? 'blue' : s.key === 'gorusuldu' ? 'amber' : s.key === 'musteri' ? 'emerald' : s.key === 'lost' ? 'red' : 'purple') + '-500/10 ' + s.bg + ' ' + s.border + (selectedStage === s.key ? ' ring-2 ring-white/20' : '')}>
+              className={'relative overflow-hidden rounded-2xl border p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ' + s.bg + ' ' + s.border + (selectedStage === s.key ? ' ring-2 ring-white/20' : '')}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xl">{s.icon}</span>
                 <span className={'text-lg font-bold ' + s.color}>{count}</span>
@@ -318,8 +398,6 @@ function LeadsView() {
           )
         })}
       </div>
-
-      {/* Search & View Toggle */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
@@ -330,8 +408,6 @@ function LeadsView() {
           <button onClick={() => setViewMode('list')} className={'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ' + (viewMode === 'list' ? 'bg-emerald-500/10 text-emerald-400 shadow-sm' : 'text-gray-500 hover:text-white')}>Liste</button>
         </div>
       </div>
-
-      {/* Pipeline View */}
       {viewMode === 'pipeline' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {CRM_STAGES.map(stage => {
@@ -353,7 +429,7 @@ function LeadsView() {
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-md">{l.name?.[0] || (l.source === 'webchat' ? 'W' : l.source?.[0]?.toUpperCase() || '?')}</div>
-                          <span className="text-xs text-white font-semibold truncate max-w-[90px]">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</span>
+                          <span className="text-xs text-white font-semibold truncate max-w-[90px]">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretcisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</span>
                         </div>
                         <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
                           className="text-[9px] px-1.5 py-0.5 rounded-lg border bg-[#0d1117]/80 cursor-pointer text-gray-400 border-[#1a2332] hover:text-white hover:border-white/20 transition-all">
@@ -386,8 +462,6 @@ function LeadsView() {
           })}
         </div>
       )}
-
-      {/* List View */}
       {viewMode === 'list' && (
         <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl overflow-hidden shadow-xl shadow-black/10">
           <div className="p-4 border-b border-[#1a2332] flex items-center justify-between bg-[#0a0e14]/80">
@@ -409,9 +483,9 @@ function LeadsView() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-white font-bold text-sm">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</h3>
+                          <h3 className="text-white font-bold text-sm">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretcisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</h3>
                           {l.phone && <a href={'tel:' + l.phone} className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-emerald-400 transition-all bg-[#080b12]/60 px-2.5 py-1 rounded-lg border border-[#1a2332] group-hover:border-white/10"><Phone size={10} />{l.phone}</a>}
-                          {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AI Yanıtlandı</span>}
+                          {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AI Yanitlandi</span>}
                         </div>
                         <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
                           className={'text-xs px-3 py-1.5 rounded-lg border font-semibold cursor-pointer transition-all ' + si.bg + ' ' + si.color + ' ' + si.border}>
