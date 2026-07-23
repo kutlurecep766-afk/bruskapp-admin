@@ -51,13 +51,15 @@ export default function MessagesPage() {
     Promise.all([
       fetch('/api/messages/conversations', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
       fetch('/api/tenant/platforms', { credentials: 'include' }).then(r => r.ok ? r.json() : ['webchat']),
-      fetch('/api/tenant/ai-override', { credentials: 'include' }).then(r => r.ok ? r.json() : { overrides: {} }),
-    ]).then(([convosData, platformsData, overridesData]) => {
+    ]).then(([convosData, platformsData]) => {
       setConvos(convosData)
       setConnectedPlatforms(Array.isArray(platformsData) ? platformsData : ['webchat'])
-      setAiConvOverride(overridesData.overrides || {})
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    }).catch(() => {})
+    fetch('/api/tenant/ai-override', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : { overrides: {} })
+      .then(data => setAiConvOverride(data.overrides || {}))
+      .catch(() => {})
+      .finally(() => setLoading(false))
     const evtSource = new EventSource('/api/messages/events')
     evtSource.onmessage = (e) => {
       try {
@@ -84,10 +86,11 @@ export default function MessagesPage() {
 
   const toggleAiConv = async (convId: string, platform: string, from: string, active: boolean) => {
     setAiConvOverride(prev => ({ ...prev, [convId]: active }))
-    await fetch('/api/tenant/ai-override', {
+    const res = await fetch('/api/tenant/ai-override', {
       method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platform, from, aiEnabled: active }),
-    }).catch(() => {})
+    })
+    if (!res.ok) setAiConvOverride(prev => ({ ...prev, [convId]: !active }))
   }
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs])
