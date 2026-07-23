@@ -24,14 +24,14 @@ const ps = (p: string) => PLATFORM_MAP[p] || { label: p, color: 'text-gray-400',
 
 function timeAgo(d: string) {
   const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
-  if (s < 60) return 'simdi'
+  if (s < 60) return 'şimdi'
   if (s < 3600) return Math.floor(s / 60) + 'dk'
   if (s < 86400) return Math.floor(s / 3600) + 's'
   return new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
 }
 
 export default function MessagesPage() {
-  const [tab, setTab] = useState('messages')
+  const [tab, setTab] = useState<string|'leads'>('messages')
   const [convos, setConvos] = useState<any[]>([])
   const [selected, setSelected] = useState<any>(null)
   const [msgs, setMsgs] = useState<any[]>([])
@@ -97,17 +97,19 @@ export default function MessagesPage() {
     const res = await fetch('/api/messages?from=' + encodeURIComponent(c.from) + '&limit=50', { credentials: 'include' })
     if (res.ok) { const d = await res.json(); setMsgs((d.messages || []).reverse()) }
     await fetch('/api/messages/read?platform=' + encodeURIComponent(c.platform) + '&from=' + encodeURIComponent(c.from), { method: 'POST', credentials: 'include' }).catch(() => {})
+    fetch('/api/messages/conversations', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(d => setConvos(d)).catch(() => {})
   }
 
   const sendMsg = async () => {
     if (!newMsg.trim() || !selected) return
-    await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ to: selected.from, content: newMsg, platform: selected.platform }) })
+    await fetch('/api/messages/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ to: selected.from, content: newMsg, platform: selected.platform }) })
     setNewMsg('')
     const res = await fetch('/api/messages?from=' + encodeURIComponent(selected.from) + '&limit=50', { credentials: 'include' })
     if (res.ok) { const d = await res.json(); setMsgs((d.messages || []).reverse()) }
+    fetch('/api/messages/conversations', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(d => setConvos(d)).catch(() => {})
   }
 
-  const platformTabs: any[] = [{ key: '', label: 'Tumu' }]
+  const platformTabs: any[] = [{ key: '', label: 'Tümü' }]
   for (const p of connectedPlatforms) {
     if (PLATFORM_MAP[p]) platformTabs.push({ key: p, ...PLATFORM_MAP[p] })
   }
@@ -130,12 +132,12 @@ export default function MessagesPage() {
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><MessageSquare size={26} className="text-white" /></div>
             <div>
               <h1 className="text-xl font-bold text-white">Mesajlar</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Tum kanallardan gelen mesajlari yonetin</p>
+              <p className="text-sm text-gray-500 mt-0.5">Tüm kanallardan gelen mesajları yönetin</p>
             </div>
           </div>
         </div>
         <div className="flex gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5 max-w-[280px]">
-          {T('messages', 'Mesajlar')}{T('leads', 'Lead Yonetimi')}
+          {T('messages', 'Mesajlar')}{T('leads', 'Lead Yönetimi')}
         </div>
         {tab === 'leads' && <LeadsView />}
       </div>
@@ -146,7 +148,7 @@ export default function MessagesPage() {
     <div className="flex items-center justify-center h-[60vh]">
       <div className="flex flex-col items-center gap-3">
         <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-        <span className="text-sm text-gray-600">Mesajlar yukleniyor...</span>
+        <span className="text-sm text-gray-600">Mesajlar yükleniyor...</span>
       </div>
     </div>
   )
@@ -162,18 +164,24 @@ export default function MessagesPage() {
               <span className="text-sm font-bold text-white">Mesajlar</span>
               <span className="text-[10px] text-gray-600 bg-[#080b12] px-2 py-0.5 rounded-full border border-[#1a2332]">{convos.length}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] text-gray-600 uppercase tracking-widest">AI</span>
-              <button onClick={() => toggleAiGlobal(!aiEnabled)}
-                className={'relative inline-flex h-[18px] w-[32px] items-center rounded-full transition-all duration-300 ' + (aiEnabled ? 'bg-emerald-500' : 'bg-gray-700')}>
-                <span className={'inline-block h-3 w-3 transform rounded-full bg-white transition-all duration-300 shadow-sm ' + (aiEnabled ? 'translate-x-[17px]' : 'translate-x-[2px]')} />
+            <div className="flex items-center gap-1">
+              <button onClick={() => setTab('leads')}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all text-gray-500 hover:text-white">
+                Lead
               </button>
+              <div className="flex items-center gap-2 ml-1 pl-2 border-l border-[#1a2332]">
+                <span className="text-[9px] text-gray-600 uppercase tracking-widest">AI</span>
+                <button onClick={() => toggleAiGlobal(!aiEnabled)}
+                  className={'relative inline-flex h-[18px] w-[32px] items-center rounded-full transition-all duration-300 ' + (aiEnabled ? 'bg-emerald-500' : 'bg-gray-700')}>
+                  <span className={'inline-block h-3 w-3 transform rounded-full bg-white transition-all duration-300 shadow-sm ' + (aiEnabled ? 'translate-x-[17px]' : 'translate-x-[2px]')} />
+                </button>
+              </div>
             </div>
           </div>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
             <input value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" placeholder="Konusma ara..." />
+              className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 transition-all" placeholder="Konuşma ara..." />
           </div>
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
             {platformTabs.map(p => {
@@ -193,8 +201,8 @@ export default function MessagesPage() {
           {filteredConvos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <div className="w-14 h-14 rounded-2xl bg-[#080b12] border border-[#1a2332] flex items-center justify-center mb-4"><MessageSquare size={22} className="text-gray-700" /></div>
-              <p className="text-sm text-gray-500 font-medium mb-1">Henuz konusma yok</p>
-              <p className="text-[11px] text-gray-600">Musterilerinizden mesaj geldiginde burada gorunecek</p>
+              <p className="text-sm text-gray-500 font-medium mb-1">Henüz konuşma yok</p>
+              <p className="text-[11px] text-gray-600">Müşterilerinizden mesaj geldiğinde burada görünecek</p>
             </div>
           ) : filteredConvos.map((c: any) => {
             const p = ps(c.platform)
@@ -218,7 +226,7 @@ export default function MessagesPage() {
                   <div className="flex items-center gap-2 mt-1.5">
                     <span className="flex items-center gap-1"><Icon className={'w-2.5 h-2.5 ' + p.color} /><span className={'text-[9px] ' + p.color}>{p.label}</span></span>
                     {!isAiActive && (
-                      <span className="flex items-center gap-1 text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">Devralindi</span>
+                      <span className="flex items-center gap-1 text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">Devralındı</span>
                     )}
                   </div>
                 </div>
@@ -263,7 +271,7 @@ export default function MessagesPage() {
               {msgs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <MessageSquare size={28} className="text-gray-700 mb-3" />
-                  <p className="text-sm text-gray-600">Henuz mesaj yok</p>
+                  <p className="text-sm text-gray-600">Henüz mesaj yok</p>
                 </div>
               ) : msgs.map((m: any, i: number) => {
                 const prev = msgs[i - 1]
@@ -309,7 +317,7 @@ export default function MessagesPage() {
             <div className="text-center max-w-xs">
               <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#1a2332] to-[#0d1117] flex items-center justify-center mb-5 shadow-inner border border-white/[0.03]"><MessageSquare size={32} className="text-gray-600" /></div>
               <h3 className="text-white/30 text-sm font-medium mb-1.5">Mesajlar</h3>
-              <p className="text-white/15 text-xs leading-relaxed">Soldan bir konusma secin veya musteri mesaji bekleyin</p>
+              <p className="text-white/15 text-xs leading-relaxed">Soldan bir konuşma seçin veya müşteri mesajı bekleyin</p>
             </div>
           </div>
         )}
@@ -318,14 +326,14 @@ export default function MessagesPage() {
   )
 }
 
-// ====== CRM Lead Yonetimi ======
+// ====== CRM Lead Yönetimi ======
 const CRM_STAGES = [
-  { key: 'yeni', label: 'Yeni Lead', icon: '🆕', desc: 'AI yanit vermedi, bekliyor', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', bar: 'bg-blue-500' },
-  { key: 'gorusuldu', label: 'Iletisime Gecildi', icon: '📞', desc: 'AI yanit verdi veya manuel gorusuldu', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', bar: 'bg-amber-500' },
-  { key: 'mql', label: 'MQL', icon: '📊', desc: 'Pazarlama onayli aday', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', bar: 'bg-sky-500' },
-  { key: 'sql', label: 'SQL', icon: '🎯', desc: 'Satisa hazir aday', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', bar: 'bg-violet-500' },
-  { key: 'musteri', label: 'Musteri', icon: '✅', desc: 'Satis tamamlandi', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', bar: 'bg-emerald-500' },
-  { key: 'lost', label: 'Kayip', icon: '❌', desc: 'Satis gerceklesmedi', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', bar: 'bg-red-500' },
+  { key: 'yeni', label: 'Yeni Lead', icon: '🆕', desc: 'AI yanıt vermedi, bekliyor', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', bar: 'bg-blue-500' },
+  { key: 'gorusuldu', label: 'İletişime Geçildi', icon: '📞', desc: 'AI yanıt verdi veya manuel görüşüldü', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', bar: 'bg-amber-500' },
+  { key: 'mql', label: 'MQL', icon: '📊', desc: 'Pazarlama onaylı aday', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', bar: 'bg-sky-500' },
+  { key: 'sql', label: 'SQL', icon: '🎯', desc: 'Satışa hazır aday', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', bar: 'bg-violet-500' },
+  { key: 'musteri', label: 'Müşteri', icon: '✅', desc: 'Satış tamamlandı', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', bar: 'bg-emerald-500' },
+  { key: 'lost', label: 'Kayıp', icon: '❌', desc: 'Satış gerçekleşmedi', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', bar: 'bg-red-500' },
 ]
 
 const stageInfo = (key: string) => CRM_STAGES.find(s => s.key === key) || CRM_STAGES[0]
@@ -373,8 +381,8 @@ function LeadsView() {
           <div className="flex items-center gap-3 mb-2">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20"><User size={24} className="text-white" /></div>
             <div>
-              <h1 className="text-xl font-bold text-white">CRM Lead Yonetimi</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Musteri adaylarini yonetin, puanlayin ve satisa donusturun</p>
+              <h1 className="text-xl font-bold text-white">CRM Lead Yönetimi</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Müşteri adaylarını yönetin, puanlayın ve satışa dönüştürün</p>
             </div>
           </div>
         </div>
@@ -401,7 +409,7 @@ function LeadsView() {
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
-          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Musteri adi, telefon veya ihtiyac ile ara..." className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Müşteri adı, telefon veya ihtiyaç ile ara..." className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
         </div>
         <div className="flex gap-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl p-0.5">
           <button onClick={() => setViewMode('pipeline')} className={'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ' + (viewMode === 'pipeline' ? 'bg-emerald-500/10 text-emerald-400 shadow-sm' : 'text-gray-500 hover:text-white')}>Pipeline</button>
@@ -423,7 +431,7 @@ function LeadsView() {
                 </div>
                 <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
                   {stageLeads.length === 0 ? (
-                    <div className="text-center py-6 text-gray-600 text-[10px]">Henuz kayit yok</div>
+                    <div className="text-center py-6 text-gray-600 text-[10px]">Henüz kayıt yok</div>
                   ) : stageLeads.map((l: any) => (
                     <div key={l.id} className="bg-[#080b12]/80 backdrop-blur-sm rounded-xl p-3 border border-[#1a2332] hover:border-white/20 hover:shadow-lg hover:shadow-black/20 transition-all duration-300 group">
                       <div className="flex items-center justify-between mb-1.5">
@@ -465,11 +473,11 @@ function LeadsView() {
       {viewMode === 'list' && (
         <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl overflow-hidden shadow-xl shadow-black/10">
           <div className="p-4 border-b border-[#1a2332] flex items-center justify-between bg-[#0a0e14]/80">
-            <p className="text-sm text-gray-400 font-medium">{filtered.length} kayit</p>
+            <p className="text-sm text-gray-400 font-medium">{filtered.length} kayıt</p>
             {selectedStage && <button onClick={() => setSelectedStage('')} className="text-xs text-gray-500 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all border border-[#1a2332]">Filtreyi Temizle</button>}
           </div>
           {filtered.length === 0 ? (
-            <div className="text-center py-16"><User size={40} className="mx-auto text-gray-700 mb-3" /><p className="text-gray-500 text-sm">Eslesen kayit bulunamadi</p></div>
+            <div className="text-center py-16"><User size={40} className="mx-auto text-gray-700 mb-3" /><p className="text-gray-500 text-sm">Eşleşen kayıt bulunamadı</p></div>
           ) : (
             <div className="divide-y divide-[#1a2332]/50">
               {filtered.map((l: any) => {
@@ -485,7 +493,7 @@ function LeadsView() {
                         <div className="flex items-center gap-3">
                           <h3 className="text-white font-bold text-sm">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretcisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</h3>
                           {l.phone && <a href={'tel:' + l.phone} className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-emerald-400 transition-all bg-[#080b12]/60 px-2.5 py-1 rounded-lg border border-[#1a2332] group-hover:border-white/10"><Phone size={10} />{l.phone}</a>}
-                          {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AI Yanitlandi</span>}
+                          {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AI Yanıtlandı</span>}
                         </div>
                         <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
                           className={'text-xs px-3 py-1.5 rounded-lg border font-semibold cursor-pointer transition-all ' + si.bg + ' ' + si.color + ' ' + si.border}>
@@ -497,7 +505,7 @@ function LeadsView() {
                           {l.needs ? (
                             <p className="text-xs text-gray-400 leading-relaxed bg-[#080b12]/40 rounded-xl px-3.5 py-2.5 border border-[#1a2332]/80">{l.needs}</p>
                           ) : (
-                            <p className="text-xs text-gray-600 italic">Ihtiyac bilgisi yok</p>
+                            <p className="text-xs text-gray-600 italic">İhtiyaç bilgisi yok</p>
                           )}
                         </div>
                         <div className="flex-shrink-0 space-y-1.5 text-right">
