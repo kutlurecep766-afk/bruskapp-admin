@@ -11,7 +11,7 @@ export default function StorefrontPage() {
   const [products, setProducts] = useState<any[]>([])
   const [masaNumbers, setMasaNumbers] = useState<number[]>([])
   const [newMasa, setNewMasa] = useState('')
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', weight: '', description: '', image: '', category: '' })
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', weight: '', description: '', image: '', category: '' })
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -106,7 +106,7 @@ export default function StorefrontPage() {
     if (res.ok) {
       const p = await res.json()
       setProducts(prev => [...prev, p])
-      setNewProduct({ name: '', price: '', weight: '', description: '', image: '', category: '' })
+      setNewProduct({ name: '', price: '', originalPrice: '', weight: '', description: '', image: '', category: '' })
     }
     setSaving(false)
   }
@@ -270,7 +270,16 @@ export default function StorefrontPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-emerald-400 font-bold text-sm">₺{p.price}</span>
+                <div className="text-right">
+                  {p.originalPrice && parseFloat(p.originalPrice) > parseFloat(p.price) ? (
+                    <div>
+                      <span className="text-gray-500 line-through text-xs">₺{p.originalPrice}</span>
+                      <span className="text-emerald-400 font-bold text-sm ml-1">₺{p.price}</span>
+                    </div>
+                  ) : (
+                    <span className="text-emerald-400 font-bold text-sm">₺{p.price}</span>
+                  )}
+                </div>
                 <button onClick={() => setEditingProduct({ ...p })} className="text-gray-500 hover:text-white text-xs">Düzenle</button>
                 <button onClick={() => deleteProduct(p.id)} className="text-red-500 hover:text-red-400"><Trash2 size={14} /></button>
               </div>
@@ -283,6 +292,7 @@ export default function StorefrontPage() {
             <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={editingProduct.originalPrice || ''} onChange={e => setEditingProduct({ ...editingProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <div className="col-span-3 flex items-center gap-2">
               {editingProduct.image && <img src={editingProduct.image} className="w-8 h-8 rounded object-cover" />}
@@ -304,6 +314,7 @@ export default function StorefrontPage() {
             <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
               className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all disabled:opacity-50">
