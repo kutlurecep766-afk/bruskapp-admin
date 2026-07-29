@@ -284,6 +284,16 @@ export default function StorefrontPage() {
             <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <div className="col-span-3 flex items-center gap-2">
+              {editingProduct.image && <img src={editingProduct.image} className="w-8 h-8 rounded object-cover" />}
+              <input type="file" accept="image/*" onChange={async e => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const url = await uploadFile(file)
+                if (url) setEditingProduct((prev: any) => ({ ...prev, image: url }))
+              }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
+            </div>
+            <input value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <div className="flex gap-2 col-span-2">
               <button onClick={updateProduct} disabled={saving} className="flex-1 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
               <button onClick={() => setEditingProduct(null)} className="px-3 py-2 rounded-xl bg-[#080b12]/60 border border-[#1a2332] text-gray-500 text-sm hover:text-white">İptal</button>
@@ -299,7 +309,15 @@ export default function StorefrontPage() {
               className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all disabled:opacity-50">
               <Plus size={14} /> Ekle
             </button>
-            <input value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} placeholder="Görsel URL (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <div className="col-span-3 flex items-center gap-2">
+              <input type="file" accept="image/*" onChange={async e => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const url = await uploadFile(file)
+                if (url) setNewProduct(prev => ({ ...prev, image: url }))
+              }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
+              {newProduct.image && <img src={newProduct.image} className="w-8 h-8 rounded object-cover" />}
+            </div>
             <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
           </div>
         )}
