@@ -26,6 +26,7 @@ const ALL_MODULES = [
   { key: 'system-health', label: 'Sistem Durumu', icon: Activity, href: '/system-health', perm: 'system-health' },
   { key: 'bulk-messages', label: 'Toplu Mesaj', icon: Send, href: '/bulk-messages', perm: 'bulk-messages' },
   { key: 'reminder-templates', label: 'Hatırlatma Şablonları', icon: Bell, href: '/reminder-templates', perm: 'reminder-templates' },
+  { key: 'storefront', label: 'QR Menü', icon: Store, href: '/storefront', perm: 'storefront' },
   { key: 'support', label: '7/24 Destek', icon: HeartHandshake, href: '/support', perm: 'support' },
 
 ]
@@ -119,9 +120,9 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             </Link>
           )}
           {isSuperAdmin && (
-            <Link href="/storefront" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/storefront') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
-              <Store size={18} className={isActive('/storefront') ? 'text-emerald-400' : 'text-gray-500 group-hover:text-gray-300'} />
-              {!collapsed && <span>QR Menü</span>}
+            <Link href="/isletmeler" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/isletmeler') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+              <Store size={18} className={isActive('/isletmeler') ? 'text-emerald-400' : 'text-gray-500 group-hover:text-gray-300'} />
+              {!collapsed && <span>İşletmeler</span>}
             </Link>
           )}
           {isSuperAdmin && (

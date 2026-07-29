@@ -20,6 +20,7 @@ const ALL_MODULES = [
   { key: 'bulk-messages', label: 'Toplu Mesaj' },
   { key: 'reminder-templates', label: 'Hatırlatma Şablonları' },
   { key: 'comments', label: 'Yorum Yönetimi' },
+  { key: 'storefront', label: 'QR Menü' },
   { key: 'support', label: '7/24 Destek' },
 ]
 
