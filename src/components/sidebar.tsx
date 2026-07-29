@@ -7,8 +7,7 @@ import {
   MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
   Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Crown,
-  Zap, Sparkles, HeartHandshake, Activity,
-
+  Zap, Sparkles, HeartHandshake, Activity, Store,
 } from 'lucide-react'
 
 const ALL_MODULES = [
@@ -117,6 +116,12 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             <Link href="/whatsapp" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/whatsapp') ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <MessageCircle size={18} className={isActive('/whatsapp') ? 'text-green-400' : 'text-gray-500 group-hover:text-gray-300'} />
               {!collapsed && <span>WhatsApp</span>}
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link href="/storefront" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/storefront') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+              <Store size={18} className={isActive('/storefront') ? 'text-emerald-400' : 'text-gray-500 group-hover:text-gray-300'} />
+              {!collapsed && <span>QR Menü</span>}
             </Link>
           )}
           {isSuperAdmin && (
