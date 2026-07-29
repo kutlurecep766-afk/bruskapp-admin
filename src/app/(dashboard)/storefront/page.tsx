@@ -11,13 +11,12 @@ export default function StorefrontPage() {
   const [products, setProducts] = useState<any[]>([])
   const [masaNumbers, setMasaNumbers] = useState<number[]>([])
   const [newMasa, setNewMasa] = useState('')
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', description: '', image: '', category: '' })
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', weight: '', description: '', image: '', category: '' })
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [bannerFile, setBannerFile] = useState<File | null>(null)
-  const [logoFile, setLogoFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
 
   const loadData = async () => {
@@ -35,7 +34,6 @@ export default function StorefrontPage() {
           setStorefront({
             name: tenant.siteTitle || tenant.name,
             slug: tenant.slug,
-            logoUrl: tenant.logoUrl,
             primaryColor: tenant.primaryColor,
             secondaryColor: tenant.secondaryColor,
             bannerUrl: cfg.bannerUrl || '',
@@ -94,28 +92,6 @@ export default function StorefrontPage() {
     setUploading(false)
   }
 
-  const handleLogoUpload = async () => {
-    if (!logoFile) return
-    setUploading(true)
-    const url = await uploadFile(logoFile)
-    if (url) {
-      if (tenantIdParam) {
-        await fetch(`/api/tenants/${tenantIdParam}/theme`, {
-          method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-          body: JSON.stringify({ logoUrl: url }),
-        })
-      } else {
-        await fetch('/api/storefront/admin/me/logo', {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-          body: JSON.stringify({ logoUrl: url }),
-        })
-      }
-      setStorefront((prev: any) => ({ ...prev, logoUrl: url }))
-      setLogoFile(null)
-    }
-    setUploading(false)
-  }
-
   const activeTenantId = () => tenantIdParam || storefront?.id
 
   const addProduct = async () => {
@@ -130,7 +106,7 @@ export default function StorefrontPage() {
     if (res.ok) {
       const p = await res.json()
       setProducts(prev => [...prev, p])
-      setNewProduct({ name: '', price: '', description: '', image: '', category: '' })
+      setNewProduct({ name: '', price: '', weight: '', description: '', image: '', category: '' })
     }
     setSaving(false)
   }
@@ -254,42 +230,24 @@ export default function StorefrontPage() {
         )}
       </div>
 
-      {/* Banner ve Logo Yükleme */}
+      {/* Banner Yükleme */}
       <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Image size={18} className="text-emerald-400" /> Banner ve Logo</h3>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Mevcut Logo</p>
-            {storefront.logoUrl ? (
-              <img src={storefront.logoUrl} className="w-20 h-20 rounded-xl object-cover border border-[#1a2332] mb-3" />
-            ) : (
-              <div className="w-20 h-20 rounded-xl bg-[#080b12]/60 border border-[#1a2332] flex items-center justify-center mb-3">
-                <Image size={24} className="text-gray-600" />
-              </div>
-            )}
-            <input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
-            {logoFile && (
-              <button onClick={handleLogoUpload} disabled={uploading} className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs hover:bg-emerald-500/20 transition-all">
-                {uploading ? 'Yükleniyor...' : 'Logo Yükle'}
-              </button>
-            )}
-          </div>
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Mevcut Banner</p>
-            {storefront.bannerUrl ? (
-              <img src={storefront.bannerUrl} className="w-full h-24 rounded-xl object-cover border border-[#1a2332] mb-3" />
-            ) : (
-              <div className="w-full h-24 rounded-xl bg-[#080b12]/60 border border-[#1a2332] flex items-center justify-center mb-3">
-                <Image size={24} className="text-gray-600" />
-              </div>
-            )}
-            <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
-            {bannerFile && (
-              <button onClick={handleBannerUpload} disabled={uploading} className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs hover:bg-emerald-500/20 transition-all">
-                {uploading ? 'Yükleniyor...' : 'Banner Yükle'}
-              </button>
-            )}
-          </div>
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Image size={18} className="text-emerald-400" /> Banner</h3>
+        <div>
+          <p className="text-sm text-gray-400 mb-2">Mevcut Banner</p>
+          {storefront.bannerUrl ? (
+            <img src={storefront.bannerUrl} className="w-full max-w-md h-32 rounded-xl object-cover border border-[#1a2332] mb-3" />
+          ) : (
+            <div className="w-full max-w-md h-32 rounded-xl bg-[#080b12]/60 border border-[#1a2332] flex items-center justify-center mb-3">
+              <Image size={24} className="text-gray-600" />
+            </div>
+          )}
+          <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
+          {bannerFile && (
+            <button onClick={handleBannerUpload} disabled={uploading} className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs hover:bg-emerald-500/20 transition-all">
+              {uploading ? 'Yükleniyor...' : 'Banner Yükle'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -305,7 +263,10 @@ export default function StorefrontPage() {
                 {p.image && <img src={p.image} className="w-10 h-10 rounded-lg object-cover" />}
                 <div>
                   <p className="text-white text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-gray-500">{p.description} {p.category && `(${p.category})`}</p>
+                  <p className="text-xs text-gray-500">
+                    {p.weight && <span className="text-gray-400 mr-2">{p.weight}</span>}
+                    {p.description} {p.category && `(${p.category})`}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -318,26 +279,28 @@ export default function StorefrontPage() {
         </div>
 
         {editingProduct ? (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
             <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <div className="flex gap-2">
+            <div className="flex gap-2 col-span-2">
               <button onClick={updateProduct} disabled={saving} className="flex-1 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
               <button onClick={() => setEditingProduct(null)} className="px-3 py-2 rounded-xl bg-[#080b12]/60 border border-[#1a2332] text-gray-500 text-sm hover:text-white">İptal</button>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
             <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
             <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
               className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all disabled:opacity-50">
               <Plus size={14} /> Ekle
             </button>
-            <input value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} placeholder="Görsel URL (isteğe bağlı)" className="col-span-2 md:col-span-5 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-2 md:col-span-5 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} placeholder="Görsel URL (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
           </div>
         )}
       </div>
