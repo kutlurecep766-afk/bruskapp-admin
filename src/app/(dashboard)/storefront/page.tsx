@@ -168,7 +168,7 @@ export default function StorefrontPage() {
   const menuUrl = slug ? `https://bruskapp.com/menu/${slug}` : ''
   const qrUrl = menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}` : ''
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>
 
   if (error) return (
     <div className="flex items-center justify-center h-64">
@@ -191,10 +191,10 @@ export default function StorefrontPage() {
   return (
     <div className="space-y-6 pb-12">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
               <Store className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -207,9 +207,9 @@ export default function StorefrontPage() {
 
       {/* Mağaza Linki */}
       <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Link size={18} className="text-emerald-400" /> Mağaza Linki</h3>
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Link size={18} className="text-amber-400" /> Mağaza Linki</h3>
         <a href={menuUrl} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all">
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all">
           {menuUrl}
         </a>
         <p className="text-xs text-gray-600 mt-2">Müşterileriniz bu linkten menünüzü görüntüleyebilir</p>
@@ -217,12 +217,12 @@ export default function StorefrontPage() {
 
       {/* QR Kod */}
       <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><QrCode size={18} className="text-emerald-400" /> Masa QR Kodları</h3>
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><QrCode size={18} className="text-amber-400" /> Masa QR Kodları</h3>
         {qrUrl && (
           <div className="flex flex-col items-center gap-3">
             <img src={qrUrl} alt="Menü QR" className="w-40 h-40 rounded-xl bg-white p-2" />
             <a href={qrUrl} download={`${slug}-menu-qr.png`}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all">
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all">
               <Download size={16} /> QR İndir
             </a>
             <p className="text-xs text-gray-600">Bu QR kod masalara bastırabilirsiniz</p>
@@ -232,7 +232,7 @@ export default function StorefrontPage() {
 
       {/* Banner Yükleme */}
       <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Image size={18} className="text-emerald-400" /> Banner</h3>
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Image size={18} className="text-amber-400" /> Banner</h3>
         <div>
           <p className="text-sm text-gray-400 mb-2">Mevcut Banner</p>
           {storefront.bannerUrl ? (
@@ -242,9 +242,10 @@ export default function StorefrontPage() {
               <Image size={24} className="text-gray-600" />
             </div>
           )}
-          <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
+          <p className="text-[10px] text-gray-600 mb-1">Önerilen: 1200x400 piksel</p>
+          <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
           {bannerFile && (
-            <button onClick={handleBannerUpload} disabled={uploading} className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs hover:bg-emerald-500/20 transition-all">
+            <button onClick={handleBannerUpload} disabled={uploading} className="mt-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs hover:bg-amber-500/20 transition-all">
               {uploading ? 'Yükleniyor...' : 'Banner Yükle'}
             </button>
           )}
@@ -253,14 +254,14 @@ export default function StorefrontPage() {
 
       {/* Ürünler */}
       <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Package size={18} className="text-emerald-400" /> Ürünler</h3>
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Package size={18} className="text-amber-400" /> Ürünler</h3>
 
         <div className="space-y-2 mb-4">
           {products.length === 0 && <p className="text-gray-500 text-sm">Henüz ürün eklenmemiş</p>}
           {products.map((p: any) => (
             <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
               <div className="flex items-center gap-3">
-                {p.image && <img src={p.image} className="w-10 h-10 rounded-lg object-cover" />}
+                {p.image && <img src={p.image} className="w-16 h-16 rounded-lg object-cover" />}
                 <div>
                   <p className="text-white text-sm font-medium">{p.name}</p>
                   <p className="text-xs text-gray-500">
@@ -274,10 +275,10 @@ export default function StorefrontPage() {
                   {p.originalPrice && parseFloat(p.originalPrice) > parseFloat(p.price) ? (
                     <div>
                       <span className="text-gray-500 line-through text-xs">₺{p.originalPrice}</span>
-                      <span className="text-emerald-400 font-bold text-sm ml-1">₺{p.price}</span>
+                      <span className="text-amber-400 font-bold text-sm ml-1">₺{p.price}</span>
                     </div>
                   ) : (
-                    <span className="text-emerald-400 font-bold text-sm">₺{p.price}</span>
+                    <span className="text-amber-400 font-bold text-sm">₺{p.price}</span>
                   )}
                 </div>
                 <button onClick={() => setEditingProduct({ ...p })} className="text-gray-500 hover:text-white text-xs">Düzenle</button>
@@ -289,57 +290,63 @@ export default function StorefrontPage() {
 
         {editingProduct ? (
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-            <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={editingProduct.originalPrice || ''} onChange={e => setEditingProduct({ ...editingProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <div className="col-span-3 flex items-center gap-2">
-              {editingProduct.image && <img src={editingProduct.image} className="w-8 h-8 rounded object-cover" />}
-              <input type="file" accept="image/*" onChange={async e => {
-                const file = e.target.files?.[0]
-                if (!file) return
-                const url = await uploadFile(file)
-                if (url) setEditingProduct((prev: any) => ({ ...prev, image: url }))
-              }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
+            <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={editingProduct.originalPrice || ''} onChange={e => setEditingProduct({ ...editingProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <div className="col-span-3">
+              <p className="text-[10px] text-gray-600 mb-1">Önerilen: 300x300 piksel</p>
+              <div className="flex items-center gap-2">
+                {editingProduct.image && <img src={editingProduct.image} className="w-8 h-8 rounded object-cover" />}
+                <input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const url = await uploadFile(file)
+                  if (url) setEditingProduct((prev: any) => ({ ...prev, image: url }))
+                }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
+              </div>
             </div>
-            <input value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
             <div className="flex gap-2 col-span-2">
-              <button onClick={updateProduct} disabled={saving} className="flex-1 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
+              <button onClick={updateProduct} disabled={saving} className="flex-1 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
               <button onClick={() => setEditingProduct(null)} className="px-3 py-2 rounded-xl bg-[#080b12]/60 border border-[#1a2332] text-gray-500 text-sm hover:text-white">İptal</button>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-            <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-            <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
             <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
-              className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all disabled:opacity-50">
+              className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all disabled:opacity-50">
               <Plus size={14} /> Ekle
             </button>
-            <div className="col-span-3 flex items-center gap-2">
-              <input type="file" accept="image/*" onChange={async e => {
-                const file = e.target.files?.[0]
-                if (!file) return
-                const url = await uploadFile(file)
-                if (url) setNewProduct(prev => ({ ...prev, image: url }))
-              }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20" />
-              {newProduct.image && <img src={newProduct.image} className="w-8 h-8 rounded object-cover" />}
+            <div className="col-span-3">
+              <p className="text-[10px] text-gray-600 mb-1">Önerilen: 300x300 piksel</p>
+              <div className="flex items-center gap-2">
+                <input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const url = await uploadFile(file)
+                  if (url) setNewProduct(prev => ({ ...prev, image: url }))
+                }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
+                {newProduct.image && <img src={newProduct.image} className="w-8 h-8 rounded object-cover" />}
+              </div>
             </div>
-            <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
+            <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
           </div>
         )}
       </div>
 
       {/* Masa Numaraları */}
       <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Table2 size={18} className="text-emerald-400" /> Masa Numaraları</h3>
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Table2 size={18} className="text-amber-400" /> Masa Numaraları</h3>
         <div className="flex gap-2 mb-3">
-          <input value={newMasa} onChange={e => setNewMasa(e.target.value)} type="number" placeholder="Masa no" className="w-32 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-gray-600" />
-          <button onClick={addMasa} className="px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all"><Plus size={14} className="inline mr-1" />Ekle</button>
+          <input value={newMasa} onChange={e => setNewMasa(e.target.value)} type="number" placeholder="Masa no" className="w-32 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          <button onClick={addMasa} className="px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Plus size={14} className="inline mr-1" />Ekle</button>
         </div>
         <div className="flex flex-wrap gap-2">
           {masaNumbers.map(n => (
@@ -349,7 +356,7 @@ export default function StorefrontPage() {
             </span>
           ))}
         </div>
-        <button onClick={saveConfig} disabled={saving} className="mt-4 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm hover:bg-emerald-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
+        <button onClick={saveConfig} disabled={saving} className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
       </div>
     </div>
   )
