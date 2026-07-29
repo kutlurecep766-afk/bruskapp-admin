@@ -289,54 +289,100 @@ export default function StorefrontPage() {
         </div>
 
         {editingProduct ? (
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-            <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={editingProduct.originalPrice || ''} onChange={e => setEditingProduct({ ...editingProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <div className="col-span-3">
-              <p className="text-[10px] text-gray-600 mb-1">Önerilen: 300x300 piksel</p>
-              <div className="flex items-center gap-2">
-                {editingProduct.image && <img src={editingProduct.image} className="w-8 h-8 rounded object-cover" />}
-                <input type="file" accept="image/*" onChange={async e => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  const url = await uploadFile(file)
-                  if (url) setEditingProduct((prev: any) => ({ ...prev, image: url }))
-                }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
+          <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div className="col-span-2 flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Ürün Adı</label>
+                <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Örn: Kahve" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Fiyat (₺)</label>
+                <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Gramaj</label>
+                <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="200 gr" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">İndirimli Fiyat</label>
+                <input value={editingProduct.originalPrice || ''} onChange={e => setEditingProduct({ ...editingProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Kategori</label>
+                <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="İçecekler" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
               </div>
             </div>
-            <input value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <div className="flex gap-2 col-span-2">
-              <button onClick={updateProduct} disabled={saving} className="flex-1 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
-              <button onClick={() => setEditingProduct(null)} className="px-3 py-2 rounded-xl bg-[#080b12]/60 border border-[#1a2332] text-gray-500 text-sm hover:text-white">İptal</button>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div className="col-span-3 flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Açıklama</label>
+                <input value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} placeholder="Ürün açıklaması" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="col-span-3 flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Görsel</label>
+                <p className="text-[10px] text-gray-600">Önerilen: 300x300 piksel</p>
+                <div className="flex items-center gap-2">
+                  {editingProduct.image && <img src={editingProduct.image} className="w-8 h-8 rounded object-cover" />}
+                  <input type="file" accept="image/*" onChange={async e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const url = await uploadFile(file)
+                    if (url) setEditingProduct((prev: any) => ({ ...prev, image: url }))
+                  }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={updateProduct} disabled={saving} className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
+              <button onClick={() => setEditingProduct(null)} className="px-4 py-2.5 rounded-xl bg-[#080b12]/60 border border-[#1a2332] text-gray-500 text-sm hover:text-white">İptal</button>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-            <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Ürün adı" className="col-span-2 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="Fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="Gramaj (200 gr)" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="İndirimli fiyat" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="Kategori" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
-              className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all disabled:opacity-50">
-              <Plus size={14} /> Ekle
-            </button>
-            <div className="col-span-3">
-              <p className="text-[10px] text-gray-600 mb-1">Önerilen: 300x300 piksel</p>
-              <div className="flex items-center gap-2">
-                <input type="file" accept="image/*" onChange={async e => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  const url = await uploadFile(file)
-                  if (url) setNewProduct(prev => ({ ...prev, image: url }))
-                }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
-                {newProduct.image && <img src={newProduct.image} className="w-8 h-8 rounded object-cover" />}
+          <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div className="col-span-2 flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Ürün Adı</label>
+                <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Örn: Kahve" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Fiyat (₺)</label>
+                <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Gramaj</label>
+                <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="200 gr" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">İndirimli Fiyat</label>
+                <input value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Kategori</label>
+                <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="İçecekler" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
+                className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all disabled:opacity-50 self-end">
+                <Plus size={14} /> Ekle
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div className="col-span-3 flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Açıklama</label>
+                <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Ürün açıklaması" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="col-span-3 flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Görsel</label>
+                <p className="text-[10px] text-gray-600">Önerilen: 300x300 piksel</p>
+                <div className="flex items-center gap-2">
+                  <input type="file" accept="image/*" onChange={async e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const url = await uploadFile(file)
+                    if (url) setNewProduct(prev => ({ ...prev, image: url }))
+                  }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
+                  {newProduct.image && <img src={newProduct.image} className="w-8 h-8 rounded object-cover" />}
+                </div>
               </div>
             </div>
-            <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Açıklama (isteğe bağlı)" className="col-span-3 bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
           </div>
         )}
       </div>
