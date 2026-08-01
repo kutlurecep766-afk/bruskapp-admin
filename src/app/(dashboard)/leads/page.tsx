@@ -17,10 +17,16 @@ const PLATFORM_MAP: Record<string, any> = {
   instagram: { label: 'Instagram', icon: IGAcon, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20', dot: 'bg-pink-400' },
   telegram: { label: 'Telegram', icon: TGIcon, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', dot: 'bg-blue-400' },
   messenger: { label: 'Messenger', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', dot: 'bg-sky-400' },
+  facebook: { label: 'Messenger', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', dot: 'bg-sky-400' },
   webchat: { label: 'Web Chat', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', dot: 'bg-emerald-400' },
 }
 
-const ps = (p: string) => PLATFORM_MAP[p] || { label: p || 'Web Chat', color: 'text-gray-400', bg: 'bg-gray-500/10', icon: null, dot: 'bg-gray-400' }
+const ps = (p: string) => {
+  const key = p.startsWith('zernio_') ? p.replace('zernio_', '') : p
+  const base = PLATFORM_MAP[key]
+  if (base) return { ...base, label: base.label }
+  return PLATFORM_MAP[p] || { label: p || 'Web Chat', color: 'text-gray-400', bg: 'bg-gray-500/10', icon: null, dot: 'bg-gray-400' }
+}
 
 interface Lead {
   id: number
