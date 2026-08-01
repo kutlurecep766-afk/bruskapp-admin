@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { MessageSquare, Search, Send, ChevronLeft, Phone, User, Calendar, Bot, CheckCircle2, Filter, Sparkles, Inbox, PhoneCall, TrendingUp, Target, XCircle, Headphones } from 'lucide-react'
+import { MessageSquare, Search, Send, ChevronLeft, ChevronUp, Phone, User, Calendar, Bot, CheckCircle2, Filter, Sparkles, Inbox, PhoneCall, TrendingUp, Target, XCircle, Headphones, X, Mail, MessageSquareText, MessageCircle, Globe } from 'lucide-react'
 
 function WAIcon({ className }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -43,7 +43,7 @@ export default function MessagesPage() {
   const [aiEnabled, setAiEnabled] = useState(true)
   const [aiConvOverride, setAiConvOverride] = useState<Record<string, boolean>>({})
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([])
-  const endRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     Promise.all([
@@ -100,7 +100,10 @@ export default function MessagesPage() {
     if (!res.ok) setAiConvOverride(prev => ({ ...prev, [convId]: !active }))
   }
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs])
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [msgs])
 
   const selectConv = async (c: any) => {
     setSelected(c); setMobileView('chat')
@@ -291,39 +294,47 @@ export default function MessagesPage() {
                 })()}
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-3 relative" style={{ backgroundImage: 'radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.04) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, rgba(168,85,247,0.03) 0%, transparent 50%)' }}>
+            <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4 relative" style={{ backgroundImage: 'radial-gradient(ellipse at 20% 20%, rgba(99,102,241,0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(168,85,247,0.04) 0%, transparent 50%), url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23918dff\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}>
               {msgs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <MessageSquare size={28} className="text-gray-700 mb-3" />
-                  <p className="text-sm text-gray-600">Henüz mesaj yok</p>
+                  <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-4 shadow-inner"><MessageSquare size={26} className="text-gray-600" /></div>
+                  <p className="text-sm text-gray-400 font-medium">Henüz mesaj yok</p>
+                  <p className="text-[11px] text-gray-600 mt-1">Bu sohbetteki mesajlar burada görünecek</p>
                 </div>
               ) : msgs.map((m: any, i: number) => {
                 const prev = msgs[i - 1]
                 const showAvatar = !prev || prev.direction !== m.direction || prev.from !== m.from
                 const isOutgoing = m.direction === 'outgoing'
+                const showDateSep = !prev || new Date(prev.createdAt).toDateString() !== new Date(m.createdAt).toDateString()
                 return (
-                  <div key={m.id} className={'flex items-end gap-2.5 ' + (isOutgoing ? 'justify-end' : 'justify-start')}>
-                    {!isOutgoing && showAvatar && (
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-md ring-1 ring-white/10">{(m.fromName?.[0] || m.from?.[0] || '?').toUpperCase()}</div>
-                    )}
-                    {!isOutgoing && !showAvatar && <div className="w-8 flex-shrink-0" />}
-                    <div className={'max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-md transition-all ' + (isOutgoing ? 'bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-500 text-white rounded-br-sm shadow-blue-500/20' : 'bg-[#1a2332]/90 text-gray-100 border border-white/[0.06] rounded-bl-sm backdrop-blur')}>
-                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                      <p className={'text-[9px] mt-2 flex items-center justify-end gap-1 ' + (isOutgoing ? 'text-blue-200/70' : 'text-gray-600')}>
-                        {new Date(m.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                        {isOutgoing && <CheckCircle2 size={10} className="opacity-60" />}
-                      </p>
-                    </div>
-                    {isOutgoing && showAvatar && (
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-md ring-1 ring-white/10">
-                        <Bot size={14} />
+                  <div key={m.id}>
+                    {showDateSep && (
+                      <div className="flex justify-center my-2">
+                        <span className="text-[9px] font-semibold text-gray-500 bg-white/[0.06] border border-white/[0.08] px-3 py-1 rounded-full backdrop-blur uppercase tracking-wider">{new Date(m.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                       </div>
                     )}
-                    {isOutgoing && !showAvatar && <div className="w-8 flex-shrink-0" />}
+                    <div className={'flex items-end gap-2.5 ' + (isOutgoing ? 'justify-end' : 'justify-start')}>
+                      {!isOutgoing && showAvatar && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-md ring-2 ring-white/10">{(m.fromName?.[0] || m.from?.[0] || '?').toUpperCase()}</div>
+                      )}
+                      {!isOutgoing && !showAvatar && <div className="w-8 flex-shrink-0" />}
+                      <div className={'max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-lg transition-all ' + (isOutgoing ? 'bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-500 text-white rounded-br-sm shadow-blue-500/30 ring-1 ring-white/10' : 'bg-[#1a2332] text-gray-100 rounded-bl-sm ring-1 ring-white/[0.06]')}>
+                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                        <p className={'text-[9px] mt-2 flex items-center justify-end gap-1 ' + (isOutgoing ? 'text-blue-100/80' : 'text-gray-500')}>
+                          {new Date(m.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                          {isOutgoing && <CheckCircle2 size={10} className="opacity-70" />}
+                        </p>
+                      </div>
+                      {isOutgoing && showAvatar && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white flex-shrink-0 shadow-md ring-2 ring-white/10">
+                          <Bot size={14} />
+                        </div>
+                      )}
+                      {isOutgoing && !showAvatar && <div className="w-8 flex-shrink-0" />}
+                    </div>
                   </div>
                 )
               })}
-              <div ref={endRef} />
             </div>
             <div className="p-4 border-t border-white/[0.06] bg-[#0d1117]/60 backdrop-blur-xl">
               <div className="flex gap-3 items-end">
@@ -369,6 +380,7 @@ function LeadsView() {
   const [viewMode, setViewMode] = useState('pipeline')
   const [selectedStage, setSelectedStage] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [detailLead, setDetailLead] = useState<any>(null)
 
   useEffect(() => {
     fetch('/api/leads', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(d => {
@@ -465,13 +477,16 @@ function LeadsView() {
                   {stageLeads.length === 0 ? (
                     <div className="text-center py-6 text-gray-600 text-[10px]">Henüz kayıt yok</div>
                   ) : stageLeads.map((l: any) => (
-                    <div key={l.id} className="bg-[#0d1117]/80 backdrop-blur-sm rounded-xl p-3 border border-white/[0.06] hover:border-white/20 hover:shadow-lg hover:shadow-black/30 transition-all duration-300 group">
+                    <div key={l.id} onClick={() => setDetailLead(l)} className="group bg-[#0d1117]/80 backdrop-blur-sm rounded-xl p-3 border border-white/[0.06] hover:border-white/20 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
                       <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-md ring-1 ring-white/10">{l.name?.[0] || (l.source === 'webchat' ? 'W' : l.source?.[0]?.toUpperCase() || '?')}</div>
-                          <span className="text-xs text-white font-semibold truncate max-w-[90px]">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold shadow-md ring-1 ring-white/10">{l.name?.[0] || (l.source === 'webchat' ? 'W' : l.source?.[0]?.toUpperCase() || '?')}</div>
+                            {l.source && PLATFORM_MAP[l.source] && PLATFORM_MAP[l.source].icon && (() => { const Pi = PLATFORM_MAP[l.source].icon; return <div className="absolute -bottom-1 -right-1 w-[16px] h-[16px] rounded-full bg-[#0d1117] flex items-center justify-center ring-2 ring-[#0d1117]"><Pi className={'w-2 h-2 ' + PLATFORM_MAP[l.source].color} /></div> })()}
+                          </div>
+                          <span className="text-xs text-white font-semibold truncate">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</span>
                         </div>
-                        <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
+                        <select value={l.status} onClick={e => e.stopPropagation()} onChange={e => updateStatus(l.id, e.target.value)}
                           className="text-[9px] px-1.5 py-0.5 rounded-lg border bg-[#0d1117]/80 cursor-pointer text-gray-400 border-white/[0.06] hover:text-white hover:border-white/20 transition-all">
                           {CRM_STAGES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                         </select>
@@ -481,11 +496,10 @@ function LeadsView() {
                         <div className="flex items-center gap-2.5">
                           {l.phone && <span className="flex items-center gap-1"><Phone size={9} />{l.phone}</span>}
                           <span className="flex items-center gap-1"><Calendar size={9} />{new Date(l.createdAt).toLocaleDateString('tr-TR')}</span>
-                          {l.source && PLATFORM_MAP[l.source] && (() => { const Icon = PLATFORM_MAP[l.source].icon; return <span className="flex items-center gap-1">{Icon ? <Icon className={'w-2.5 h-2.5 ' + PLATFORM_MAP[l.source].color} /> : null}{PLATFORM_MAP[l.source].label}</span> })()}
                         </div>
                         <div className="flex items-center gap-2">
                           {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">AI</span>}
-                          {l.phone && <a href={'tel:' + l.phone} className="text-emerald-400 hover:text-emerald-300 font-semibold text-[10px] transition-all">Ara</a>}
+                          <span className="text-[9px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 font-semibold">Detay <ChevronUp size={9} className="rotate-45" /></span>
                         </div>
                       </div>
                       <div className="mt-2 flex gap-0.5">
@@ -517,18 +531,19 @@ function LeadsView() {
                 const idx = stageIndex(l.status)
                 const Icon = si.Icon
                 return (
-                  <div key={l.id} className="flex items-start gap-4 p-5 hover:bg-white/[0.02] transition-all duration-300 group">
-                    <div className="flex-shrink-0">
+                  <div key={l.id} onClick={() => setDetailLead(l)} className="flex items-start gap-4 p-5 hover:bg-white/[0.02] transition-all duration-300 group cursor-pointer">
+                    <div className="relative flex-shrink-0">
                       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-emerald-500/10 ring-1 ring-white/10">{l.name?.[0] || (l.source === 'webchat' ? 'W' : l.source?.[0]?.toUpperCase() || '?')}</div>
+                      {l.source && PLATFORM_MAP[l.source] && PLATFORM_MAP[l.source].icon && (() => { const Pi = PLATFORM_MAP[l.source].icon; return <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#0d1117] flex items-center justify-center ring-[3px] ring-[#0d1117]"><Pi className={'w-2.5 h-2.5 ' + PLATFORM_MAP[l.source].color} /></div> })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3 flex-wrap">
                           <h3 className="text-white font-bold text-sm">{l.name || (l.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (l.phone ? l.phone : (l.source || 'Bilinmeyen')))}</h3>
-                          {l.phone && <a href={'tel:' + l.phone} className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-emerald-400 transition-all bg-white/[0.03] px-2.5 py-1 rounded-lg border border-white/[0.06] group-hover:border-white/10"><Phone size={10} />{l.phone}</a>}
+                          {l.phone && <span onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-[10px] text-gray-500 bg-white/[0.03] px-2.5 py-1 rounded-lg border border-white/[0.06] group-hover:border-white/10"><Phone size={10} />{l.phone}</span>}
                           {l.hasAiReply && <span className="text-[8px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AI Yanıtlandı</span>}
                         </div>
-                        <select value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
+                        <select onClick={e => e.stopPropagation()} value={l.status} onChange={e => updateStatus(l.id, e.target.value)}
                           className={'text-xs px-3 py-1.5 rounded-lg border font-semibold cursor-pointer transition-all ' + si.bg + ' ' + si.color + ' ' + si.border}>
                           {CRM_STAGES.map(s => <option key={s.key} value={s.key} className="bg-[#0d1117]">{s.label}</option>)}
                         </select>
@@ -563,6 +578,91 @@ function LeadsView() {
           )}
         </div>
       )}
+      {detailLead && <LeadDetailModal lead={detailLead} onClose={() => setDetailLead(null)} onStatus={(id, s) => { updateStatus(id, s); setDetailLead((p: any) => p && p.id === id ? { ...p, status: s } : p) }} />}
+    </div>
+  )
+}
+
+function LeadDetailModal({ lead, onClose, onStatus }: { lead: any; onClose: () => void; onStatus: (id: number, status: string) => void }) {
+  const si = stageInfo(lead.status)
+  const Icon = si.Icon
+  const p = ps(lead.source)
+  const SrcIcon = p.icon
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="relative w-full max-w-lg max-h-[88vh] overflow-y-auto rounded-3xl border border-white/[0.1] bg-[#0d1117]/95 backdrop-blur-2xl shadow-2xl shadow-black/60 animate-slide-in">
+        <div className="h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-t-3xl" />
+        <div className="relative p-6">
+          <div className="absolute -top-24 -right-16 w-64 h-64 bg-blue-500/[0.06] rounded-full blur-3xl pointer-events-none" />
+          <button onClick={onClose} className="absolute top-5 right-5 p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all z-10"><X size={18} /></button>
+          <div className="relative flex items-center gap-4 mb-6">
+            <div className="relative flex-shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-emerald-500/20 ring-1 ring-white/10">{lead.name?.[0] || (lead.source === 'webchat' ? 'W' : lead.source?.[0]?.toUpperCase() || '?')}</div>
+              {SrcIcon && <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#0d1117] flex items-center justify-center ring-[3px] ring-[#0d1117]"><SrcIcon className={'w-3 h-3 ' + p.color} /></div>}
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-xl font-bold text-white tracking-tight truncate">{lead.name || (lead.source === 'webchat' ? 'Web Chat Ziyaretçisi' : (lead.phone ? lead.phone : (lead.source || 'Bilinmeyen')))}</h3>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                {lead.phone && <span className="flex items-center gap-1 text-xs text-gray-400"><Phone size={11} />{lead.phone}</span>}
+                {lead.email && <span className="flex items-center gap-1 text-xs text-gray-500"><Mail size={11} />{lead.email}</span>}
+              </div>
+            </div>
+          </div>
+          <div className="relative flex flex-wrap items-center gap-2 mb-5">
+            <span className={'flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-semibold ' + si.bg + ' ' + si.color + ' ' + si.border}><Icon size={13} />{si.label}</span>
+            {lead.source && PLATFORM_MAP[lead.source] && (
+              <span className={'flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border ' + PLATFORM_MAP[lead.source].bg + ' ' + PLATFORM_MAP[lead.source].color + ' ' + PLATFORM_MAP[lead.source].border}>
+                {SrcIcon && <SrcIcon className="w-3 h-3" />}{PLATFORM_MAP[lead.source].label}
+              </span>
+            )}
+            {lead.hasAiReply && <span className="text-xs text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 flex items-center gap-1.5"><Bot size={12} />AI Yanıtlandı</span>}
+          </div>
+          <div className="relative grid grid-cols-3 gap-2 mb-5">
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+              <p className="text-lg font-bold text-white">{new Date(lead.createdAt).toLocaleDateString('tr-TR', { day: 'numeric' })}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">{new Date(lead.createdAt).toLocaleDateString('tr-TR', { month: 'short', year: 'numeric' })}</p>
+            </div>
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+              <p className="text-lg font-bold text-white">{lead.conversation?.length || 0}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">Mesaj</p>
+            </div>
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+              <p className="text-lg font-bold text-white">{lead.sessionId ? lead.sessionId.slice(0, 6) : '-'}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">Oturum</p>
+            </div>
+          </div>
+          {lead.needs && (
+            <div className="relative mb-5">
+              <h4 className="text-[11px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><MessageSquareText size={11} /> Müşteri İhtiyacı</h4>
+              <p className="text-sm text-gray-200 bg-white/[0.02] rounded-xl p-3.5 border border-white/[0.06] leading-relaxed">{lead.needs}</p>
+            </div>
+          )}
+          {lead.conversation && lead.conversation.length > 0 && (
+            <div className="relative mb-6">
+              <h4 className="text-[11px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><MessageCircle size={11} /> Sohbet Geçmişi</h4>
+              <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] max-h-52 overflow-y-auto p-3 space-y-2 scrollbar-thin">
+                {lead.conversation.map((msg: any, i: number) => (
+                  <div key={i} className={'flex ' + (msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                    <div className={'max-w-[80%] rounded-xl px-3 py-2 text-sm ' + (msg.role === 'user' ? 'bg-gradient-to-br from-blue-500/30 to-indigo-500/30 text-blue-100 border border-blue-500/20' : 'bg-[#1a2332]/80 text-gray-300 border border-white/[0.04]')}>{msg.content}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="relative flex flex-wrap gap-2">
+            <select value={lead.status} onChange={e => onStatus(lead.id, e.target.value)}
+              className={'text-xs px-3 py-2 rounded-xl border font-semibold cursor-pointer transition-all bg-[#0d1117] ' + si.bg + ' ' + si.color + ' ' + si.border}>
+              {CRM_STAGES.map(s => <option key={s.key} value={s.key} className="bg-[#0d1117]">{s.label}</option>)}
+            </select>
+            {lead.phone && (
+              <a href={'tel:' + lead.phone} className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all border border-white/10"><Phone size={13} /> Ara</a>
+            )}
+            {lead.phone && (
+              <a href={'https://wa.me/' + lead.phone.replace(/[^0-9]/g, '')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all"><MessageCircle size={13} /> WhatsApp</a>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
