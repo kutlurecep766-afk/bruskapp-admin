@@ -22,6 +22,11 @@ const PLATFORM_MAP: Record<string, any> = {
 
 const ps = (p: string) => PLATFORM_MAP[p] || { label: p, color: 'text-gray-400', bg: 'bg-gray-500/10', icon: null, dot: 'bg-gray-400' }
 
+const displayName = (p: string, from: string, fromName?: string | null) => {
+  if (p === 'whatsapp') return from || fromName || 'Bilinmeyen'
+  return fromName || from || 'Bilinmeyen'
+}
+
 function timeAgo(d: string) {
   const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
   if (s < 60) return 'şimdi'
@@ -238,13 +243,13 @@ export default function MessagesPage() {
                 className={'relative flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-white/[0.03] hover:bg-white/[0.03] group ' + (isSelected ? 'bg-gradient-to-r from-blue-500/[0.08] to-transparent' : '')}>
                 {isSelected && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-500 to-indigo-500 rounded-r-full" />}
                 <div className="relative flex-shrink-0 mt-0.5">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/80 to-indigo-600/80 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/10 ring-1 ring-white/10">{(c.fromName?.[0] || c.from?.[0] || '?').toUpperCase()}</div>
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/80 to-indigo-600/80 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/10 ring-1 ring-white/10">{(displayName(c.platform, c.from, c.fromName)?.[0] || '?').toUpperCase()}</div>
                   {Icon && <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#0d1117] flex items-center justify-center ring-[3px] ring-[#0d1117]"><Icon className={'w-2.5 h-2.5 ' + p.color} /></div>}
                   {c.count > 0 && <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white text-[8px] font-bold ring-[3px] ring-[#0d1117] shadow-lg shadow-red-500/30">{c.count > 99 ? '99+' : c.count}</div>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-white font-medium truncate">{c.fromName || c.from}</span>
+                    <span className="text-sm text-white font-medium truncate">{displayName(c.platform, c.from, c.fromName)}</span>
                     <span className={'text-[10px] flex-shrink-0 font-mono ' + (c.count > 0 ? 'text-blue-400 font-semibold' : 'text-gray-600')}>{timeAgo(c.lastMessageAt)}</span>
                   </div>
                   <p className={'text-xs truncate mt-0.5 leading-relaxed ' + (c.count > 0 ? 'text-gray-300 font-medium' : 'text-gray-500')}>{c.lastContent || ''}</p>
@@ -268,11 +273,11 @@ export default function MessagesPage() {
             <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/[0.06] bg-[#0d1117]/60 backdrop-blur-xl">
               <button onClick={() => setMobileView('list')} className="md:hidden p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"><ChevronLeft size={18} /></button>
               <div className="relative flex-shrink-0">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/80 to-indigo-600/80 flex items-center justify-center text-white text-sm font-bold shadow-lg ring-1 ring-white/10">{(selected.fromName?.[0] || selected.from?.[0] || '?').toUpperCase()}</div>
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/80 to-indigo-600/80 flex items-center justify-center text-white text-sm font-bold shadow-lg ring-1 ring-white/10">{(displayName(selected.platform, selected.from, selected.fromName)?.[0] || '?').toUpperCase()}</div>
                 {(() => { const p = ps(selected.platform); const Icon = p.icon; return Icon ? <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#0d1117] flex items-center justify-center ring-[3px] ring-[#0d1117]"><Icon className={'w-2.5 h-2.5 ' + p.color} /></div> : null })()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white font-medium truncate">{selected.fromName || selected.from}</p>
+                <p className="text-sm text-white font-medium truncate">{displayName(selected.platform, selected.from, selected.fromName)}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className={'inline-block w-1.5 h-1.5 rounded-full ' + ps(selected.platform).dot} />
                   <span className="text-[10px] text-gray-500">{ps(selected.platform).label}</span>
@@ -315,7 +320,7 @@ export default function MessagesPage() {
                     )}
                     <div className={'flex items-end gap-2.5 ' + (isOutgoing ? 'justify-end' : 'justify-start')}>
                       {!isOutgoing && showAvatar && (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-md ring-2 ring-white/10">{(m.fromName?.[0] || m.from?.[0] || '?').toUpperCase()}</div>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-md ring-2 ring-white/10">{(displayName(m.platform, m.from, m.fromName)?.[0] || '?').toUpperCase()}</div>
                       )}
                       {!isOutgoing && !showAvatar && <div className="w-8 flex-shrink-0" />}
                       <div className={'max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-lg transition-all ' + (isOutgoing ? 'bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-500 text-white rounded-br-sm shadow-blue-500/30 ring-1 ring-white/10' : 'bg-[#1a2332] text-gray-100 rounded-bl-sm ring-1 ring-white/[0.06]')}>
