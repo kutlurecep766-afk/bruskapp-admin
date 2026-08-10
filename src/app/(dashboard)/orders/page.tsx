@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { ShoppingCart, Search, Clock, Filter, RefreshCw, CheckCircle, XCircle, AlertCircle, ChevronDown, Calendar } from 'lucide-react'
-import PrinterManager from '@/components/printer/PrinterManager'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
   pending: { label: 'Bekliyor', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: Clock },
@@ -15,14 +14,12 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
   const [search, setSearch] = useState('')
-  const [tenantId, setTenantId] = useState<string>('')
 
   const load = async () => {
     try {
       const tenant = await fetch('/api/tenants/me', { credentials: 'include' }).then(r => r.json())
       const tid = tenant?.tenant?.id || tenant?.id
       if (tid) {
-        setTenantId(tid)
         const res = await fetch('/api/orders?tenantId=' + tid, { credentials: 'include' })
         if (res.ok) setOrders(await res.json())
       }
@@ -89,9 +86,6 @@ export default function OrdersPage() {
           </div>
         ))}
       </div>
-
-      {/* Printer Manager */}
-      <PrinterManager tenantId={tenantId} />
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">

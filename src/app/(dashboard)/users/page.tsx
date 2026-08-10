@@ -21,6 +21,7 @@ const ALL_MODULES = [
   { key: 'reminder-templates', label: 'Hatırlatma Şablonları' },
   { key: 'comments', label: 'Yorum Yönetimi' },
   { key: 'storefront', label: 'QR Menü' },
+  { key: 'printer', label: 'Yazıcı' },
   { key: 'support', label: '7/24 Destek' },
 ]
 

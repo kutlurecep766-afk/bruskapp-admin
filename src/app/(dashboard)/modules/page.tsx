@@ -17,6 +17,7 @@ const ALL_MODULES = [
   { key: 'hepsiburada', label: 'Hepsiburada', desc: 'Hepsiburada mesajlarına AI cevap', emoji: '🛍️' },
   { key: 'n11', label: 'n11', desc: 'n11 mesajlarına AI cevap', emoji: '🏪' },
   { key: 'settings', label: 'Ayarlar', desc: 'İşletme ayarları ve tercihler', emoji: '⚙️' },
+  { key: 'printer', label: 'Yazıcı', desc: 'Fiş yazıcısı bağlama ve otomatik basım', emoji: '🖨️' },
 ]
 
 export default function ModulesPage() {
