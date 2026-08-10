@@ -20,6 +20,7 @@ export default function StorefrontPage() {
   const [uploading, setUploading] = useState(false)
   const [googleReviewUrl, setGoogleReviewUrl] = useState('')
   const [instagramUrl, setInstagramUrl] = useState('')
+  const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -63,6 +64,12 @@ export default function StorefrontPage() {
   }
 
   useEffect(() => { loadData() }, [tenantIdParam])
+
+  useEffect(() => {
+    const close = () => setStatusMenuFor(null)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [])
 
   const uploadFile = async (file: File): Promise<string | null> => {
     const form = new FormData()
@@ -142,13 +149,13 @@ export default function StorefrontPage() {
     setProducts(prev => prev.filter(p => p.id !== id))
   }
 
-  const toggleProductStatus = async (p: any) => {
-    const next = p.status === 'soldout' ? 'preparing' : p.status === 'preparing' ? 'active' : 'soldout'
+  const setProductStatus = async (p: any, status: string) => {
     const tid = activeTenantId()
     if (!tid) return
+    setStatusMenuFor(null)
     const res = await fetch(`/api/storefront/admin/${tid}/products/${p.id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ ...p, status: next }),
+      body: JSON.stringify({ ...p, status }),
     })
     if (res.ok) {
       const updated = await res.json()
@@ -367,14 +374,30 @@ export default function StorefrontPage() {
                     <span className="text-amber-400 font-bold text-sm">₺{p.price}</span>
                   )}
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); toggleProductStatus(p) }} title="Durumu değiştir"
-                  className={
-                  p.status === 'soldout' ? 'text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer'
-                  : p.status === 'preparing' ? 'text-[10px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer'
-                  : 'text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-all cursor-pointer'
-                }>
-                  {p.status === 'soldout' ? 'Tükendi' : p.status === 'preparing' ? 'Hazırlıkta' : 'Aktif'}
-                </button>
+                <div className="relative">
+                  <button onClick={(e) => { e.stopPropagation(); setStatusMenuFor(statusMenuFor === p.id ? null : p.id) }} title="Durumu değiştir"
+                    className={
+                    p.status === 'soldout' ? 'text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer'
+                    : p.status === 'preparing' ? 'text-[10px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer'
+                    : 'text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-all cursor-pointer'
+                  }>
+                    {p.status === 'soldout' ? 'Tükendi' : p.status === 'preparing' ? 'Hazırlıkta' : 'Aktif'}
+                  </button>
+                  {statusMenuFor === p.id && (
+                    <div onClick={e => e.stopPropagation()} className="absolute right-0 top-7 z-20 w-40 rounded-xl bg-[#0d1117] border border-[#2a3a4a] shadow-2xl overflow-hidden">
+                      {[
+                        { val: 'active', label: 'Aktif', cls: 'text-green-400 hover:bg-green-500/10' },
+                        { val: 'soldout', label: 'Tükendi', cls: 'text-red-400 hover:bg-red-500/10' },
+                        { val: 'preparing', label: 'Hazırlıkta', cls: 'text-amber-400 hover:bg-amber-500/10' },
+                      ].map(opt => (
+                        <button key={opt.val} onClick={(e) => { e.stopPropagation(); setProductStatus(p, opt.val) }}
+                          className={`w-full text-left px-3 py-2 text-[11px] font-medium transition-colors ${opt.cls} ${p.status === opt.val ? 'bg-white/5' : ''}`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <span className="text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">Düzenlemek için tıklayın</span>
                 <button onClick={(e) => { e.stopPropagation(); deleteProduct(p.id) }} className="text-red-500 hover:text-red-400"><Trash2 size={14} /></button>
               </div>
