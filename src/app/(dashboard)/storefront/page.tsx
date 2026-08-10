@@ -11,13 +11,15 @@ export default function StorefrontPage() {
   const [products, setProducts] = useState<any[]>([])
   const [masaNumbers, setMasaNumbers] = useState<number[]>([])
   const [newMasa, setNewMasa] = useState('')
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', weight: '', description: '', image: '', category: '' })
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', weight: '', description: '', image: '', category: '', status: 'active' })
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [googleReviewUrl, setGoogleReviewUrl] = useState('')
+  const [instagramUrl, setInstagramUrl] = useState('')
 
   const loadData = async () => {
     setLoading(true)
@@ -39,6 +41,8 @@ export default function StorefrontPage() {
             bannerUrl: cfg.bannerUrl || '',
           })
           setMasaNumbers(cfg.masaNumbers || [])
+          setGoogleReviewUrl(cfg.googleReviewUrl || '')
+          setInstagramUrl(cfg.instagramUrl || '')
         }
         if (productsRes.ok) setProducts(await productsRes.json())
       } else {
@@ -48,6 +52,8 @@ export default function StorefrontPage() {
           setStorefront(data)
           setProducts(data.products || [])
           setMasaNumbers(data.masaNumbers || [])
+          setGoogleReviewUrl(data.googleReviewUrl || '')
+          setInstagramUrl(data.instagramUrl || '')
         } else {
           setError('Bu sayfaya erişim yetkiniz yok')
         }
@@ -106,7 +112,7 @@ export default function StorefrontPage() {
     if (res.ok) {
       const p = await res.json()
       setProducts(prev => [...prev, p])
-      setNewProduct({ name: '', price: '', originalPrice: '', weight: '', description: '', image: '', category: '' })
+      setNewProduct({ name: '', price: '', originalPrice: '', weight: '', description: '', image: '', category: '', status: 'active' })
     }
     setSaving(false)
   }
@@ -164,9 +170,27 @@ export default function StorefrontPage() {
     setSaving(false)
   }
 
+  const saveSocialLinks = async () => {
+    setSaving(true)
+    const tid = activeTenantId()
+    if (tid) {
+      await fetch(`/api/storefront/admin/${tid}/config`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ googleReviewUrl, instagramUrl }),
+      })
+    } else {
+      await fetch('/api/storefront/admin/me/config', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ googleReviewUrl, instagramUrl }),
+      })
+    }
+    setSaving(false)
+  }
+
   const slug = storefront?.slug || ''
   const menuUrl = slug ? `https://bruskapp.com/menu/${slug}` : ''
-  const qrUrl = menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}` : ''
+  const onlineQrUrl = menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}` : ''
+  const masaQrUrl = (num: number) => menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl + '?masa=' + num)}` : ''
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>
 
@@ -217,17 +241,66 @@ export default function StorefrontPage() {
 
       {/* QR Kod */}
       <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><QrCode size={18} className="text-amber-400" /> Masa QR Kodları</h3>
-        {qrUrl && (
-          <div className="flex flex-col items-center gap-3">
-            <img src={qrUrl} alt="Menü QR" className="w-40 h-40 rounded-xl bg-white p-2" />
-            <a href={qrUrl} download={`${slug}-menu-qr.png`}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all">
-              <Download size={16} /> QR İndir
-            </a>
-            <p className="text-xs text-gray-600">Bu QR kod masalara bastırabilirsiniz</p>
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><QrCode size={18} className="text-amber-400" /> QR Kodlar</h3>
+
+        {/* Online Sipariş QR */}
+        <div className="mb-6 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
+          <p className="text-white text-sm font-semibold mb-1">Online Sipariş QR Kodu</p>
+          <p className="text-xs text-gray-500 mb-3">Müşterileriniz bu QR'ı okutarak online sipariş verebilir (adresli teslimat). Bu QR kodu vitrin, web sitesi veya paket üzerine koyabilirsiniz.</p>
+          {onlineQrUrl && (
+            <div className="flex items-center gap-4">
+              <img src={onlineQrUrl} alt="Online Sipariş QR" className="w-32 h-32 rounded-xl bg-white p-2" />
+              <a href={onlineQrUrl} download={`${slug}-online-qr.png`}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all">
+                <Download size={16} /> QR İndir
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Masa QR Kodları */}
+        <p className="text-white text-sm font-semibold mb-1">Masa QR Kodları</p>
+        <p className="text-xs text-gray-500 mb-3">Her masa için ayrı QR kodu. Müşteri masasındaki QR'ı okutunca masa numarası otomatik seçilir ve siparişi masaya teslim edilir.</p>
+        {masaNumbers.length === 0 ? (
+          <p className="text-xs text-gray-600">Henüz masa eklenmemiş. Aşağıdaki "Masa Numaraları" bölümünden masa ekleyin.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {masaNumbers.map(n => {
+              const mqr = masaQrUrl(n)
+              return (
+                <div key={n} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
+                  <p className="text-white text-sm font-bold">Masa {n}</p>
+                  <img src={mqr} alt={`Masa ${n} QR`} className="w-24 h-24 rounded-lg bg-white p-1.5" />
+                  <a href={mqr} download={`${slug}-masa-${n}-qr.png`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs hover:bg-amber-500/20 transition-all">
+                    <Download size={14} /> İndir
+                  </a>
+                </div>
+              )
+            })}
           </div>
         )}
+      </div>
+
+      {/* Sosyal Medya Yönlendirme */}
+      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Link size={18} className="text-amber-400" /> Sosyal Medya Yönlendirme</h3>
+        <p className="text-xs text-gray-500 mb-4">Bu linkler QR menüde logo olarak görünür; müşteri tıklayınca direkt oraya yönlendirilir.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Google Yorum Linki</label>
+            <input value={googleReviewUrl} onChange={e => setGoogleReviewUrl(e.target.value)}
+              placeholder="https://g.page/r/... yorum linki"
+              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Instagram Linki</label>
+            <input value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)}
+              placeholder="https://instagram.com/isletmeadi"
+              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          </div>
+        </div>
+        <button onClick={saveSocialLinks} disabled={saving} className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Linkleri Kaydet</button>
       </div>
 
       {/* Banner Yükleme */}
@@ -281,6 +354,13 @@ export default function StorefrontPage() {
                     <span className="text-amber-400 font-bold text-sm">₺{p.price}</span>
                   )}
                 </div>
+                <span className={
+                  p.status === 'soldout' ? 'text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20'
+                  : p.status === 'preparing' ? 'text-[10px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : 'text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20'
+                }>
+                  {p.status === 'soldout' ? 'Tükendi' : p.status === 'preparing' ? 'Hazırlıkta' : 'Aktif'}
+                </span>
                 <button onClick={() => setEditingProduct({ ...p })} className="text-gray-500 hover:text-white text-xs">Düzenle</button>
                 <button onClick={() => deleteProduct(p.id)} className="text-red-500 hover:text-red-400"><Trash2 size={14} /></button>
               </div>
@@ -310,6 +390,15 @@ export default function StorefrontPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Kategori</label>
                 <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="İçecekler" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Durum</label>
+                <select value={editingProduct.status || 'active'} onChange={e => setEditingProduct({ ...editingProduct, status: e.target.value })}
+                  className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50">
+                  <option value="active">Aktif</option>
+                  <option value="soldout">Tükendi</option>
+                  <option value="preparing">Hazırlık Aşamasında</option>
+                </select>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
@@ -358,6 +447,15 @@ export default function StorefrontPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Kategori</label>
                 <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="İçecekler" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Durum</label>
+                <select value={newProduct.status || 'active'} onChange={e => setNewProduct({ ...newProduct, status: e.target.value })}
+                  className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50">
+                  <option value="active">Aktif</option>
+                  <option value="soldout">Tükendi</option>
+                  <option value="preparing">Hazırlık Aşamasında</option>
+                </select>
               </div>
               <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
                 className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all disabled:opacity-50 self-end">
