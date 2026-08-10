@@ -21,7 +21,7 @@ export default function StorefrontPage() {
   const [googleReviewUrl, setGoogleReviewUrl] = useState('')
   const [instagramUrl, setInstagramUrl] = useState('')
   const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null)
-  const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', workingHours: [''] as string[], paymentMethods: [''] as string[] })
+  const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', locationUrl: '', workingHours: [''] as string[], paymentMethods: [''] as string[] })
 
   const loadData = async () => {
     setLoading(true)
@@ -49,6 +49,7 @@ export default function StorefrontPage() {
             shopName: cfg.shopName || '',
             address: cfg.address || '',
             phone: cfg.phone || '',
+            locationUrl: cfg.locationUrl || '',
             workingHours: cfg.workingHours && cfg.workingHours.length ? cfg.workingHours : [''],
             paymentMethods: cfg.paymentMethods && cfg.paymentMethods.length ? cfg.paymentMethods : [''],
           })
@@ -67,6 +68,7 @@ export default function StorefrontPage() {
             shopName: data.shopName || '',
             address: data.address || '',
             phone: data.phone || '',
+            locationUrl: data.locationUrl || '',
             workingHours: data.workingHours && data.workingHours.length ? data.workingHours : [''],
             paymentMethods: data.paymentMethods && data.paymentMethods.length ? data.paymentMethods : [''],
           })
@@ -197,6 +199,7 @@ export default function StorefrontPage() {
       shopName: shopInfo.shopName.trim(),
       address: shopInfo.address.trim(),
       phone: shopInfo.phone.trim(),
+      locationUrl: shopInfo.locationUrl.trim(),
       workingHours: shopInfo.workingHours.map(h => h.trim()).filter(Boolean),
       paymentMethods: shopInfo.paymentMethods.map(p => p.trim()).filter(Boolean),
     }
@@ -347,6 +350,13 @@ export default function StorefrontPage() {
             <input value={shopInfo.address} onChange={e => setShopInfo({ ...shopInfo, address: e.target.value })}
               placeholder="Örn: Atatürk Cad. No:12, Kadıköy/İstanbul"
               className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Konum Linki (Google Maps)</label>
+            <input value={shopInfo.locationUrl} onChange={e => setShopInfo({ ...shopInfo, locationUrl: e.target.value })}
+              placeholder="https://maps.google.com/... veya https://maps.app.goo.gl/..."
+              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+            <p className="text-[10px] text-gray-600">Doluysa QR menüde konum butonu görünür; müşteri tıklayınca haritaya yönlendirilir.</p>
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
             <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Çalışma Saatleri</label>
