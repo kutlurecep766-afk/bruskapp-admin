@@ -223,7 +223,6 @@ export default function StorefrontPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">QR Menü Yönetimi</h1>
-              <p className="text-sm text-gray-500 mt-0.5">{storefront.name}</p>
             </div>
           </div>
         </div>
@@ -332,7 +331,7 @@ export default function StorefrontPage() {
         <div className="space-y-2 mb-4">
           {products.length === 0 && <p className="text-gray-500 text-sm">Henüz ürün eklenmemiş</p>}
           {products.map((p: any) => (
-            <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
+            <div key={p.id} onClick={() => setEditingProduct({ ...p })} className="flex items-center justify-between p-3 rounded-xl bg-[#080b12]/60 border border-[#1a2332] cursor-pointer hover:border-amber-500/30 transition-all group">
               <div className="flex items-center gap-3">
                 {p.image && <img src={p.image} className="w-16 h-16 rounded-lg object-cover" />}
                 <div>
@@ -361,8 +360,8 @@ export default function StorefrontPage() {
                 }>
                   {p.status === 'soldout' ? 'Tükendi' : p.status === 'preparing' ? 'Hazırlıkta' : 'Aktif'}
                 </span>
-                <button onClick={() => setEditingProduct({ ...p })} className="text-gray-500 hover:text-white text-xs">Düzenle</button>
-                <button onClick={() => deleteProduct(p.id)} className="text-red-500 hover:text-red-400"><Trash2 size={14} /></button>
+                <span className="text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">Düzenlemek için tıklayın</span>
+                <button onClick={(e) => { e.stopPropagation(); deleteProduct(p.id) }} className="text-red-500 hover:text-red-400"><Trash2 size={14} /></button>
               </div>
             </div>
           ))}
