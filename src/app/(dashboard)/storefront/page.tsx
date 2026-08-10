@@ -142,6 +142,20 @@ export default function StorefrontPage() {
     setProducts(prev => prev.filter(p => p.id !== id))
   }
 
+  const toggleProductStatus = async (p: any) => {
+    const next = p.status === 'soldout' ? 'preparing' : p.status === 'preparing' ? 'active' : 'soldout'
+    const tid = activeTenantId()
+    if (!tid) return
+    const res = await fetch(`/api/storefront/admin/${tid}/products/${p.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ ...p, status: next }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setProducts(prev => prev.map(x => x.id === updated.id ? updated : x))
+    }
+  }
+
   const addMasa = () => {
     const num = parseInt(newMasa)
     if (isNaN(num) || masaNumbers.includes(num)) return
@@ -353,13 +367,14 @@ export default function StorefrontPage() {
                     <span className="text-amber-400 font-bold text-sm">₺{p.price}</span>
                   )}
                 </div>
-                <span className={
-                  p.status === 'soldout' ? 'text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20'
-                  : p.status === 'preparing' ? 'text-[10px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                  : 'text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20'
+                <button onClick={(e) => { e.stopPropagation(); toggleProductStatus(p) }} title="Durumu değiştir"
+                  className={
+                  p.status === 'soldout' ? 'text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer'
+                  : p.status === 'preparing' ? 'text-[10px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer'
+                  : 'text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-all cursor-pointer'
                 }>
                   {p.status === 'soldout' ? 'Tükendi' : p.status === 'preparing' ? 'Hazırlıkta' : 'Aktif'}
-                </span>
+                </button>
                 <span className="text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">Düzenlemek için tıklayın</span>
                 <button onClick={(e) => { e.stopPropagation(); deleteProduct(p.id) }} className="text-red-500 hover:text-red-400"><Trash2 size={14} /></button>
               </div>
