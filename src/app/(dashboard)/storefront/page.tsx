@@ -21,6 +21,7 @@ export default function StorefrontPage() {
   const [googleReviewUrl, setGoogleReviewUrl] = useState('')
   const [instagramUrl, setInstagramUrl] = useState('')
   const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null)
+  const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', workingHours: [''] as string[], paymentMethods: [''] as string[] })
 
   const loadData = async () => {
     setLoading(true)
@@ -44,6 +45,13 @@ export default function StorefrontPage() {
           setMasaNumbers(cfg.masaNumbers || [])
           setGoogleReviewUrl(cfg.googleReviewUrl || '')
           setInstagramUrl(cfg.instagramUrl || '')
+          setShopInfo({
+            shopName: cfg.shopName || '',
+            address: cfg.address || '',
+            phone: cfg.phone || '',
+            workingHours: cfg.workingHours && cfg.workingHours.length ? cfg.workingHours : [''],
+            paymentMethods: cfg.paymentMethods && cfg.paymentMethods.length ? cfg.paymentMethods : [''],
+          })
         }
         if (productsRes.ok) setProducts(await productsRes.json())
       } else {
@@ -55,6 +63,13 @@ export default function StorefrontPage() {
           setMasaNumbers(data.masaNumbers || [])
           setGoogleReviewUrl(data.googleReviewUrl || '')
           setInstagramUrl(data.instagramUrl || '')
+          setShopInfo({
+            shopName: data.shopName || '',
+            address: data.address || '',
+            phone: data.phone || '',
+            workingHours: data.workingHours && data.workingHours.length ? data.workingHours : [''],
+            paymentMethods: data.paymentMethods && data.paymentMethods.length ? data.paymentMethods : [''],
+          })
         } else {
           setError('Bu sayfaya erişim yetkiniz yok')
         }
@@ -177,15 +192,23 @@ export default function StorefrontPage() {
   const saveConfig = async () => {
     setSaving(true)
     const tid = activeTenantId()
+    const payload = {
+      masaNumbers,
+      shopName: shopInfo.shopName.trim(),
+      address: shopInfo.address.trim(),
+      phone: shopInfo.phone.trim(),
+      workingHours: shopInfo.workingHours.map(h => h.trim()).filter(Boolean),
+      paymentMethods: shopInfo.paymentMethods.map(p => p.trim()).filter(Boolean),
+    }
     if (tid) {
       await fetch(`/api/storefront/admin/${tid}/config`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ masaNumbers }),
+        body: JSON.stringify(payload),
       })
     } else {
       await fetch('/api/storefront/admin/me/config', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ masaNumbers }),
+        body: JSON.stringify(payload),
       })
     }
     setSaving(false)
@@ -300,6 +323,59 @@ export default function StorefrontPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* Dükkan Bilgileri */}
+      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Store size={18} className="text-amber-400" /> Dükkan Bilgileri</h3>
+        <p className="text-xs text-gray-500 mb-4">Bu bilgiler QR menüde banner'ın altında dükkan kartı olarak görünür.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Dükkan Adı</label>
+            <input value={shopInfo.shopName} onChange={e => setShopInfo({ ...shopInfo, shopName: e.target.value })}
+              placeholder="Örn: Cafe Linna"
+              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Telefon</label>
+            <input value={shopInfo.phone} onChange={e => setShopInfo({ ...shopInfo, phone: e.target.value })}
+              placeholder="0 (5XX) XXX XX XX"
+              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Adres / Konum</label>
+            <input value={shopInfo.address} onChange={e => setShopInfo({ ...shopInfo, address: e.target.value })}
+              placeholder="Örn: Atatürk Cad. No:12, Kadıköy/İstanbul"
+              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Çalışma Saatleri</label>
+            <p className="text-[10px] text-gray-600 mb-1">Her satır bir saat dilimi (ör: "Pzt - Cuma: 09:00 - 22:00")</p>
+            {shopInfo.workingHours.map((h, i) => (
+              <div key={i} className="flex gap-2 mb-1">
+                <input value={h} onChange={e => { const arr = [...shopInfo.workingHours]; arr[i] = e.target.value; setShopInfo({ ...shopInfo, workingHours: arr }) }}
+                  placeholder="Örn: Pzt - Cuma: 09:00 - 22:00"
+                  className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+                <button onClick={() => setShopInfo({ ...shopInfo, workingHours: shopInfo.workingHours.filter((_, x) => x !== i) })} className="px-2 text-gray-500 hover:text-red-400 text-sm">✕</button>
+              </div>
+            ))}
+            <button onClick={() => setShopInfo({ ...shopInfo, workingHours: [...shopInfo.workingHours, ''] })} className="text-xs text-amber-400 hover:text-amber-300 mt-1">+ Saat Satırı Ekle</button>
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Ödeme Yöntemleri</label>
+            <p className="text-[10px] text-gray-600 mb-1">QR menüde müşteriye gösterilecek ödeme yöntemleri</p>
+            {shopInfo.paymentMethods.map((pm, i) => (
+              <div key={i} className="flex gap-2 mb-1">
+                <input value={pm} onChange={e => { const arr = [...shopInfo.paymentMethods]; arr[i] = e.target.value; setShopInfo({ ...shopInfo, paymentMethods: arr }) }}
+                  placeholder="Örn: Kapıda Ödeme / Kart ile Ödeme"
+                  className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+                <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: shopInfo.paymentMethods.filter((_, x) => x !== i) })} className="px-2 text-gray-500 hover:text-red-400 text-sm">✕</button>
+              </div>
+            ))}
+            <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: [...shopInfo.paymentMethods, ''] })} className="text-xs text-amber-400 hover:text-amber-300 mt-1">+ Ödeme Yöntemi Ekle</button>
+          </div>
+        </div>
+        <button onClick={saveConfig} disabled={saving} className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Dükkan Bilgilerini Kaydet</button>
       </div>
 
       {/* Sosyal Medya Yönlendirme */}
