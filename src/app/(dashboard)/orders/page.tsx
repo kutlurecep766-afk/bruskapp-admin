@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
-  RefreshCw, Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
+  Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
   Printer, Volume2, VolumeX, Eye, History, Loader2, Truck,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
@@ -20,6 +20,7 @@ type TabKey = 'table' | 'online' | 'waiter' | 'history'
 
 function isTableOrder(o: any) {
   const p = (o.platform || '').trim()
+  if (isWaiterCall(o)) return false
   return (p === 'Masa' || p === 'Masa Siparişi' || o.tableNumber)
 }
 function isOnlineOrder(o: any) {
@@ -375,13 +376,17 @@ export default function OrdersPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-2 px-3 py-2.5 rounded-full bg-white/15 text-white text-xs font-semibold backdrop-blur">
+              <span className="relative flex w-2.5 h-2.5">
+                <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              </span>
+              Canlı
+            </span>
             <button onClick={() => { setSoundOn(v => { localStorage.setItem(SOUND_KEY, (!v) ? '1' : '0'); return !v }) }}
               className={'flex items-center gap-2 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ' + (soundOn ? 'bg-white text-blue-700 shadow-md' : 'bg-white/15 text-white backdrop-blur')}>
               {soundOn ? <Volume2 size={14} /> : <VolumeX size={14} />}
               {soundOn ? 'Ses Açık' : 'Ses Kapalı'}
-            </button>
-            <button onClick={load} className="flex items-center gap-2 px-3 py-2.5 rounded-full bg-white/15 text-white text-xs font-semibold backdrop-blur hover:bg-white/25 transition-all">
-              <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" /> Yenile
             </button>
             <button onClick={printBulk} disabled={printerBusy}
               className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-blue-700 text-xs font-bold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-60">
@@ -575,12 +580,14 @@ export default function OrdersPage() {
                 placeholder={tab === 'table' ? 'Masa numarası veya müşteri ara...' : 'Müşteri, telefon veya adres ara...'}
                 className="w-full bg-white border border-blue-100 rounded-full pl-9 pr-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 shadow-sm" />
             </div>
-            <div className="flex gap-1 bg-white border border-blue-100 rounded-full p-1 shadow-sm">
-              {[{ key: '', label: 'Tümü' }, { key: 'pending', label: 'Bekleyen' }, { key: 'preparing', label: 'Hazırlanıyor' }, { key: 'out_for_delivery', label: 'Yola Çıktı' }, { key: 'delivered', label: 'Teslim Edildi' }, { key: 'completed', label: 'Tamamlanan' }].map(f => (
+            <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
+            <div className="flex gap-1 bg-white border border-blue-100 rounded-full p-1 shadow-sm w-max">
+              {[{ key: '', label: 'Tümü' }, { key: 'pending', label: 'Bekleyen' }, { key: 'preparing', label: 'Hazırlanıyor' }, { key: 'out_for_delivery', label: 'Yola Çıktı' }, { key: 'delivered', label: 'Teslim Edildi' }, { key: 'completed', label: 'Tamamlanan' }, { key: 'cancelled', label: 'İptal' }].map(f => (
                 <button key={f.key} onClick={() => setFilter(f.key)}
-                  className={'px-3 py-1.5 rounded-full text-xs font-semibold transition-all ' + (filter === f.key ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}>{f.label}</button>
+                  className={'px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (filter === f.key ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}>{f.label}</button>
               ))}
             </div>
+          </div>
           </div>
 
           {/* Order list */}
