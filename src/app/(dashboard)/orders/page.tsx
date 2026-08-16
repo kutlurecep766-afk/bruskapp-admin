@@ -3,13 +3,15 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   RefreshCw, Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
-  Printer, Volume2, VolumeX, Eye, History, Loader2,
+  Printer, Volume2, VolumeX, Eye, History, Loader2, Truck,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string; dot: string; icon: any }> = {
   pending: { label: 'Bekliyor', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500', icon: Timer },
   preparing: { label: 'Hazırlanıyor', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', dot: 'bg-blue-500', icon: Timer },
+  out_for_delivery: { label: 'Yola Çıktı', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200', dot: 'bg-purple-500', icon: Truck },
+  delivered: { label: 'Teslim Edildi', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500', icon: CheckCircle2 },
   completed: { label: 'Tamamlandı', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500', icon: CheckCircle2 },
   cancelled: { label: 'İptal', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500', icon: XCircle },
 }
@@ -28,7 +30,7 @@ function isWaiterCall(o: any) {
   return (o.platform || '').includes('Garson')
 }
 function isHistorical(o: any) {
-  return o.status === 'completed' || o.status === 'cancelled'
+  return o.status === 'completed' || o.status === 'delivered' || o.status === 'cancelled'
 }
 
 const PLATFORM_META: Record<'table' | 'online', { label: string; bg: string; border: string; icon: any; grad: string }> = {
@@ -125,6 +127,7 @@ export default function OrdersPage() {
   const portRef = useRef<SerialPort | null>(null)
   const [printerBusy, setPrinterBusy] = useState(false)
   const [printerStatus, setPrinterStatus] = useState('')
+  const [customerNote, setCustomerNote] = useState('')
   const shopRef = useRef({ name: 'BRUSKAPP', address: '' })
 
   useEffect(() => { soundRef.current = soundOn }, [soundOn])
@@ -177,14 +180,16 @@ export default function OrdersPage() {
     }
   }, [load])
 
-  const updateStatus = async (id: number, status: string) => {
+  useEffect(() => { setCustomerNote(detail?.customerNote || '') }, [detail])
+
+  const updateStatus = async (id: number, status: string, customerNote?: string) => {
     setUpdating(id)
     try {
       await fetch('/api/orders/' + id + '/status', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(customerNote ? { status, customerNote } : { status }),
       })
       await load()
     } catch {} finally { setUpdating(null) }
@@ -497,6 +502,11 @@ export default function OrdersPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[10px] text-gray-400 font-mono font-semibold tracking-wider">#{o.id}</span>
+                          {o.trackingCode && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-50 text-yellow-700 font-mono text-[10px] font-bold border border-yellow-200" title="Müşteri Takip Kodu">
+                              <Search size={9} /> {o.trackingCode}
+                            </span>
+                          )}
                           <span className={'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ' + meta.bg + ' ' + meta.border}>
                             <Icon size={11} /> {meta.label}
                           </span>
@@ -543,7 +553,7 @@ export default function OrdersPage() {
                 className="w-full bg-white border border-blue-100 rounded-full pl-9 pr-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 shadow-sm" />
             </div>
             <div className="flex gap-1 bg-white border border-blue-100 rounded-full p-1 shadow-sm">
-              {[{ key: '', label: 'Tümü' }, { key: 'pending', label: 'Bekleyen' }, { key: 'preparing', label: 'Hazırlanıyor' }, { key: 'completed', label: 'Tamamlanan' }].map(f => (
+              {[{ key: '', label: 'Tümü' }, { key: 'pending', label: 'Bekleyen' }, { key: 'preparing', label: 'Hazırlanıyor' }, { key: 'out_for_delivery', label: 'Yola Çıktı' }, { key: 'delivered', label: 'Teslim Edildi' }, { key: 'completed', label: 'Tamamlanan' }].map(f => (
                 <button key={f.key} onClick={() => setFilter(f.key)}
                   className={'px-3 py-1.5 rounded-full text-xs font-semibold transition-all ' + (filter === f.key ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}>{f.label}</button>
               ))}
@@ -575,6 +585,11 @@ export default function OrdersPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[10px] text-gray-400 font-mono font-semibold tracking-wider">#{o.id}</span>
+                          {o.trackingCode && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-50 text-yellow-700 font-mono text-[10px] font-bold border border-yellow-200" title="Müşteri Takip Kodu">
+                              <Search size={9} /> {o.trackingCode}
+                            </span>
+                          )}
                           <span className={'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ' + meta.bg + ' ' + meta.border}>
                             <Icon size={11} /> {meta.label}
                           </span>
@@ -627,28 +642,37 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  {o.status !== 'completed' && o.status !== 'cancelled' && (
-                    <div className="mt-4 flex items-center gap-2 flex-wrap border-t border-blue-50 pt-4">
-                      {o.status !== 'preparing' && (
-                        <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'preparing') }} disabled={updating === o.id}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
-                          <Timer size={13} /> Hazırlanıyor
+                  {o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled' && (() => {
+                    const online = isOnlineOrder(o)
+                    return (
+                      <div className="mt-4 flex items-center gap-2 flex-wrap border-t border-blue-50 pt-4">
+                        {o.status !== 'preparing' && (
+                          <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'preparing') }} disabled={updating === o.id}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                            <Timer size={13} /> Hazırlanıyor
+                          </button>
+                        )}
+                        {online && o.status !== 'out_for_delivery' && (
+                          <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'out_for_delivery') }} disabled={updating === o.id}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-50 text-purple-700 text-xs font-bold border border-purple-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                            <Truck size={13} /> Yola Çıktı
+                          </button>
+                        )}
+                        <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'delivered') }} disabled={updating === o.id}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                          <CheckCircle2 size={13} /> Teslim Edildi
                         </button>
-                      )}
-                      <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'completed') }} disabled={updating === o.id}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
-                        <CheckCircle2 size={13} /> Tamamlandı
-                      </button>
-                      <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'cancelled') }} disabled={updating === o.id}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-500 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
-                        <XCircle size={13} /> İptal
-                      </button>
-                      <button onClick={e => { e.stopPropagation(); printReceipt(o) }} disabled={printerBusy}
-                        className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
-                        <Printer size={13} /> Yazdır
-                      </button>
-                    </div>
-                  )}
+                        <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'cancelled') }} disabled={updating === o.id}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-500 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                          <XCircle size={13} /> İptal
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); printReceipt(o) }} disabled={printerBusy}
+                          className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                          <Printer size={13} /> Yazdır
+                        </button>
+                      </div>
+                    )
+                  })()}
                 </div>
               )
             })}
@@ -666,6 +690,11 @@ export default function OrdersPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-white/70 text-xs font-mono font-semibold">SİPARİŞ #{detail.id}</span>
+                    {detail.trackingCode && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-400/20 border border-yellow-300/30 text-yellow-100 text-xs font-mono font-bold" title="Takip Kodu">
+                        <Search size={11} /> {detail.trackingCode}
+                      </span>
+                    )}
                     <StatusBadge o={detail} />
                   </div>
                   <p className="text-white text-xl font-bold mt-2">{detail.customerName || 'Müşteri'}</p>
@@ -745,6 +774,20 @@ export default function OrdersPage() {
                 </div>
               )}
 
+              {/* Customer note */}
+              <div className="rounded-2xl bg-blue-50/60 border border-blue-100 p-4">
+                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-2">Müşteriye Not</p>
+                <textarea value={customerNote} onChange={e => setCustomerNote(e.target.value)}
+                  placeholder="Örn: Siparişiniz yola çıktı, tahmini varış 30 dk."
+                  rows={3}
+                  className="w-full bg-white border border-blue-100 rounded-xl px-3 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 resize-none" />
+                <p className="text-[10px] text-gray-400 mt-1.5">Müşteri, sipariş takip ekranında bu notu görecek.</p>
+                <button onClick={() => { updateStatus(detail.id, detail.status, customerNote) }} disabled={updating === detail.id}
+                  className="mt-3 py-2 px-4 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50">
+                  {updating === detail.id ? 'Kaydediliyor...' : 'Notu Kaydet'}
+                </button>
+              </div>
+
               {/* Total */}
               <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl px-5 py-4 shadow-md shadow-blue-600/20">
                 <p className="text-white text-sm font-semibold">Toplam</p>
@@ -757,11 +800,24 @@ export default function OrdersPage() {
                   className="flex-1 py-3 rounded-full bg-white border-2 border-blue-600 text-blue-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95 disabled:opacity-50">
                   <Printer size={15} className="inline mr-1.5 -mt-0.5" /> Fiş Yazdır
                 </button>
-                {detail.status !== 'completed' && detail.status !== 'cancelled' && (
-                  <button onClick={() => { updateStatus(detail.id, 'completed'); setDetail(null) }} disabled={updating === detail.id}
-                    className="flex-1 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 transition-all active:scale-95 disabled:opacity-50">
-                    <CheckCircle2 size={15} className="inline mr-1.5 -mt-0.5" /> Tamamlandı İşaretle
-                  </button>
+                {detail.status !== 'delivered' && detail.status !== 'completed' && detail.status !== 'cancelled' && (
+                  (() => {
+                    const online = isOnlineOrder(detail)
+                    return (
+                      <>
+                        {online && detail.status !== 'out_for_delivery' && (
+                          <button onClick={() => { updateStatus(detail.id, 'out_for_delivery') }} disabled={updating === detail.id}
+                            className="flex-1 py-3 rounded-full bg-purple-50 border-2 border-purple-500 text-purple-700 text-sm font-bold hover:bg-purple-100 transition-all active:scale-95 disabled:opacity-50">
+                            <Truck size={15} className="inline mr-1.5 -mt-0.5" /> Yola Çıktı
+                          </button>
+                        )}
+                        <button onClick={() => { updateStatus(detail.id, 'delivered'); setDetail(null) }} disabled={updating === detail.id}
+                          className="flex-1 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 transition-all active:scale-95 disabled:opacity-50">
+                          <CheckCircle2 size={15} className="inline mr-1.5 -mt-0.5" /> Teslim Edildi
+                        </button>
+                      </>
+                    )
+                  })()
                 )}
               </div>
             </div>
