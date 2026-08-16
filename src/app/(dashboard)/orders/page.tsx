@@ -83,10 +83,22 @@ function StatusBadge({ o }: { o: any }) {
 /* ---------------- SOUND ---------------- */
 const SOUND_KEY = 'brusk_orders_sound'
 
+let audioCtx: AudioContext | null = null
+function ensureAudio(): AudioContext | null {
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || (window as any).webkitAudioContext
+      audioCtx = new AC()
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume()
+    return audioCtx
+  } catch { return null }
+}
+
 function playChime(kind: 'order' | 'waiter') {
   try {
-    const AC = window.AudioContext || (window as any).webkitAudioContext
-    const ctx = new AC()
+    const ctx = ensureAudio()
+    if (!ctx) return
     const now = ctx.currentTime
     const notes = kind === 'order' ? [523.25, 659.25, 783.99] : [659.25, 523.25, 659.25, 783.99]
     notes.forEach((freq, i) => {
@@ -102,7 +114,6 @@ function playChime(kind: 'order' | 'waiter') {
       osc.start(t)
       osc.stop(t + 0.13)
     })
-    setTimeout(() => { try { ctx.close() } catch {} }, 1500)
   } catch {}
 }
 
@@ -168,8 +179,8 @@ export default function OrdersPage() {
           } catch {}
           load()
         })
-        es.onmessage = () => load()
-        es.onerror = () => es.close()
+        es.addEventListener('status_update', () => load())
+        es.onerror = () => {}
       } catch {}
     }
     connect()
@@ -179,6 +190,18 @@ export default function OrdersPage() {
       if (esRef.current) esRef.current.close()
     }
   }, [load])
+
+  useEffect(() => {
+    const unlock = () => ensureAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    window.addEventListener('touchstart', unlock, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+      window.removeEventListener('touchstart', unlock)
+    }
+  }, [])
 
   useEffect(() => { setCustomerNote(detail?.customerNote || '') }, [detail])
 
