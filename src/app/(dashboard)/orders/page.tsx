@@ -374,7 +374,7 @@ export default function OrdersPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => { setSoundOn(v => { localStorage.setItem(SOUND_KEY, (!v) ? '1' : '0'); return !v }) }}
               className={'flex items-center gap-2 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ' + (soundOn ? 'bg-white text-blue-700 shadow-md' : 'bg-white/15 text-white backdrop-blur')}>
               {soundOn ? <Volume2 size={14} /> : <VolumeX size={14} />}
@@ -391,7 +391,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Tabs */}
-        <div className="relative mt-6 flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="relative mt-6 flex items-center gap-2 overflow-x-auto no-scrollbar">
           {TABS.map(t => {
             const active = tab === t.key
             const Icon = t.icon
@@ -669,13 +669,13 @@ export default function OrdersPage() {
                     const online = isOnlineOrder(o)
                     return (
                       <div className="mt-4 flex items-center gap-2 flex-wrap border-t border-blue-50 pt-4">
-                        {o.status !== 'preparing' && (
+                        {o.status === 'pending' && (
                           <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'preparing') }} disabled={updating === o.id}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                             <Timer size={13} /> Hazırlanıyor
                           </button>
                         )}
-                        {online && o.status !== 'out_for_delivery' && (
+                        {online && o.status === 'preparing' && (
                           <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'out_for_delivery') }} disabled={updating === o.id}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-50 text-purple-700 text-xs font-bold border border-purple-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                             <Truck size={13} /> Yola Çıktı
@@ -828,7 +828,7 @@ export default function OrdersPage() {
                     const online = isOnlineOrder(detail)
                     return (
                       <>
-                        {online && detail.status !== 'out_for_delivery' && (
+                        {online && detail.status === 'preparing' && (
                           <button onClick={() => { updateStatus(detail.id, 'out_for_delivery') }} disabled={updating === detail.id}
                             className="flex-1 py-3 rounded-full bg-purple-50 border-2 border-purple-500 text-purple-700 text-sm font-bold hover:bg-purple-100 transition-all active:scale-95 disabled:opacity-50">
                             <Truck size={15} className="inline mr-1.5 -mt-0.5" /> Yola Çıktı
