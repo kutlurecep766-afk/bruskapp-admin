@@ -32,6 +32,8 @@ export default function StorefrontPage() {
   const [instagramUrl, setInstagramUrl] = useState('')
   const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null)
   const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', locationUrl: '', workingHours: [''] as string[] })
+  const [paymentMethodsTable, setPaymentMethodsTable] = useState<string[]>(TABLE_PAYMENTS)
+  const [paymentMethodsOnline, setPaymentMethodsOnline] = useState<string[]>(ONLINE_PAYMENTS)
 
   const loadData = async () => {
     setLoading(true)
@@ -62,6 +64,8 @@ export default function StorefrontPage() {
             locationUrl: cfg.locationUrl || '',
             workingHours: cfg.workingHours && cfg.workingHours.length ? cfg.workingHours : [''],
           })
+          setPaymentMethodsTable(cfg.paymentMethodsTable?.length ? cfg.paymentMethodsTable : TABLE_PAYMENTS)
+          setPaymentMethodsOnline(cfg.paymentMethodsOnline?.length ? cfg.paymentMethodsOnline : ONLINE_PAYMENTS)
         }
         if (productsRes.ok) setProducts(await productsRes.json())
       } else {
@@ -80,6 +84,8 @@ export default function StorefrontPage() {
             locationUrl: data.locationUrl || '',
             workingHours: data.workingHours && data.workingHours.length ? data.workingHours : [''],
           })
+          setPaymentMethodsTable(data.paymentMethodsTable?.length ? data.paymentMethodsTable : TABLE_PAYMENTS)
+          setPaymentMethodsOnline(data.paymentMethodsOnline?.length ? data.paymentMethodsOnline : ONLINE_PAYMENTS)
         } else {
           setError('Bu sayfaya erişim yetkiniz yok')
         }
@@ -199,6 +205,14 @@ export default function StorefrontPage() {
     setMasaNumbers(prev => prev.filter(n => n !== num))
   }
 
+  const togglePayment = (kind: 'table' | 'online', key: string) => {
+    if (kind === 'table') {
+      setPaymentMethodsTable(prev => prev.includes(key) ? (prev.length > 1 ? prev.filter(k => k !== key) : prev) : [...prev, key])
+    } else {
+      setPaymentMethodsOnline(prev => prev.includes(key) ? (prev.length > 1 ? prev.filter(k => k !== key) : prev) : [...prev, key])
+    }
+  }
+
   const saveConfig = async () => {
     setSaving(true)
     const tid = activeTenantId()
@@ -209,6 +223,8 @@ export default function StorefrontPage() {
       phone: shopInfo.phone.trim(),
       locationUrl: shopInfo.locationUrl.trim(),
       workingHours: shopInfo.workingHours.map(h => h.trim()).filter(Boolean),
+      paymentMethodsTable,
+      paymentMethodsOnline,
     }
     if (tid) {
       await fetch(`/api/storefront/admin/${tid}/config`, {
@@ -401,7 +417,7 @@ export default function StorefrontPage() {
           </div>
           <div className="flex flex-col gap-3 md:col-span-2">
             <label className={labelCls}>Ödeme Yöntemleri</label>
-            <p className="text-[10px] text-gray-500">Bu ödeme yöntemleri her QR kodu için otomatik uygulanır.</p>
+            <p className="text-[10px] text-gray-500">Seçili ödeme yöntemleri her QR kodu için aktif olur. Tıklayarak seçebilir/yayayabilirsiniz.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
               <div className="rounded-xl bg-blue-50/40 border border-blue-100 p-3">
                 <div className="flex items-center gap-2 mb-2">
@@ -411,17 +427,19 @@ export default function StorefrontPage() {
                   {TABLE_PAYMENTS.map(key => {
                     const meta = PAYMENT_META[key]
                     const Icon = meta.icon
+                    const active = paymentMethodsTable.includes(key)
                     return (
-                      <div key={key} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-white border border-blue-100">
-                        <span className="w-4 h-4 rounded flex items-center justify-center bg-blue-600 flex-shrink-0">
-                          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      <button key={key} onClick={() => togglePayment('table', key)} type="button"
+                        className={'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border transition-all text-left ' + (active ? 'bg-white border-blue-200 cursor-pointer hover:border-blue-400' : 'bg-white/60 border-blue-100 opacity-60 cursor-pointer hover:opacity-100')}>
+                        <span className={'w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all ' + (active ? 'bg-blue-600' : 'bg-gray-200')}>
+                          {active && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                         </span>
-                        <Icon size={14} className="text-blue-600 flex-shrink-0" />
+                        <Icon size={14} className={(active ? 'text-blue-600' : 'text-gray-400') + ' flex-shrink-0'} />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-900 font-semibold">{meta.label}</p>
+                          <p className={'text-xs font-semibold ' + (active ? 'text-gray-900' : 'text-gray-400')}>{meta.label}</p>
                           <p className="text-[9px] text-gray-400">{meta.desc}</p>
                         </div>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -434,17 +452,19 @@ export default function StorefrontPage() {
                   {ONLINE_PAYMENTS.map(key => {
                     const meta = PAYMENT_META[key]
                     const Icon = meta.icon
+                    const active = paymentMethodsOnline.includes(key)
                     return (
-                      <div key={key} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-white border border-cyan-100">
-                        <span className="w-4 h-4 rounded flex items-center justify-center bg-cyan-600 flex-shrink-0">
-                          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      <button key={key} onClick={() => togglePayment('online', key)} type="button"
+                        className={'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border transition-all text-left ' + (active ? 'bg-white border-cyan-200 cursor-pointer hover:border-cyan-400' : 'bg-white/60 border-cyan-100 opacity-60 cursor-pointer hover:opacity-100')}>
+                        <span className={'w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all ' + (active ? 'bg-cyan-600' : 'bg-gray-200')}>
+                          {active && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                         </span>
-                        <Icon size={14} className="text-cyan-600 flex-shrink-0" />
+                        <Icon size={14} className={(active ? 'text-cyan-600' : 'text-gray-400') + ' flex-shrink-0'} />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-900 font-semibold">{meta.label}</p>
+                          <p className={'text-xs font-semibold ' + (active ? 'text-gray-900' : 'text-gray-400')}>{meta.label}</p>
                           <p className="text-[9px] text-gray-400">{meta.desc}</p>
                         </div>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
