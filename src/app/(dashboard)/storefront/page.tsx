@@ -3,17 +3,15 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, Banknote, CreditCard, HandCoins, Wallet } from 'lucide-react'
 
-const PAYMENT_OPTIONS = [
-  { key: 'Online Ödeme', label: 'Online Ödeme', icon: Globe, desc: 'SanalPOS ile online' },
-  { key: 'Kapıda Nakit', label: 'Kapıda Nakit', icon: Banknote, desc: 'Adrese teslimde nakit' },
-  { key: 'Kapıda Kart', label: 'Kapıda Kart', icon: CreditCard, desc: 'Adrese teslimde kart' },
-  { key: 'Kasada Nakit', label: 'Kasada Nakit', icon: HandCoins, desc: 'Masa siparişinde kasadan nakit' },
-  { key: 'Kasada Kart', label: 'Kasada Kart', icon: Wallet, desc: 'Masa siparişinde kasadan kart' },
-]
-const KNOWN_PAYMENT_KEYS = PAYMENT_OPTIONS.map(o => o.key)
-const DEFAULT_TABLE_PAYMENTS = ['Online Ödeme', 'Kasada Nakit', 'Kasada Kart']
-const DEFAULT_ONLINE_PAYMENTS = ['Online Ödeme', 'Kapıda Nakit', 'Kapıda Kart']
-const filterPayments = (arr: string[] | undefined, defaults: string[]) => (arr?.length ? arr : defaults).filter(k => KNOWN_PAYMENT_KEYS.includes(k))
+const TABLE_PAYMENTS = ['Online Ödeme', 'Kasada Kart', 'Kasada Nakit']
+const ONLINE_PAYMENTS = ['Online Ödeme', 'Kapıda Kart', 'Kapıda Nakit']
+const PAYMENT_META: Record<string, { label: string; icon: any; desc: string }> = {
+  'Online Ödeme': { label: 'Online Ödeme', icon: Globe, desc: 'SanalPOS ile online' },
+  'Kapıda Nakit': { label: 'Kapıda Nakit', icon: Banknote, desc: 'Adrese teslimde nakit' },
+  'Kapıda Kart': { label: 'Kapıda Kart', icon: CreditCard, desc: 'Adrese teslimde kart' },
+  'Kasada Nakit': { label: 'Kasada Nakit', icon: HandCoins, desc: 'Masa siparişinde kasadan nakit' },
+  'Kasada Kart': { label: 'Kasada Kart', icon: Wallet, desc: 'Masa siparişinde kasadan kart' },
+}
 
 export default function StorefrontPage() {
   const searchParams = useSearchParams()
@@ -34,8 +32,6 @@ export default function StorefrontPage() {
   const [instagramUrl, setInstagramUrl] = useState('')
   const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null)
   const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', locationUrl: '', workingHours: [''] as string[] })
-  const [tablePayments, setTablePayments] = useState<string[]>([])
-  const [onlinePayments, setOnlinePayments] = useState<string[]>([])
 
   const loadData = async () => {
     setLoading(true)
@@ -59,8 +55,6 @@ export default function StorefrontPage() {
           setMasaNumbers(cfg.masaNumbers || [])
           setGoogleReviewUrl(cfg.googleReviewUrl || '')
           setInstagramUrl(cfg.instagramUrl || '')
-          setTablePayments(filterPayments(cfg.paymentMethodsTable, DEFAULT_TABLE_PAYMENTS))
-          setOnlinePayments(filterPayments(cfg.paymentMethodsOnline, DEFAULT_ONLINE_PAYMENTS))
           setShopInfo({
             shopName: cfg.shopName || '',
             address: cfg.address || '',
@@ -79,8 +73,6 @@ export default function StorefrontPage() {
           setMasaNumbers(data.masaNumbers || [])
           setGoogleReviewUrl(data.googleReviewUrl || '')
           setInstagramUrl(data.instagramUrl || '')
-          setTablePayments(filterPayments(data.paymentMethodsTable, DEFAULT_TABLE_PAYMENTS))
-          setOnlinePayments(filterPayments(data.paymentMethodsOnline, DEFAULT_ONLINE_PAYMENTS))
           setShopInfo({
             shopName: data.shopName || '',
             address: data.address || '',
@@ -217,8 +209,6 @@ export default function StorefrontPage() {
       phone: shopInfo.phone.trim(),
       locationUrl: shopInfo.locationUrl.trim(),
       workingHours: shopInfo.workingHours.map(h => h.trim()).filter(Boolean),
-      paymentMethodsTable: [...tablePayments],
-      paymentMethodsOnline: [...onlinePayments],
     }
     if (tid) {
       await fetch(`/api/storefront/admin/${tid}/config`, {
@@ -411,28 +401,27 @@ export default function StorefrontPage() {
           </div>
           <div className="flex flex-col gap-3 md:col-span-2">
             <label className={labelCls}>Ödeme Yöntemleri</label>
-            <p className="text-[10px] text-gray-500">Masa QR ve Online QR için ayrı ayrı seçin. Seçilen yöntemler yalnızca o koddan girilen siparişlerde görünür.</p>
+            <p className="text-[10px] text-gray-500">Bu ödeme yöntemleri her QR kodu için otomatik uygulanır.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
               <div className="rounded-xl bg-blue-50/40 border border-blue-100 p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold uppercase tracking-wide"><Table2 size={9} /> Masa QR</span>
                 </div>
                 <div className="space-y-1.5">
-                  {PAYMENT_OPTIONS.map(opt => {
-                    const Icon = opt.icon
-                    const checked = tablePayments.includes(opt.key)
+                  {TABLE_PAYMENTS.map(key => {
+                    const meta = PAYMENT_META[key]
+                    const Icon = meta.icon
                     return (
-                      <label key={opt.key} onClick={() => setTablePayments(prev => checked ? prev.filter(k => k !== opt.key) : [...prev, opt.key])}
-                        className={'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all ' + (checked ? 'bg-white border-blue-300 ring-2 ring-blue-100' : 'bg-blue-50/40 border-blue-100 hover:border-blue-300')}>
-                        <span className={'w-4 h-4 rounded flex items-center justify-center border-2 transition-all flex-shrink-0 ' + (checked ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white')}>
-                          {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                      <div key={key} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-white border border-blue-100">
+                        <span className="w-4 h-4 rounded flex items-center justify-center bg-blue-600 flex-shrink-0">
+                          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                         </span>
                         <Icon size={14} className="text-blue-600 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-900 font-semibold">{opt.label}</p>
-                          <p className="text-[9px] text-gray-400">{opt.desc}</p>
+                          <p className="text-xs text-gray-900 font-semibold">{meta.label}</p>
+                          <p className="text-[9px] text-gray-400">{meta.desc}</p>
                         </div>
-                      </label>
+                      </div>
                     )
                   })}
                 </div>
@@ -442,21 +431,20 @@ export default function StorefrontPage() {
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-600 text-white text-[9px] font-bold uppercase tracking-wide"><Globe size={9} /> Online QR</span>
                 </div>
                 <div className="space-y-1.5">
-                  {PAYMENT_OPTIONS.map(opt => {
-                    const Icon = opt.icon
-                    const checked = onlinePayments.includes(opt.key)
+                  {ONLINE_PAYMENTS.map(key => {
+                    const meta = PAYMENT_META[key]
+                    const Icon = meta.icon
                     return (
-                      <label key={opt.key} onClick={() => setOnlinePayments(prev => checked ? prev.filter(k => k !== opt.key) : [...prev, opt.key])}
-                        className={'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all ' + (checked ? 'bg-white border-cyan-300 ring-2 ring-cyan-100' : 'bg-cyan-50/40 border-cyan-100 hover:border-cyan-300')}>
-                        <span className={'w-4 h-4 rounded flex items-center justify-center border-2 transition-all flex-shrink-0 ' + (checked ? 'bg-cyan-600 border-cyan-600' : 'border-gray-300 bg-white')}>
-                          {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                      <div key={key} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-white border border-cyan-100">
+                        <span className="w-4 h-4 rounded flex items-center justify-center bg-cyan-600 flex-shrink-0">
+                          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                         </span>
                         <Icon size={14} className="text-cyan-600 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-900 font-semibold">{opt.label}</p>
-                          <p className="text-[9px] text-gray-400">{opt.desc}</p>
+                          <p className="text-xs text-gray-900 font-semibold">{meta.label}</p>
+                          <p className="text-[9px] text-gray-400">{meta.desc}</p>
                         </div>
-                      </label>
+                      </div>
                     )
                   })}
                 </div>
