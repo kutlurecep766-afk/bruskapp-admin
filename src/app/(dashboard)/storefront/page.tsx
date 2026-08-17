@@ -337,7 +337,7 @@ export default function StorefrontPage() {
           {onlineQrUrl && (
             <div className="flex items-center gap-4">
               <img src={onlineQrUrl} alt="Online Sipariş QR" className="w-32 h-32 rounded-xl bg-white p-2 border border-blue-100 shadow-sm" />
-              <a href={onlineQrUrl} download={`${slug}-online-qr.png`}
+              <a href={onlineQrUrl} download={`onlineQR.png`}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-sm font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                 <Download size={16} /> QR İndir
               </a>
@@ -358,7 +358,7 @@ export default function StorefrontPage() {
                 <div key={n} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50/50 border border-blue-100 hover:shadow-md hover:shadow-blue-600/10 transition-all">
                   <p className="text-gray-900 text-sm font-bold">Masa {n}</p>
                   <img src={mqr} alt={`Masa ${n} QR`} className="w-24 h-24 rounded-lg bg-white p-1.5 border border-blue-100 shadow-sm" />
-                  <a href={mqr} download={`${slug}-masa-${n}-qr.png`}
+                  <a href={mqr} download={`masa${n}QR.png`}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                     <Download size={14} /> İndir
                   </a>
