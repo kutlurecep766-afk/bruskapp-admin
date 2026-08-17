@@ -1,15 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, Banknote, CreditCard, HandCoins, Wallet } from 'lucide-react'
+import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, Banknote, CreditCard } from 'lucide-react'
 
 const PAYMENT_OPTIONS = [
   { key: 'Online Ödeme', label: 'Online Ödeme', icon: Globe, desc: 'SanalPOS ile online' },
   { key: 'Kapıda Nakit', label: 'Kapıda Nakit', icon: Banknote, desc: 'Adrese teslimde nakit' },
   { key: 'Kapıda Kart', label: 'Kapıda Kart', icon: CreditCard, desc: 'Adrese teslimde kart' },
-  { key: 'Kasada Nakit', label: 'Kasada Nakit', icon: HandCoins, desc: 'Masa siparişinde kasadan nakit' },
-  { key: 'Kasada Kart', label: 'Kasada Kart', icon: Wallet, desc: 'Masa siparişinde kasadan kart' },
 ]
+const KNOWN_PAYMENT_KEYS = PAYMENT_OPTIONS.map(o => o.key)
+const filterPayments = (arr: string[] | undefined) => (arr?.length ? arr : KNOWN_PAYMENT_KEYS).filter(k => KNOWN_PAYMENT_KEYS.includes(k))
 
 export default function StorefrontPage() {
   const searchParams = useSearchParams()
@@ -29,7 +29,7 @@ export default function StorefrontPage() {
   const [googleReviewUrl, setGoogleReviewUrl] = useState('')
   const [instagramUrl, setInstagramUrl] = useState('')
   const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null)
-  const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', locationUrl: '', workingHours: [''] as string[], paymentMethods: [''] as string[] })
+  const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', locationUrl: '', workingHours: [''] as string[] })
   const [tablePayments, setTablePayments] = useState<string[]>([])
   const [onlinePayments, setOnlinePayments] = useState<string[]>([])
 
@@ -55,15 +55,14 @@ export default function StorefrontPage() {
           setMasaNumbers(cfg.masaNumbers || [])
           setGoogleReviewUrl(cfg.googleReviewUrl || '')
           setInstagramUrl(cfg.instagramUrl || '')
-          setTablePayments(cfg.paymentMethodsTable || (cfg.paymentMethods?.length ? cfg.paymentMethods : ['Kasada Nakit', 'Kasada Kart', 'Online Ödeme']))
-          setOnlinePayments(cfg.paymentMethodsOnline || (cfg.paymentMethods?.length ? cfg.paymentMethods : ['Kapıda Nakit', 'Kapıda Kart', 'Online Ödeme']))
+          setTablePayments(filterPayments(cfg.paymentMethodsTable))
+          setOnlinePayments(filterPayments(cfg.paymentMethodsOnline))
           setShopInfo({
             shopName: cfg.shopName || '',
             address: cfg.address || '',
             phone: cfg.phone || '',
             locationUrl: cfg.locationUrl || '',
             workingHours: cfg.workingHours && cfg.workingHours.length ? cfg.workingHours : [''],
-            paymentMethods: cfg.paymentMethods && cfg.paymentMethods.length ? cfg.paymentMethods : [''],
           })
         }
         if (productsRes.ok) setProducts(await productsRes.json())
@@ -76,15 +75,14 @@ export default function StorefrontPage() {
           setMasaNumbers(data.masaNumbers || [])
           setGoogleReviewUrl(data.googleReviewUrl || '')
           setInstagramUrl(data.instagramUrl || '')
-          setTablePayments(data.paymentMethodsTable || (data.paymentMethods?.length ? data.paymentMethods : ['Kasada Nakit', 'Kasada Kart', 'Online Ödeme']))
-          setOnlinePayments(data.paymentMethodsOnline || (data.paymentMethods?.length ? data.paymentMethods : ['Kapıda Nakit', 'Kapıda Kart', 'Online Ödeme']))
+          setTablePayments(filterPayments(data.paymentMethodsTable))
+          setOnlinePayments(filterPayments(data.paymentMethodsOnline))
           setShopInfo({
             shopName: data.shopName || '',
             address: data.address || '',
             phone: data.phone || '',
             locationUrl: data.locationUrl || '',
             workingHours: data.workingHours && data.workingHours.length ? data.workingHours : [''],
-            paymentMethods: data.paymentMethods && data.paymentMethods.length ? data.paymentMethods : [''],
           })
         } else {
           setError('Bu sayfaya erişim yetkiniz yok')
@@ -215,7 +213,6 @@ export default function StorefrontPage() {
       phone: shopInfo.phone.trim(),
       locationUrl: shopInfo.locationUrl.trim(),
       workingHours: shopInfo.workingHours.map(h => h.trim()).filter(Boolean),
-      paymentMethods: shopInfo.paymentMethods.map(p => p.trim()).filter(Boolean),
       paymentMethodsTable: [...tablePayments],
       paymentMethodsOnline: [...onlinePayments],
     }
