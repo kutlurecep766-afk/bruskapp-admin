@@ -262,6 +262,24 @@ export default function StorefrontPage() {
   const onlineQrUrl = menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}` : ''
   const masaQrUrl = (num: number) => menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl + '?masa=' + num)}` : ''
 
+  const downloadQr = async (url: string, filename: string) => {
+    try {
+      const res = await fetch(url, { mode: 'cors' })
+      if (!res.ok) throw new Error('fetch failed')
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(objectUrl)
+    } catch {
+      window.open(url, '_blank')
+    }
+  }
+
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
 
   if (error) return (
@@ -337,10 +355,10 @@ export default function StorefrontPage() {
           {onlineQrUrl && (
             <div className="flex items-center gap-4">
               <img src={onlineQrUrl} alt="Online Sipariş QR" className="w-32 h-32 rounded-xl bg-white p-2 border border-blue-100 shadow-sm" />
-              <a href={onlineQrUrl} download={`onlineQR.png`}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-sm font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
+              <button onClick={(e) => { e.preventDefault(); downloadQr(onlineQrUrl, 'onlineQR.png') }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-sm font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer">
                 <Download size={16} /> QR İndir
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -358,10 +376,10 @@ export default function StorefrontPage() {
                 <div key={n} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50/50 border border-blue-100 hover:shadow-md hover:shadow-blue-600/10 transition-all">
                   <p className="text-gray-900 text-sm font-bold">Masa {n}</p>
                   <img src={mqr} alt={`Masa ${n} QR`} className="w-24 h-24 rounded-lg bg-white p-1.5 border border-blue-100 shadow-sm" />
-                  <a href={mqr} download={`masa${n}QR.png`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
+                  <button onClick={(e) => { e.preventDefault(); downloadQr(mqr, `masa${n}QR.png`) }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer">
                     <Download size={14} /> İndir
-                  </a>
+                  </button>
                 </div>
               )
             })}
