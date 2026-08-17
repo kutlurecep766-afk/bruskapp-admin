@@ -1,7 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link } from 'lucide-react'
+import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, Banknote, CreditCard, HandCoins, Wallet } from 'lucide-react'
+
+const PAYMENT_OPTIONS = [
+  { key: 'Online Ödeme', label: 'Online Ödeme', icon: Globe, desc: 'SanalPOS ile online' },
+  { key: 'Kapıda Nakit', label: 'Kapıda Nakit', icon: Banknote, desc: 'Adrese teslimde nakit' },
+  { key: 'Kapıda Kart', label: 'Kapıda Kart', icon: CreditCard, desc: 'Adrese teslimde kart' },
+  { key: 'Kasada Nakit', label: 'Kasada Nakit', icon: HandCoins, desc: 'Masa siparişinde kasadan nakit' },
+  { key: 'Kasada Kart', label: 'Kasada Kart', icon: Wallet, desc: 'Masa siparişinde kasadan kart' },
+]
 
 export default function StorefrontPage() {
   const searchParams = useSearchParams()
@@ -22,6 +30,8 @@ export default function StorefrontPage() {
   const [instagramUrl, setInstagramUrl] = useState('')
   const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null)
   const [shopInfo, setShopInfo] = useState({ shopName: '', address: '', phone: '', locationUrl: '', workingHours: [''] as string[], paymentMethods: [''] as string[] })
+  const [tablePayments, setTablePayments] = useState<string[]>([])
+  const [onlinePayments, setOnlinePayments] = useState<string[]>([])
 
   const loadData = async () => {
     setLoading(true)
@@ -45,6 +55,8 @@ export default function StorefrontPage() {
           setMasaNumbers(cfg.masaNumbers || [])
           setGoogleReviewUrl(cfg.googleReviewUrl || '')
           setInstagramUrl(cfg.instagramUrl || '')
+          setTablePayments(cfg.paymentMethodsTable || (cfg.paymentMethods?.length ? cfg.paymentMethods : ['Kasada Nakit', 'Kasada Kart', 'Online Ödeme']))
+          setOnlinePayments(cfg.paymentMethodsOnline || (cfg.paymentMethods?.length ? cfg.paymentMethods : ['Kapıda Nakit', 'Kapıda Kart', 'Online Ödeme']))
           setShopInfo({
             shopName: cfg.shopName || '',
             address: cfg.address || '',
@@ -64,6 +76,8 @@ export default function StorefrontPage() {
           setMasaNumbers(data.masaNumbers || [])
           setGoogleReviewUrl(data.googleReviewUrl || '')
           setInstagramUrl(data.instagramUrl || '')
+          setTablePayments(data.paymentMethodsTable || (data.paymentMethods?.length ? data.paymentMethods : ['Kasada Nakit', 'Kasada Kart', 'Online Ödeme']))
+          setOnlinePayments(data.paymentMethodsOnline || (data.paymentMethods?.length ? data.paymentMethods : ['Kapıda Nakit', 'Kapıda Kart', 'Online Ödeme']))
           setShopInfo({
             shopName: data.shopName || '',
             address: data.address || '',
@@ -202,6 +216,8 @@ export default function StorefrontPage() {
       locationUrl: shopInfo.locationUrl.trim(),
       workingHours: shopInfo.workingHours.map(h => h.trim()).filter(Boolean),
       paymentMethods: shopInfo.paymentMethods.map(p => p.trim()).filter(Boolean),
+      paymentMethodsTable: [...tablePayments],
+      paymentMethodsOnline: [...onlinePayments],
     }
     if (tid) {
       await fetch(`/api/storefront/admin/${tid}/config`, {
@@ -392,18 +408,59 @@ export default function StorefrontPage() {
             ))}
             <button onClick={() => setShopInfo({ ...shopInfo, workingHours: [...shopInfo.workingHours, ''] })} className="text-xs text-blue-600 hover:text-blue-700 font-semibold mt-1 text-left">+ Saat Satırı Ekle</button>
           </div>
-          <div className="flex flex-col gap-1 md:col-span-2">
+          <div className="flex flex-col gap-3 md:col-span-2">
             <label className={labelCls}>Ödeme Yöntemleri</label>
-            <p className="text-[10px] text-gray-500 mb-1">QR menüde müşteriye gösterilecek ödeme yöntemleri</p>
-            {shopInfo.paymentMethods.map((pm, i) => (
-              <div key={i} className="flex gap-2 mb-1">
-                <input value={pm} onChange={e => { const arr = [...shopInfo.paymentMethods]; arr[i] = e.target.value; setShopInfo({ ...shopInfo, paymentMethods: arr }) }}
-                  placeholder="Örn: Kapıda Ödeme / Kart ile Ödeme"
-                  className={inputCls} />
-                <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: shopInfo.paymentMethods.filter((_, x) => x !== i) })} className="px-2 text-gray-400 hover:text-red-500 text-sm transition-colors">✕</button>
+            <p className="text-[10px] text-gray-500">Masa QR ve Online QR için ayrı ayrı seçin. Seçilen yöntemler yalnızca o koddan girilen siparişlerde görünür.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+              <div className="rounded-xl bg-blue-50/40 border border-blue-100 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold uppercase tracking-wide"><Table2 size={9} /> Masa QR</span>
+                </div>
+                <div className="space-y-1.5">
+                  {PAYMENT_OPTIONS.map(opt => {
+                    const Icon = opt.icon
+                    const checked = tablePayments.includes(opt.key)
+                    return (
+                      <label key={opt.key} onClick={() => setTablePayments(prev => checked ? prev.filter(k => k !== opt.key) : [...prev, opt.key])}
+                        className={'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all ' + (checked ? 'bg-white border-blue-300 ring-2 ring-blue-100' : 'bg-blue-50/40 border-blue-100 hover:border-blue-300')}>
+                        <span className={'w-4 h-4 rounded flex items-center justify-center border-2 transition-all flex-shrink-0 ' + (checked ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white')}>
+                          {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        </span>
+                        <Icon size={14} className="text-blue-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-900 font-semibold">{opt.label}</p>
+                          <p className="text-[9px] text-gray-400">{opt.desc}</p>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
               </div>
-            ))}
-            <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: [...shopInfo.paymentMethods, ''] })} className="text-xs text-blue-600 hover:text-blue-700 font-semibold mt-1 text-left">+ Ödeme Yöntemi Ekle</button>
+              <div className="rounded-xl bg-cyan-50/40 border border-cyan-100 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-600 text-white text-[9px] font-bold uppercase tracking-wide"><Globe size={9} /> Online QR</span>
+                </div>
+                <div className="space-y-1.5">
+                  {PAYMENT_OPTIONS.map(opt => {
+                    const Icon = opt.icon
+                    const checked = onlinePayments.includes(opt.key)
+                    return (
+                      <label key={opt.key} onClick={() => setOnlinePayments(prev => checked ? prev.filter(k => k !== opt.key) : [...prev, opt.key])}
+                        className={'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all ' + (checked ? 'bg-white border-cyan-300 ring-2 ring-cyan-100' : 'bg-cyan-50/40 border-cyan-100 hover:border-cyan-300')}>
+                        <span className={'w-4 h-4 rounded flex items-center justify-center border-2 transition-all flex-shrink-0 ' + (checked ? 'bg-cyan-600 border-cyan-600' : 'border-gray-300 bg-white')}>
+                          {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        </span>
+                        <Icon size={14} className="text-cyan-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-900 font-semibold">{opt.label}</p>
+                          <p className="text-[9px] text-gray-400">{opt.desc}</p>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </SectionCard>
