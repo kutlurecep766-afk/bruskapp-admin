@@ -1,16 +1,16 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, Banknote, CreditCard, HandCoins, Wallet } from 'lucide-react'
+import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, SmartphoneNfc, Banknote, CreditCard, HandCoins, WalletCards } from 'lucide-react'
 
 const TABLE_PAYMENTS = ['Online Ödeme', 'Kasada Kart', 'Kasada Nakit']
 const ONLINE_PAYMENTS = ['Online Ödeme', 'Kapıda Kart', 'Kapıda Nakit']
 const PAYMENT_META: Record<string, { label: string; icon: any; desc: string }> = {
-  'Online Ödeme': { label: 'Online Ödeme', icon: Globe, desc: 'SanalPOS ile online' },
+  'Online Ödeme': { label: 'Online Ödeme', icon: SmartphoneNfc, desc: 'SanalPOS ile online' },
   'Kapıda Nakit': { label: 'Kapıda Nakit', icon: Banknote, desc: 'Adrese teslimde nakit' },
   'Kapıda Kart': { label: 'Kapıda Kart', icon: CreditCard, desc: 'Adrese teslimde kart' },
   'Kasada Nakit': { label: 'Kasada Nakit', icon: HandCoins, desc: 'Masa siparişinde kasadan nakit' },
-  'Kasada Kart': { label: 'Kasada Kart', icon: Wallet, desc: 'Masa siparişinde kasadan kart' },
+  'Kasada Kart': { label: 'Kasada Kart', icon: WalletCards, desc: 'Masa siparişinde kasadan kart' },
 }
 
 export default function StorefrontPage() {
