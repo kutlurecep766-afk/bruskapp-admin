@@ -1,15 +1,19 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, Banknote, CreditCard } from 'lucide-react'
+import { Store, Plus, Trash2, Save, QrCode, Download, Table2, Package, Image, Link, Globe, Banknote, CreditCard, HandCoins, Wallet } from 'lucide-react'
 
 const PAYMENT_OPTIONS = [
   { key: 'Online Ödeme', label: 'Online Ödeme', icon: Globe, desc: 'SanalPOS ile online' },
   { key: 'Kapıda Nakit', label: 'Kapıda Nakit', icon: Banknote, desc: 'Adrese teslimde nakit' },
   { key: 'Kapıda Kart', label: 'Kapıda Kart', icon: CreditCard, desc: 'Adrese teslimde kart' },
+  { key: 'Kasada Nakit', label: 'Kasada Nakit', icon: HandCoins, desc: 'Masa siparişinde kasadan nakit' },
+  { key: 'Kasada Kart', label: 'Kasada Kart', icon: Wallet, desc: 'Masa siparişinde kasadan kart' },
 ]
 const KNOWN_PAYMENT_KEYS = PAYMENT_OPTIONS.map(o => o.key)
-const filterPayments = (arr: string[] | undefined) => (arr?.length ? arr : KNOWN_PAYMENT_KEYS).filter(k => KNOWN_PAYMENT_KEYS.includes(k))
+const DEFAULT_TABLE_PAYMENTS = ['Online Ödeme', 'Kasada Nakit', 'Kasada Kart']
+const DEFAULT_ONLINE_PAYMENTS = ['Online Ödeme', 'Kapıda Nakit', 'Kapıda Kart']
+const filterPayments = (arr: string[] | undefined, defaults: string[]) => (arr?.length ? arr : defaults).filter(k => KNOWN_PAYMENT_KEYS.includes(k))
 
 export default function StorefrontPage() {
   const searchParams = useSearchParams()
@@ -55,8 +59,8 @@ export default function StorefrontPage() {
           setMasaNumbers(cfg.masaNumbers || [])
           setGoogleReviewUrl(cfg.googleReviewUrl || '')
           setInstagramUrl(cfg.instagramUrl || '')
-          setTablePayments(filterPayments(cfg.paymentMethodsTable))
-          setOnlinePayments(filterPayments(cfg.paymentMethodsOnline))
+          setTablePayments(filterPayments(cfg.paymentMethodsTable, DEFAULT_TABLE_PAYMENTS))
+          setOnlinePayments(filterPayments(cfg.paymentMethodsOnline, DEFAULT_ONLINE_PAYMENTS))
           setShopInfo({
             shopName: cfg.shopName || '',
             address: cfg.address || '',
@@ -75,8 +79,8 @@ export default function StorefrontPage() {
           setMasaNumbers(data.masaNumbers || [])
           setGoogleReviewUrl(data.googleReviewUrl || '')
           setInstagramUrl(data.instagramUrl || '')
-          setTablePayments(filterPayments(data.paymentMethodsTable))
-          setOnlinePayments(filterPayments(data.paymentMethodsOnline))
+          setTablePayments(filterPayments(data.paymentMethodsTable, DEFAULT_TABLE_PAYMENTS))
+          setOnlinePayments(filterPayments(data.paymentMethodsOnline, DEFAULT_ONLINE_PAYMENTS))
           setShopInfo({
             shopName: data.shopName || '',
             address: data.address || '',
