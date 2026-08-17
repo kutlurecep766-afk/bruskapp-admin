@@ -239,12 +239,12 @@ export default function StorefrontPage() {
   const onlineQrUrl = menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}` : ''
   const masaQrUrl = (num: number) => menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl + '?masa=' + num)}` : ''
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
 
   if (error) return (
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
-        <Store className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+        <Store className="w-12 h-12 text-blue-300 mx-auto mb-3" />
         <p className="text-gray-500 text-sm">{error}</p>
       </div>
     </div>
@@ -253,51 +253,69 @@ export default function StorefrontPage() {
   if (!storefront) return (
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
-        <Store className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+        <Store className="w-12 h-12 text-blue-300 mx-auto mb-3" />
         <p className="text-gray-500 text-sm">İşletme bulunamadı</p>
       </div>
     </div>
   )
 
+  const SectionCard = ({ icon: Icon, title, children, extra }: { icon: any; title: string; children: React.ReactNode; extra?: React.ReactNode }) => (
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+      <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
+      <div className="relative">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-gray-900 font-bold flex items-center gap-2"><Icon size={18} className="text-blue-600" /> {title}</h3>
+          {extra}
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+
+  const inputCls = "w-full bg-blue-50/40 border border-blue-100 rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 transition-all"
+  const labelCls = "text-[10px] text-gray-500 font-semibold uppercase tracking-wider"
+
   return (
     <div className="space-y-6 pb-12">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-6 lg:p-8 shadow-lg shadow-blue-600/20">
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-blue-900/20 blur-3xl" />
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+            <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur flex items-center justify-center shadow-inner">
               <Store className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">QR Menü Yönetimi</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-white tracking-tight">QR Menü Yönetimi</h1>
+              <p className="text-sm text-blue-100 mt-0.5 flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5" />
+                Ürünler, QR kodlar ve dükkan bilgileri tek ekranda
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Mağaza Linki */}
-      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Link size={18} className="text-amber-400" /> Mağaza Linki</h3>
+      <SectionCard icon={Link} title="Mağaza Linki">
         <a href={menuUrl} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all">
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-sm font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
           {menuUrl}
         </a>
-        <p className="text-xs text-gray-600 mt-2">Müşterileriniz bu linkten menünüzü görüntüleyebilir</p>
-      </div>
+        <p className="text-xs text-gray-500 mt-2">Müşterileriniz bu linkten menünüzü görüntüleyebilir</p>
+      </SectionCard>
 
       {/* QR Kod */}
-      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><QrCode size={18} className="text-amber-400" /> QR Kodlar</h3>
-
+      <SectionCard icon={QrCode} title="QR Kodlar">
         {/* Online Sipariş QR */}
-        <div className="mb-6 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-          <p className="text-white text-sm font-semibold mb-1">Online Sipariş QR Kodu</p>
+        <div className="mb-6 p-4 rounded-xl bg-blue-50/50 border border-blue-100">
+          <p className="text-gray-900 text-sm font-semibold mb-1">Online Sipariş QR Kodu</p>
           <p className="text-xs text-gray-500 mb-3">Müşterileriniz bu QR'ı okutarak online sipariş verebilir (adresli teslimat). Bu QR kodu vitrin, web sitesi veya paket üzerine koyabilirsiniz.</p>
           {onlineQrUrl && (
             <div className="flex items-center gap-4">
-              <img src={onlineQrUrl} alt="Online Sipariş QR" className="w-32 h-32 rounded-xl bg-white p-2" />
+              <img src={onlineQrUrl} alt="Online Sipariş QR" className="w-32 h-32 rounded-xl bg-white p-2 border border-blue-100 shadow-sm" />
               <a href={onlineQrUrl} download={`${slug}-online-qr.png`}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all">
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-sm font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                 <Download size={16} /> QR İndir
               </a>
             </div>
@@ -305,20 +323,20 @@ export default function StorefrontPage() {
         </div>
 
         {/* Masa QR Kodları */}
-        <p className="text-white text-sm font-semibold mb-1">Masa QR Kodları</p>
+        <p className="text-gray-900 text-sm font-semibold mb-1">Masa QR Kodları</p>
         <p className="text-xs text-gray-500 mb-3">Her masa için ayrı QR kodu. Müşteri masasındaki QR'ı okutunca masa numarası otomatik seçilir ve siparişi masaya teslim edilir.</p>
         {masaNumbers.length === 0 ? (
-          <p className="text-xs text-gray-600">Henüz masa eklenmemiş. Aşağıdaki "Masa Numaraları" bölümünden masa ekleyin.</p>
+          <p className="text-xs text-gray-500">Henüz masa eklenmemiş. Aşağıdaki "Masa Numaraları" bölümünden masa ekleyin.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {masaNumbers.map(n => {
               const mqr = masaQrUrl(n)
               return (
-                <div key={n} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-                  <p className="text-white text-sm font-bold">Masa {n}</p>
-                  <img src={mqr} alt={`Masa ${n} QR`} className="w-24 h-24 rounded-lg bg-white p-1.5" />
+                <div key={n} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50/50 border border-blue-100 hover:shadow-md hover:shadow-blue-600/10 transition-all">
+                  <p className="text-gray-900 text-sm font-bold">Masa {n}</p>
+                  <img src={mqr} alt={`Masa ${n} QR`} className="w-24 h-24 rounded-lg bg-white p-1.5 border border-blue-100 shadow-sm" />
                   <a href={mqr} download={`${slug}-masa-${n}-qr.png`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs hover:bg-amber-500/20 transition-all">
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                     <Download size={14} /> İndir
                   </a>
                 </div>
@@ -326,305 +344,340 @@ export default function StorefrontPage() {
             })}
           </div>
         )}
-      </div>
+      </SectionCard>
 
       {/* Dükkan Bilgileri */}
-      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Store size={18} className="text-amber-400" /> Dükkan Bilgileri</h3>
+      <SectionCard icon={Store} title="Dükkan Bilgileri" extra={
+        <button onClick={saveConfig} disabled={saving} className="px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+          <Save size={14} className="inline mr-1 -mt-0.5" />Dükkan Bilgilerini Kaydet
+        </button>
+      }>
         <p className="text-xs text-gray-500 mb-4">Bu bilgiler QR menüde banner'ın altında dükkan kartı olarak görünür.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Dükkan Adı</label>
+            <label className={labelCls}>Dükkan Adı</label>
             <input value={shopInfo.shopName} onChange={e => setShopInfo({ ...shopInfo, shopName: e.target.value })}
               placeholder="Örn: Cafe Linna"
-              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              className={inputCls} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Telefon</label>
+            <label className={labelCls}>Telefon</label>
             <input value={shopInfo.phone} onChange={e => setShopInfo({ ...shopInfo, phone: e.target.value })}
               placeholder="0 (5XX) XXX XX XX"
-              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              className={inputCls} />
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Adres / Konum</label>
+            <label className={labelCls}>Adres / Konum</label>
             <input value={shopInfo.address} onChange={e => setShopInfo({ ...shopInfo, address: e.target.value })}
               placeholder="Örn: Atatürk Cad. No:12, Kadıköy/İstanbul"
-              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              className={inputCls} />
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Konum Linki (Google Maps)</label>
+            <label className={labelCls}>Konum Linki (Google Maps)</label>
             <input value={shopInfo.locationUrl} onChange={e => setShopInfo({ ...shopInfo, locationUrl: e.target.value })}
               placeholder="https://maps.google.com/... veya https://maps.app.goo.gl/..."
-              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-            <p className="text-[10px] text-gray-600">Doluysa QR menüde konum butonu görünür; müşteri tıklayınca haritaya yönlendirilir.</p>
+              className={inputCls} />
+            <p className="text-[10px] text-gray-500">Doluysa QR menüde konum butonu görünür; müşteri tıklayınca haritaya yönlendirilir.</p>
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Çalışma Saatleri</label>
-            <p className="text-[10px] text-gray-600 mb-1">Her satır bir saat dilimi (ör: "Pzt - Cuma: 09:00 - 22:00")</p>
+            <label className={labelCls}>Çalışma Saatleri</label>
+            <p className="text-[10px] text-gray-500 mb-1">Her satır bir saat dilimi (ör: "Pzt - Cuma: 09:00 - 22:00")</p>
             {shopInfo.workingHours.map((h, i) => (
               <div key={i} className="flex gap-2 mb-1">
                 <input value={h} onChange={e => { const arr = [...shopInfo.workingHours]; arr[i] = e.target.value; setShopInfo({ ...shopInfo, workingHours: arr }) }}
                   placeholder="Örn: Pzt - Cuma: 09:00 - 22:00"
-                  className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-                <button onClick={() => setShopInfo({ ...shopInfo, workingHours: shopInfo.workingHours.filter((_, x) => x !== i) })} className="px-2 text-gray-500 hover:text-red-400 text-sm">✕</button>
+                  className={inputCls} />
+                <button onClick={() => setShopInfo({ ...shopInfo, workingHours: shopInfo.workingHours.filter((_, x) => x !== i) })} className="px-2 text-gray-400 hover:text-red-500 text-sm transition-colors">✕</button>
               </div>
             ))}
-            <button onClick={() => setShopInfo({ ...shopInfo, workingHours: [...shopInfo.workingHours, ''] })} className="text-xs text-amber-400 hover:text-amber-300 mt-1">+ Saat Satırı Ekle</button>
+            <button onClick={() => setShopInfo({ ...shopInfo, workingHours: [...shopInfo.workingHours, ''] })} className="text-xs text-blue-600 hover:text-blue-700 font-semibold mt-1 text-left">+ Saat Satırı Ekle</button>
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Ödeme Yöntemleri</label>
-            <p className="text-[10px] text-gray-600 mb-1">QR menüde müşteriye gösterilecek ödeme yöntemleri</p>
+            <label className={labelCls}>Ödeme Yöntemleri</label>
+            <p className="text-[10px] text-gray-500 mb-1">QR menüde müşteriye gösterilecek ödeme yöntemleri</p>
             {shopInfo.paymentMethods.map((pm, i) => (
               <div key={i} className="flex gap-2 mb-1">
                 <input value={pm} onChange={e => { const arr = [...shopInfo.paymentMethods]; arr[i] = e.target.value; setShopInfo({ ...shopInfo, paymentMethods: arr }) }}
                   placeholder="Örn: Kapıda Ödeme / Kart ile Ödeme"
-                  className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-                <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: shopInfo.paymentMethods.filter((_, x) => x !== i) })} className="px-2 text-gray-500 hover:text-red-400 text-sm">✕</button>
+                  className={inputCls} />
+                <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: shopInfo.paymentMethods.filter((_, x) => x !== i) })} className="px-2 text-gray-400 hover:text-red-500 text-sm transition-colors">✕</button>
               </div>
             ))}
-            <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: [...shopInfo.paymentMethods, ''] })} className="text-xs text-amber-400 hover:text-amber-300 mt-1">+ Ödeme Yöntemi Ekle</button>
+            <button onClick={() => setShopInfo({ ...shopInfo, paymentMethods: [...shopInfo.paymentMethods, ''] })} className="text-xs text-blue-600 hover:text-blue-700 font-semibold mt-1 text-left">+ Ödeme Yöntemi Ekle</button>
           </div>
         </div>
-        <button onClick={saveConfig} disabled={saving} className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Dükkan Bilgilerini Kaydet</button>
-      </div>
+      </SectionCard>
 
       {/* Sosyal Medya Yönlendirme */}
-      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Link size={18} className="text-amber-400" /> Sosyal Medya Yönlendirme</h3>
+      <SectionCard icon={Link} title="Sosyal Medya Yönlendirme" extra={
+        <button onClick={saveSocialLinks} disabled={saving} className="px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+          <Save size={14} className="inline mr-1 -mt-0.5" />Linkleri Kaydet
+        </button>
+      }>
         <p className="text-xs text-gray-500 mb-4">Bu linkler QR menüde logo olarak görünür; müşteri tıklayınca direkt oraya yönlendirilir.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Google Yorum Linki</label>
+            <label className={labelCls}>Google Yorum Linki</label>
             <input value={googleReviewUrl} onChange={e => setGoogleReviewUrl(e.target.value)}
               placeholder="https://g.page/r/... yorum linki"
-              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              className={inputCls} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Instagram Linki</label>
+            <label className={labelCls}>Instagram Linki</label>
             <input value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)}
               placeholder="https://instagram.com/isletmeadi"
-              className="bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              className={inputCls} />
           </div>
         </div>
-        <button onClick={saveSocialLinks} disabled={saving} className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Linkleri Kaydet</button>
-      </div>
+      </SectionCard>
 
       {/* Banner Yükleme */}
-      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Image size={18} className="text-amber-400" /> Banner</h3>
+      <SectionCard icon={Image} title="Banner">
         <div>
-          <p className="text-sm text-gray-400 mb-2">Mevcut Banner</p>
+          <p className="text-sm text-gray-700 mb-2 font-medium">Mevcut Banner</p>
           {storefront.bannerUrl ? (
-            <img src={storefront.bannerUrl} className="w-full max-w-md h-32 rounded-xl object-cover border border-[#1a2332] mb-3" />
+            <img src={storefront.bannerUrl} className="w-full max-w-md h-32 rounded-xl object-cover border border-blue-100 shadow-sm mb-3" />
           ) : (
-            <div className="w-full max-w-md h-32 rounded-xl bg-[#080b12]/60 border border-[#1a2332] flex items-center justify-center mb-3">
-              <Image size={24} className="text-gray-600" />
+            <div className="w-full max-w-md h-32 rounded-xl bg-blue-50/50 border border-blue-100 flex items-center justify-center mb-3">
+              <Image size={24} className="text-blue-300" />
             </div>
           )}
-          <p className="text-[10px] text-gray-600 mb-1">Önerilen: 1200x400 piksel</p>
-          <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
+          <p className="text-[10px] text-gray-500 mb-1">Önerilen: 1200x400 piksel</p>
+          <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all" />
           {bannerFile && (
-            <button onClick={handleBannerUpload} disabled={uploading} className="mt-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs hover:bg-amber-500/20 transition-all">
+            <button onClick={handleBannerUpload} disabled={uploading} className="mt-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:bg-blue-700 transition-all disabled:opacity-50">
               {uploading ? 'Yükleniyor...' : 'Banner Yükle'}
             </button>
           )}
         </div>
-      </div>
+      </SectionCard>
 
       {/* Ürünler */}
-      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Package size={18} className="text-amber-400" /> Ürünler</h3>
+      <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
+        <div className="relative">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-900 font-bold flex items-center gap-2"><Package size={18} className="text-blue-600" /> Ürünler</h3>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200">
+              <Package size={12} /> {products.length} ürün
+            </span>
+          </div>
 
-        <div className="space-y-2 mb-4">
-          {products.length === 0 && <p className="text-gray-500 text-sm">Henüz ürün eklenmemiş</p>}
-          {products.map((p: any) => (
-            <div key={p.id} onClick={() => setEditingProduct({ ...p })} className="flex items-center justify-between p-3 rounded-xl bg-[#080b12]/60 border border-[#1a2332] cursor-pointer hover:border-amber-500/30 transition-all group">
-              <div className="flex items-center gap-3">
-                {p.image && <img src={p.image} className="w-16 h-16 rounded-lg object-cover" />}
-                <div>
-                  <p className="text-white text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {p.weight && <span className="text-gray-400 mr-2">{p.weight}</span>}
-                    {p.description} {p.category && `(${p.category})`}
-                  </p>
+          <div className="space-y-2 mb-4">
+            {products.length === 0 && (
+              <div className="rounded-2xl bg-blue-50/50 border border-dashed border-blue-200 py-12 text-center">
+                <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-white border border-blue-100 flex items-center justify-center">
+                  <Package className="w-7 h-7 text-blue-300" />
                 </div>
+                <p className="text-gray-500 text-sm font-semibold">Henüz ürün eklenmemiş</p>
+                <p className="text-gray-400 text-xs mt-1.5">Aşağıdaki formdan ilk ürününüzü ekleyin</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  {p.originalPrice && parseFloat(p.originalPrice) > parseFloat(p.price) ? (
-                    <div>
-                      <span className="text-gray-500 line-through text-xs">₺{p.originalPrice}</span>
-                      <span className="text-amber-400 font-bold text-sm ml-1">₺{p.price}</span>
-                    </div>
+            )}
+            {products.map((p: any) => (
+              <div key={p.id} onClick={() => setEditingProduct({ ...p })} className="flex items-center justify-between p-3 rounded-xl bg-blue-50/40 border border-blue-100 cursor-pointer hover:border-blue-300 hover:shadow-md hover:shadow-blue-600/10 transition-all group">
+                <div className="flex items-center gap-3">
+                  {p.image ? (
+                    <img src={p.image} className="w-12 h-12 rounded-lg object-cover border border-blue-100" />
                   ) : (
-                    <span className="text-amber-400 font-bold text-sm">₺{p.price}</span>
-                  )}
-                </div>
-                <div className="relative">
-                  <button onClick={(e) => { e.stopPropagation(); setStatusMenuFor(statusMenuFor === p.id ? null : p.id) }} title="Durumu değiştir"
-                    className={
-                    p.status === 'soldout' ? 'text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer'
-                    : p.status === 'preparing' ? 'text-[10px] px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer'
-                    : 'text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-all cursor-pointer'
-                  }>
-                    {p.status === 'soldout' ? 'Tükendi' : p.status === 'preparing' ? 'Hazırlıkta' : 'Aktif'}
-                  </button>
-                  {statusMenuFor === p.id && (
-                    <div onClick={e => e.stopPropagation()} className="absolute right-0 top-7 z-20 w-40 rounded-xl bg-[#0d1117] border border-[#2a3a4a] shadow-2xl overflow-hidden">
-                      {[
-                        { val: 'active', label: 'Aktif', cls: 'text-green-400 hover:bg-green-500/10' },
-                        { val: 'soldout', label: 'Tükendi', cls: 'text-red-400 hover:bg-red-500/10' },
-                        { val: 'preparing', label: 'Hazırlıkta', cls: 'text-amber-400 hover:bg-amber-500/10' },
-                      ].map(opt => (
-                        <button key={opt.val} onClick={(e) => { e.stopPropagation(); setProductStatus(p, opt.val) }}
-                          className={`w-full text-left px-3 py-2 text-[11px] font-medium transition-colors ${opt.cls} ${p.status === opt.val ? 'bg-white/5' : ''}`}>
-                          {opt.label}
-                        </button>
-                      ))}
+                    <div className="w-12 h-12 rounded-lg bg-blue-100/60 flex items-center justify-center flex-shrink-0">
+                      <Package size={18} className="text-blue-400" />
                     </div>
                   )}
+                  <div>
+                    <p className="text-gray-900 text-sm font-semibold">{p.name}</p>
+                    <p className="text-xs text-gray-500 truncate max-w-xs">
+                      {p.weight && <span className="text-gray-400 mr-2">{p.weight}</span>}
+                      {p.description} {p.category && `(${p.category})`}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">Düzenlemek için tıklayın</span>
-                <button onClick={(e) => { e.stopPropagation(); deleteProduct(p.id) }} className="text-red-500 hover:text-red-400"><Trash2 size={14} /></button>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    {p.originalPrice && parseFloat(p.originalPrice) > parseFloat(p.price) ? (
+                      <div>
+                        <span className="text-gray-400 line-through text-xs">₺{p.originalPrice}</span>
+                        <span className="text-blue-700 font-bold text-sm ml-1">₺{p.price}</span>
+                      </div>
+                    ) : (
+                      <span className="text-blue-700 font-bold text-sm">₺{p.price}</span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <button onClick={(e) => { e.stopPropagation(); setStatusMenuFor(statusMenuFor === p.id ? null : p.id) }} title="Durumu değiştir"
+                      className={
+                      p.status === 'soldout' ? 'text-[10px] px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all cursor-pointer'
+                      : p.status === 'preparing' ? 'text-[10px] px-2 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer'
+                      : 'text-[10px] px-2 py-1 rounded-full bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-all cursor-pointer'
+                    }>
+                      {p.status === 'soldout' ? 'Tükendi' : p.status === 'preparing' ? 'Hazırlıkta' : 'Aktif'}
+                    </button>
+                    {statusMenuFor === p.id && (
+                      <div onClick={e => e.stopPropagation()} className="absolute right-0 top-7 z-20 w-40 rounded-xl bg-white border border-blue-100 shadow-2xl overflow-hidden">
+                        {[
+                          { val: 'active', label: 'Aktif', cls: 'text-green-600 hover:bg-green-50' },
+                          { val: 'soldout', label: 'Tükendi', cls: 'text-red-600 hover:bg-red-50' },
+                          { val: 'preparing', label: 'Hazırlıkta', cls: 'text-amber-600 hover:bg-amber-50' },
+                        ].map(opt => (
+                          <button key={opt.val} onClick={(e) => { e.stopPropagation(); setProductStatus(p, opt.val) }}
+                            className={`w-full text-left px-3 py-2 text-[11px] font-medium transition-colors ${opt.cls} ${p.status === opt.val ? 'bg-blue-50' : ''}`}>
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hidden md:inline">Düzenlemek için tıklayın</span>
+                  <button onClick={(e) => { e.stopPropagation(); deleteProduct(p.id) }} className="text-red-500 hover:text-red-600 transition-colors"><Trash2 size={14} /></button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {editingProduct ? (
-          <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              <div className="col-span-2 flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Ürün Adı</label>
-                <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Örn: Kahve" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          {editingProduct ? (
+            <div className="flex flex-col gap-3 p-4 rounded-xl bg-blue-50/40 border border-blue-100 animate-fadeIn">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm text-gray-900 font-bold flex items-center gap-2"><Package size={14} className="text-blue-600" /> Ürünü Düzenle</p>
+                <span className="text-[10px] text-gray-400">Düzenleme modu</span>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Fiyat (₺)</label>
-                <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className={labelCls}>Ürün Adı</label>
+                  <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} placeholder="Örn: Kahve" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Fiyat (₺)</label>
+                  <input value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} type="number" step="0.01" placeholder="0.00" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Gramaj</label>
+                  <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="200 gr" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>İndirimli Fiyat</label>
+                  <input value={editingProduct.originalPrice || ''} onChange={e => setEditingProduct({ ...editingProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="0.00" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Kategori</label>
+                  <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="İçecekler" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Durum</label>
+                  <select value={editingProduct.status || 'active'} onChange={e => setEditingProduct({ ...editingProduct, status: e.target.value })}
+                    className={inputCls}>
+                    <option value="active">Aktif</option>
+                    <option value="soldout">Tükendi</option>
+                    <option value="preparing">Hazırlık Aşamasında</option>
+                  </select>
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Gramaj</label>
-                <input value={editingProduct.weight || ''} onChange={e => setEditingProduct({ ...editingProduct, weight: e.target.value })} placeholder="200 gr" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <div className="col-span-3 flex flex-col gap-1">
+                  <label className={labelCls}>Açıklama</label>
+                  <input value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} placeholder="Ürün açıklaması" className={inputCls} />
+                </div>
+                <div className="col-span-3 flex flex-col gap-1">
+                  <label className={labelCls}>Görsel</label>
+                  <p className="text-[10px] text-gray-500">Önerilen: 300x300 piksel</p>
+                  <div className="flex items-center gap-2">
+                    {editingProduct.image && <img src={editingProduct.image} className="w-10 h-10 rounded-lg object-cover border border-blue-100" />}
+                    <input type="file" accept="image/*" onChange={async e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const url = await uploadFile(file)
+                      if (url) setEditingProduct((prev: any) => ({ ...prev, image: url }))
+                    }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all" />
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">İndirimli Fiyat</label>
-                <input value={editingProduct.originalPrice || ''} onChange={e => setEditingProduct({ ...editingProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Kategori</label>
-                <input value={editingProduct.category || ''} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })} placeholder="İçecekler" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Durum</label>
-                <select value={editingProduct.status || 'active'} onChange={e => setEditingProduct({ ...editingProduct, status: e.target.value })}
-                  className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50">
-                  <option value="active">Aktif</option>
-                  <option value="soldout">Tükendi</option>
-                  <option value="preparing">Hazırlık Aşamasında</option>
-                </select>
+              <div className="flex gap-2">
+                <button onClick={updateProduct} disabled={saving} className="flex-1 px-4 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 transition-all active:scale-95 disabled:opacity-50"><Save size={14} className="inline mr-1 -mt-0.5" />Kaydet</button>
+                <button onClick={() => setEditingProduct(null)} className="px-4 py-2.5 rounded-full bg-white border border-blue-200 text-gray-600 text-sm font-bold hover:bg-blue-50 transition-all">İptal</button>
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              <div className="col-span-3 flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Açıklama</label>
-                <input value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} placeholder="Ürün açıklaması" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
+          ) : (
+            <div className="flex flex-col gap-3 p-4 rounded-xl bg-blue-50/40 border border-blue-100">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm text-gray-900 font-bold flex items-center gap-2"><Plus size={14} className="text-blue-600" /> Yeni Ürün Ekle</p>
               </div>
-              <div className="col-span-3 flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Görsel</label>
-                <p className="text-[10px] text-gray-600">Önerilen: 300x300 piksel</p>
-                <div className="flex items-center gap-2">
-                  {editingProduct.image && <img src={editingProduct.image} className="w-8 h-8 rounded object-cover" />}
-                  <input type="file" accept="image/*" onChange={async e => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    const url = await uploadFile(file)
-                    if (url) setEditingProduct((prev: any) => ({ ...prev, image: url }))
-                  }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className={labelCls}>Ürün Adı</label>
+                  <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Örn: Kahve" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Fiyat (₺)</label>
+                  <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="0.00" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Gramaj</label>
+                  <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="200 gr" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>İndirimli Fiyat</label>
+                  <input value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="0.00" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Kategori</label>
+                  <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="İçecekler" className={inputCls} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Durum</label>
+                  <select value={newProduct.status || 'active'} onChange={e => setNewProduct({ ...newProduct, status: e.target.value })}
+                    className={inputCls}>
+                    <option value="active">Aktif</option>
+                    <option value="soldout">Tükendi</option>
+                    <option value="preparing">Hazırlık Aşamasında</option>
+                  </select>
+                </div>
+                <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
+                  className="flex items-center justify-center gap-1 px-3 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 self-end">
+                  <Plus size={14} /> Ekle
+                </button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <div className="col-span-3 flex flex-col gap-1">
+                  <label className={labelCls}>Açıklama</label>
+                  <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Ürün açıklaması" className={inputCls} />
+                </div>
+                <div className="col-span-3 flex flex-col gap-1">
+                  <label className={labelCls}>Görsel</label>
+                  <p className="text-[10px] text-gray-500">Önerilen: 300x300 piksel</p>
+                  <div className="flex items-center gap-2">
+                    <input type="file" accept="image/*" onChange={async e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const url = await uploadFile(file)
+                      if (url) setNewProduct(prev => ({ ...prev, image: url }))
+                    }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all" />
+                    {newProduct.image && <img src={newProduct.image} className="w-10 h-10 rounded-lg object-cover border border-blue-100" />}
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={updateProduct} disabled={saving} className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
-              <button onClick={() => setEditingProduct(null)} className="px-4 py-2.5 rounded-xl bg-[#080b12]/60 border border-[#1a2332] text-gray-500 text-sm hover:text-white">İptal</button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#080b12]/60 border border-[#1a2332]">
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              <div className="col-span-2 flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Ürün Adı</label>
-                <input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Örn: Kahve" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Fiyat (₺)</label>
-                <input value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Gramaj</label>
-                <input value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} placeholder="200 gr" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">İndirimli Fiyat</label>
-                <input value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} type="number" step="0.01" placeholder="0.00" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Kategori</label>
-                <input value={newProduct.category || ''} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="İçecekler" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Durum</label>
-                <select value={newProduct.status || 'active'} onChange={e => setNewProduct({ ...newProduct, status: e.target.value })}
-                  className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50">
-                  <option value="active">Aktif</option>
-                  <option value="soldout">Tükendi</option>
-                  <option value="preparing">Hazırlık Aşamasında</option>
-                </select>
-              </div>
-              <button onClick={addProduct} disabled={saving || !newProduct.name || !newProduct.price}
-                className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all disabled:opacity-50 self-end">
-                <Plus size={14} /> Ekle
-              </button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              <div className="col-span-3 flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Açıklama</label>
-                <input value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Ürün açıklaması" className="bg-[#0d1117]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-              </div>
-              <div className="col-span-3 flex flex-col gap-1">
-                <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Görsel</label>
-                <p className="text-[10px] text-gray-600">Önerilen: 300x300 piksel</p>
-                <div className="flex items-center gap-2">
-                  <input type="file" accept="image/*" onChange={async e => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    const url = await uploadFile(file)
-                    if (url) setNewProduct(prev => ({ ...prev, image: url }))
-                  }} className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20" />
-                  {newProduct.image && <img src={newProduct.image} className="w-8 h-8 rounded object-cover" />}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Masa Numaraları */}
-      <div className="bg-[#0d1117]/80 border border-[#1a2332] rounded-2xl p-6">
-        <h3 className="text-white font-semibold flex items-center gap-2 mb-4"><Table2 size={18} className="text-amber-400" /> Masa Numaraları</h3>
+      <SectionCard icon={Table2} title="Masa Numaraları" extra={
+        <button onClick={saveConfig} disabled={saving} className="px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+          <Save size={14} className="inline mr-1 -mt-0.5" />Kaydet
+        </button>
+      }>
         <div className="flex gap-2 mb-3">
-          <input value={newMasa} onChange={e => setNewMasa(e.target.value)} type="number" placeholder="Masa no" className="w-32 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600" />
-          <button onClick={addMasa} className="px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Plus size={14} className="inline mr-1" />Ekle</button>
+          <input value={newMasa} onChange={e => setNewMasa(e.target.value)} type="number" placeholder="Masa no" className="w-32 bg-blue-50/40 border border-blue-100 rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 transition-all" />
+          <button onClick={addMasa} className="px-3 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all"><Plus size={14} className="inline mr-1" />Ekle</button>
         </div>
         <div className="flex flex-wrap gap-2">
+          {masaNumbers.length === 0 && <p className="text-xs text-gray-500">Masa eklenmemiş</p>}
           {masaNumbers.map(n => (
-            <span key={n} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#080b12]/60 border border-[#1a2332] text-white text-sm">
+            <span key={n} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold">
               Masa {n}
-              <button onClick={() => removeMasa(n)} className="text-red-500 hover:text-red-400"><Trash2 size={12} /></button>
+              <button onClick={() => removeMasa(n)} className="text-blue-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
             </span>
           ))}
         </div>
-        <button onClick={saveConfig} disabled={saving} className="mt-4 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/20 transition-all"><Save size={14} className="inline mr-1" />Kaydet</button>
-      </div>
+      </SectionCard>
     </div>
   )
 }
