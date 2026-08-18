@@ -70,6 +70,22 @@ function parseAddress(note?: string) {
   return m?.[1] || ''
 }
 
+function parseLocation(note?: string) {
+  const m = /Konum: (https?:\/\/[^\s|]+)/.exec(note || '')
+  return m?.[1] || ''
+}
+
+function LocationButton({ note }: { note?: string }) {
+  const link = parseLocation(note)
+  if (!link) return null
+  return (
+    <a href={link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-cyan-600 text-white text-xs font-bold shadow-md shadow-cyan-600/30 hover:bg-cyan-700 hover:scale-105 active:scale-95 transition-all">
+      <MapPin size={13} /> Konum
+    </a>
+  )
+}
+
 function StatusBadge({ o }: { o: any }) {
   const s = STATUS_MAP[o.status] || STATUS_MAP.pending
   const Icon = s.icon
@@ -642,6 +658,7 @@ export default function OrdersPage() {
                               <MapPin size={10} className="text-cyan-500" /> {address}
                             </p>
                           )}
+                          <LocationButton note={o.note} />
                         </div>
                       </div>
                     </div>
@@ -774,6 +791,7 @@ export default function OrdersPage() {
                       <MapPin size={15} className="text-cyan-600 flex-shrink-0 mt-0.5" /> {parseAddress(detail.note)}
                     </p>
                   )}
+                  <LocationButton note={detail.note} />
                 </div>
               )}
 
@@ -800,7 +818,7 @@ export default function OrdersPage() {
               {detail.note && detail.note !== 'Garson çağrısı' && !/^Adres: /.test(detail.note) && (
                 <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
                   <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1.5">Genel Not</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{detail.note}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed">{detail.note.replace(/ \| Konum: https?:\/\/[^\s|]+/, '')}</p>
                 </div>
               )}
 
