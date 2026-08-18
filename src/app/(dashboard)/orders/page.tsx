@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
-  Printer, Volume2, VolumeX, Eye, History, Loader2, Truck,
+  Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 
@@ -730,9 +730,10 @@ export default function OrdersPage() {
       {/* Detail Modal */}
       {detail && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-blue-950/60 backdrop-blur-sm p-0 md:p-4" onClick={() => setDetail(null)}>
-          <div className="w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl animate-fadeIn" onClick={e => e.stopPropagation()}>
-            <div className="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-6">
+          <div className="w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl animate-fadeIn flex flex-col max-h-[90dvh] md:max-h-[85vh]" onClick={e => e.stopPropagation()}>
+            <div className="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-6 flex-shrink-0">
               <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+              <div className="md:hidden w-10 h-1 rounded-full bg-white/40 mx-auto mb-5" />
               <div className="relative flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
@@ -749,13 +750,14 @@ export default function OrdersPage() {
                     <Clock size={12} /> {formatDate(detail.createdAt)}
                   </p>
                 </div>
-                <button onClick={() => setDetail(null)} className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-all active:scale-90">
-                  ✕
+                <button onClick={() => setDetail(null)} title="Kapat"
+                  className="w-10 h-10 -mr-2 -mt-2 rounded-full bg-white text-blue-700 flex items-center justify-center shadow-lg shadow-blue-900/20 hover:bg-blue-50 hover:scale-105 active:scale-90 transition-all flex-shrink-0">
+                  <X size={18} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               {/* Info chips */}
               <div className="flex flex-wrap gap-2">
                 {isTableOrder(detail) && detail.tableNumber ? (
