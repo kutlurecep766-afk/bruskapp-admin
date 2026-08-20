@@ -4,9 +4,10 @@ import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
   Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X, Store, CalendarClock,
-  Play, Pause, Lock,
+  Play, Pause, Lock, FileText,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
+import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string; dot: string; icon: any }> = {
   pending: { label: 'Bekliyor', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500', icon: Timer },
@@ -264,6 +265,7 @@ export default function OrdersPage() {
   const [storeEffectiveOnline, setStoreEffectiveOnline] = useState('open')
   const [storeSaving, setStoreSaving] = useState(false)
   const [storeMsg, setStoreMsg] = useState<string | null>(null)
+  const [storeInfo, setStoreInfo] = useState<{ name: string; address: string; phone: string }>({ name: '', address: '', phone: '' })
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const esRef = useRef<EventSource | null>(null)
@@ -309,6 +311,13 @@ export default function OrdersPage() {
   }, [])
 
   useEffect(() => { loadStoreSettings() }, [loadStoreSettings])
+
+  useEffect(() => {
+    fetch('/api/storefront/admin/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
+      if (!d) return
+      setStoreInfo({ name: d.shopName || d.name || '', address: d.address || '', phone: d.phone || '' })
+    }).catch(() => {})
+  }, [])
 
   const saveStoreSettings = async () => {
     if (!tableSettings || !onlineSettings) return
@@ -493,6 +502,24 @@ export default function OrdersPage() {
       } finally { w.releaseLock() }
       setPrinterStatus(list.length + ' fiş yazdırıldı')
     } catch { setPrinterStatus('Yazdırma hatası') } finally { setPrinterBusy(false) }
+  }
+
+  function viewReceipt(o: any) {
+    openReceiptPdf({
+      businessName: storeInfo.name || 'İşletme',
+      address: storeInfo.address,
+      phone: storeInfo.phone,
+      orderId: o.id,
+      trackingCode: o.trackingCode || null,
+      tableNumber: o.tableNumber || null,
+      customerName: o.customerName || '',
+      customerContact: o.customerContact || '',
+      customerAddress: parseReceiptAddress(o.note) || (isTableOrder(o) ? storeInfo.address : ''),
+      payment: parseReceiptPayment(o.note) || '',
+      dateLabel: new Date(o.createdAt || Date.now()).toLocaleString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      items: (o.products || []).map((p: any) => ({ name: p.name, price: Number(p.price) || 0, qty: p.quantity || 1, note: p.note })),
+      total: orderTotal(o),
+    })
   }
 
   const TABS: { key: TabKey; label: string; icon: any }[] = [
@@ -898,8 +925,12 @@ export default function OrdersPage() {
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-500 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <XCircle size={13} /> İptal
                         </button>
+                        <button onClick={e => { e.stopPropagation(); viewReceipt(o) }}
+                          className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 active:scale-95 transition-all">
+                          <FileText size={13} /> Fişi Görüntüle
+                        </button>
                         <button onClick={e => { e.stopPropagation(); printReceipt(o) }} disabled={printerBusy}
-                          className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <Printer size={13} /> Yazdır
                         </button>
                       </div>
@@ -1031,6 +1062,10 @@ export default function OrdersPage() {
 
               {/* Actions */}
               <div className="flex gap-2">
+                <button onClick={() => viewReceipt(detail)}
+                  className="flex-1 py-3 rounded-full bg-white border-2 border-blue-200 text-blue-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95">
+                  <FileText size={15} className="inline mr-1.5 -mt-0.5" /> Fişi Görüntüle (PDF)
+                </button>
                 <button onClick={() => { printReceipt(detail); setDetail(null) }} disabled={printerBusy}
                   className="flex-1 py-3 rounded-full bg-white border-2 border-blue-600 text-blue-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95 disabled:opacity-50">
                   <Printer size={15} className="inline mr-1.5 -mt-0.5" /> Fiş Yazdır
