@@ -7,7 +7,7 @@ import {
   MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
   Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Crown,
-  Zap, Sparkles, HeartHandshake, Activity, Store, Printer,
+  Zap, Sparkles, HeartHandshake, Activity, Store, Printer, CreditCard,
 } from 'lucide-react'
 
 const ALL_MODULES = [
@@ -27,6 +27,7 @@ const ALL_MODULES = [
   { key: 'bulk-messages', label: 'Toplu Mesaj', icon: Send, href: '/bulk-messages', perm: 'bulk-messages' },
   { key: 'reminder-templates', label: 'Hatırlatma Şablonları', icon: Bell, href: '/reminder-templates', perm: 'reminder-templates' },
   { key: 'storefront', label: 'QR Menü', icon: Store, href: '/storefront', perm: 'storefront' },
+  { key: 'virtual-pos', label: 'Sanal POS', icon: CreditCard, href: '/virtual-pos', perm: 'virtual-pos' },
   { key: 'printer', label: 'Yazıcı', icon: Printer, href: '/printer', perm: 'printer' },
   { key: 'support', label: '7/24 Destek', icon: HeartHandshake, href: '/support', perm: 'support' },
 

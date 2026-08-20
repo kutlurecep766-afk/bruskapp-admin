@@ -7,6 +7,9 @@ interface Props {
   onDone?: () => void
 }
 
+const labelCls = "text-[10px] text-gray-500 font-semibold uppercase tracking-wider"
+const inputCls = "w-full bg-blue-50/40 border border-blue-100 rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 transition-all"
+
 export default function PaytrPaymentForm({ onDone }: Props) {
   const [step, setStep] = useState<'form' | 'iframe' | 'done'>('form')
   const [amount, setAmount] = useState('')
@@ -64,32 +67,38 @@ export default function PaytrPaymentForm({ onDone }: Props) {
   if (step === 'iframe') return (
     <div>
       <iframe src={`https://www.paytr.com/odeme/guvenli/${token}`} className="w-full border-0 rounded-xl" style={{ height: 520 }} title="PayTR Ödeme" />
-      <button onClick={reset} className="mt-3 px-4 py-2 bg-white/5 border border-[#1a2332] rounded-xl text-sm text-gray-400 hover:text-white transition-colors">İptal</button>
+      <button onClick={reset} className="mt-3 px-4 py-2 bg-white border border-blue-200 rounded-xl text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all">İptal</button>
     </div>
   )
 
   if (step === 'done') return (
     <div className="text-center py-10">
       {result?.status === 'success' ? (
-        <><CheckCircle size={48} className="mx-auto text-emerald-400 mb-3" /><h3 className="text-lg font-semibold text-white">Ödeme Başarılı</h3></>
+        <><CheckCircle size={48} className="mx-auto text-emerald-500 mb-3" /><h3 className="text-lg font-semibold text-gray-900">Ödeme Başarılı</h3></>
       ) : (
-        <><XCircle size={48} className="mx-auto text-red-400 mb-3" /><h3 className="text-lg font-semibold text-white">Ödeme Başarısız</h3></>
+        <><XCircle size={48} className="mx-auto text-red-500 mb-3" /><h3 className="text-lg font-semibold text-gray-900">Ödeme Başarısız</h3></>
       )}
-      <p className="text-xs text-gray-600 mt-2 font-mono">{result?.oid}</p>
+      <p className="text-xs text-gray-400 mt-2 font-mono">{result?.oid}</p>
       <div className="flex gap-3 justify-center mt-6">
-        <button onClick={reset} className="px-4 py-2 bg-white/5 border border-[#1a2332] rounded-xl text-sm text-gray-400 hover:text-white">Yeni Ödeme</button>
-        <button onClick={onDone} className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm">Kapat</button>
+        <button onClick={reset} className="px-4 py-2 bg-white border border-blue-200 rounded-xl text-sm text-gray-500 hover:text-blue-600 transition-all">Yeni Ödeme</button>
+        <button onClick={onDone} className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 transition-all">Kapat</button>
       </div>
     </div>
   )
 
   return (
     <div className="space-y-4">
-      {error && <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">{error}</div>}
-      <div><label className="block text-sm font-medium text-gray-400 mb-1">Tutar (TL)</label><input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="w-full px-4 py-2.5 bg-[#080b12] border border-[#1a2332] rounded-xl text-white text-sm focus:outline-none focus:border-blue-500/50" placeholder="100.00" /></div>
-      <div><label className="block text-sm font-medium text-gray-400 mb-1">Açıklama</label><input type="text" value={desc} onChange={e => setDesc(e.target.value)} className="w-full px-4 py-2.5 bg-[#080b12] border border-[#1a2332] rounded-xl text-white text-sm focus:outline-none focus:border-blue-500/50" placeholder="Sipariş ödemesi" /></div>
+      {error && <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
+      <div className="flex flex-col gap-1">
+        <label className={labelCls}>Tutar (TL)</label>
+        <input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className={inputCls} placeholder="100.00" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className={labelCls}>Açıklama</label>
+        <input type="text" value={desc} onChange={e => setDesc(e.target.value)} className={inputCls} placeholder="Sipariş ödemesi" />
+      </div>
       <InstallmentSelect installments={installments} value={selectedInstallment} onChange={setSelectedInstallment} loading={instLoading} />
-      <button onClick={start} disabled={loading || !amount} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/20 transition-all disabled:opacity-50">
+      <button onClick={start} disabled={loading || !amount} className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
         {loading ? <><Loader2 size={16} className="inline animate-spin mr-2" />Başlatılıyor...</> : 'Ödeme Başlat'}
       </button>
     </div>
