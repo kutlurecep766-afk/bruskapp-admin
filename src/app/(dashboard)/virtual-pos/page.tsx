@@ -294,9 +294,9 @@ export default function VirtualPosPage() {
           <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
           <div className="relative">
             <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><Percent size={18} className="text-blue-600" /> Taksit Ayarları</h3>
-            <p className="text-xs text-gray-500 mb-5">Ödeme sayfanızda sunulacak taksit seçenekleri, bağlı PayTR hesabınızdan çekilen verilere göre listelenir.</p>
+            <p className="text-xs text-gray-500 mb-5">Ödeme sayfanızda sunulacak taksit seçeneklerini belirleyin. Karta göre gerçek taksit erişimi PayTR tarafında belirlenir; bu seçimler üst sınır olarak PayTR isteğine eklenir.</p>
             {!isConfigured ? (
-              <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">Önce <b>API Anahtarları</b> sekmesinden PayTR hesabınızı bağlayın; taksit seçenekleri hesabınızdan getirilecek.</p>
+              <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">Önce <b>API Anahtarları</b> sekmesinden PayTR hesabınızı bağlayın.</p>
             ) : (
               <InstallmentSettingsPanel />
             )}
