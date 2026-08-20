@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import {
   CreditCard, Link2, CheckCircle, AlertCircle, Copy, ExternalLink,
-  HandCoins, ScrollText, Percent, ShieldCheck, Wallet, Sparkles, ArrowRight,
+  HandCoins, Percent, ShieldCheck, Wallet, Sparkles, ArrowRight,
 } from 'lucide-react'
 import PaytrPaymentForm from '@/components/paytr-iframe'
 import InstallmentSelect from '@/components/installment-select'
@@ -16,7 +16,7 @@ const PROVIDERS = [
 
 export default function VirtualPosPage() {
   const [provider, setProvider] = useState('paytr')
-  const [tab, setTab] = useState<'keys' | 'pay' | 'link' | 'installment' | 'legal'>('keys')
+  const [tab, setTab] = useState<'keys' | 'pay' | 'link' | 'installment'>('keys')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [config, setConfig] = useState<any>(null)
@@ -29,7 +29,6 @@ export default function VirtualPosPage() {
   const [linkInstallments, setLinkInstallments] = useState<Array<{ number: number; totalPrice: number; installmentPrice: number }>>([])
   const [linkInstLoading, setLinkInstLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [legalInfo, setLegalInfo] = useState({ title: '', taxOffice: '', taxNumber: '', address: '', phone: '', email: '' })
 
   useEffect(() => {
     fetch('/api/payments/virtual-pos/api-keys', { credentials: 'include' })
@@ -40,10 +39,6 @@ export default function VirtualPosPage() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-    fetch('/api/payments/virtual-pos/legal-info', { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => { if (data) setLegalInfo(data) })
-      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -95,20 +90,6 @@ export default function VirtualPosPage() {
   }
 
   const copyLink = () => { if (linkResult) navigator.clipboard.writeText(linkResult) }
-
-  const saveLegalInfo = async () => {
-    setSaving(true); setMessage(null)
-    const res = await fetch('/api/payments/virtual-pos/legal-info', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(legalInfo),
-    })
-    if (res.ok) setMessage({ type: 'success', text: 'Yasal bilgiler kaydedildi.' })
-    else setMessage({ type: 'error', text: 'Yasal bilgiler kaydedilemedi.' })
-    setSaving(false)
-  }
-
-  const activeProvider = PROVIDERS.find(p => p.id === provider)!
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
 
@@ -201,7 +182,6 @@ export default function VirtualPosPage() {
         <button onClick={() => setTab('pay')} className={'px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (tab === 'pay' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}><HandCoins size={13} className="inline mr-1.5 -mt-0.5" />Ödeme Al</button>
         <button onClick={() => setTab('link')} className={'px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (tab === 'link' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}><Link2 size={13} className="inline mr-1.5 -mt-0.5" />Tahsilat Linki</button>
         <button onClick={() => setTab('installment')} className={'px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (tab === 'installment' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}><Percent size={13} className="inline mr-1.5 -mt-0.5" />Taksit</button>
-        <button onClick={() => setTab('legal')} className={'px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (tab === 'legal' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}><ScrollText size={13} className="inline mr-1.5 -mt-0.5" />Yasal Bilgiler</button>
       </div>
 
       {message && (
@@ -314,67 +294,12 @@ export default function VirtualPosPage() {
           <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
           <div className="relative">
             <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><Percent size={18} className="text-blue-600" /> Taksit Ayarları</h3>
-            <p className="text-xs text-gray-500 mb-5">Ödeme sayfanızda sunulacak taksit seçeneklerini belirleyin. Müşteriler ödeme sırasında seçim yapabilir.</p>
-            <InstallmentSettingsPanel />
-          </div>
-        </div>
-      )}
-
-      {/* Yasal Bilgiler */}
-      {tab === 'legal' && (
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
-          <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
-          <div className="relative">
-            <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><ScrollText size={18} className="text-blue-600" /> Yasal Bilgiler</h3>
-            <p className="text-xs text-gray-500 mb-5">PayTR, ödeme sayfasında Mesafeli Satış Sözleşmesi ve İptal/İade Politikası bağlantıları ister. Bu bilgiler sözleşmelerde otomatik görüntülenir.</p>
-            {config?.slug && (
-              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 space-y-2 text-sm mb-5">
-                <p className="text-gray-900 font-medium">Sözleşme Linkleri (PayTR paneline ekleyin):</p>
-                <div className="flex items-center gap-2">
-                  <ScrollText size={14} className="text-blue-600 shrink-0" />
-                  <span className="text-gray-600">Mesafeli Satış:</span>
-                  <code className="text-xs bg-white px-2 py-1 rounded text-blue-600 break-all border border-blue-100">https://{config.slug}.bruskapp.com/sozlesme/mesafeli-satis</code>
-                  <button onClick={() => navigator.clipboard.writeText(`https://${config.slug}.bruskapp.com/sozlesme/mesafeli-satis`)} className="p-1 text-gray-400 hover:text-blue-600 shrink-0"><Copy size={14} /></button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ScrollText size={14} className="text-blue-600 shrink-0" />
-                  <span className="text-gray-600">İade Politikası:</span>
-                  <code className="text-xs bg-white px-2 py-1 rounded text-blue-600 break-all border border-blue-100">https://{config.slug}.bruskapp.com/sozlesme/iade</code>
-                  <button onClick={() => navigator.clipboard.writeText(`https://${config.slug}.bruskapp.com/sozlesme/iade`)} className="p-1 text-gray-400 hover:text-blue-600 shrink-0"><Copy size={14} /></button>
-                </div>
-                <p className="text-xs text-amber-600">⚠ PayTR panelinde bu linkleri kullanın.</p>
-              </div>
+            <p className="text-xs text-gray-500 mb-5">Ödeme sayfanızda sunulacak taksit seçenekleri, bağlı PayTR hesabınızdan çekilen verilere göre listelenir.</p>
+            {!isConfigured ? (
+              <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">Önce <b>API Anahtarları</b> sekmesinden PayTR hesabınızı bağlayın; taksit seçenekleri hesabınızdan getirilecek.</p>
+            ) : (
+              <InstallmentSettingsPanel />
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className={labelCls}>İşletme Ünvanı</label>
-                <input type="text" value={legalInfo.title} onChange={e => setLegalInfo(f => ({ ...f, title: e.target.value }))} className={inputCls} placeholder="ABC Restoran Ltd. Şti." />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelCls}>Vergi Dairesi</label>
-                <input type="text" value={legalInfo.taxOffice} onChange={e => setLegalInfo(f => ({ ...f, taxOffice: e.target.value }))} className={inputCls} placeholder="Kadıköy VD" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelCls}>Vergi No</label>
-                <input type="text" value={legalInfo.taxNumber} onChange={e => setLegalInfo(f => ({ ...f, taxNumber: e.target.value }))} className={inputCls} placeholder="1234567890" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelCls}>Telefon</label>
-                <input type="text" value={legalInfo.phone} onChange={e => setLegalInfo(f => ({ ...f, phone: e.target.value }))} className={inputCls} placeholder="+905321234567" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelCls}>E-posta</label>
-                <input type="email" value={legalInfo.email} onChange={e => setLegalInfo(f => ({ ...f, email: e.target.value }))} className={inputCls} placeholder="info@abc.com" />
-              </div>
-              <div className="flex flex-col gap-1 md:col-span-2">
-                <label className={labelCls}>Adres</label>
-                <textarea value={legalInfo.address} onChange={e => setLegalInfo(f => ({ ...f, address: e.target.value }))} className={inputCls + ' h-20 resize-none'} placeholder="Fikirtepe Mah. Örnek Sok. No:5, Kadıköy/İstanbul" />
-              </div>
-            </div>
-            <button onClick={saveLegalInfo} disabled={saving}
-              className="mt-5 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
-              {saving ? 'Kaydediliyor...' : 'Kaydet'}
-            </button>
           </div>
         </div>
       )}
@@ -392,7 +317,7 @@ function InstallmentSettingsPanel() {
     fetch('/api/payments/installment-settings', { credentials: 'include' })
       .then(r => r.json())
       .then(d => setSettings(d))
-      .catch(() => {})
+      .catch(() => setSettings({}))
   }, [])
 
   const toggle = (n: number) => {
@@ -417,9 +342,13 @@ function InstallmentSettingsPanel() {
     setSaving(false)
   }
 
-  if (!settings) return <div className="text-sm text-gray-500">Yükleniyor...</div>
+  if (settings === null) return <div className="text-sm text-gray-500">Yükleniyor...</div>
 
-  const prov = settings.paytr || { enabled: true, maxInstallment: 12, allowedInstallments: [1, 2, 3, 6, 9, 12] }
+  const prov = settings.paytr
+
+  if (!prov || !prov.allowedInstallments?.length) {
+    return <p className="text-gray-500 text-sm bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3">PayTR hesabınızdan henüz taksit verisi alınamadı. Hesap bilgilerini kontrol edip sayfayı yenileyin.</p>
+  }
 
   return (
     <div className="space-y-4">
