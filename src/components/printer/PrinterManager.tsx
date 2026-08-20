@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Printer, Wifi, Usb, CheckCircle2, AlertTriangle, Loader2, PlugZap, Unplug, Play } from 'lucide-react'
+import { Printer, Wifi, Usb, CheckCircle2, AlertTriangle, Loader2, PlugZap, Unplug, Play, Armchair, Globe, Bell } from 'lucide-react'
 import { buildTestReceipt, buildOrderReceipt } from './escpos'
 import { printReceiptSystem, parseNoteAddress as parseNoteAddressImpl, parseNotePayment as parseNotePaymentImpl, type ReceiptData } from '@/lib/receipt'
 
@@ -11,6 +11,14 @@ interface PrinterManagerProps {
 
 const storageKey = (k: string) => 'brusk_print_' + k
 type PrintMode = 'system' | 'usb'
+
+function orderType(o: any): 'table' | 'online' | 'waiter' | 'other' {
+  const p = String(o.platform || '').trim()
+  if (p.includes('Garson')) return 'waiter'
+  if (p === 'Masa' || p === 'Masa Siparişi' || o.tableNumber) return 'table'
+  if (p === 'QR Menü' || p === 'Online' || p === 'Online Sipariş') return 'online'
+  return 'other'
+}
 
 function orderToReceipt(order: any, storeInfo: { name: string; address: string; phone: string }): ReceiptData {
   const isWaiter = String(order.platform || '').includes('Garson')
@@ -40,6 +48,9 @@ export default function PrinterManager({ tenantId, storeInfo }: PrinterManagerPr
   const [port, setPort] = useState<SerialPort | null>(null)
   const [connected, setConnected] = useState(false)
   const [autoPrint, setAutoPrint] = useState(false)
+  const [printTable, setPrintTable] = useState(true)
+  const [printOnline, setPrintOnline] = useState(true)
+  const [printWaiter, setPrintWaiter] = useState(false)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('Sistem yazıcısı kullanılacak')
   const [logs, setLogs] = useState<string[]>([])
@@ -54,18 +65,33 @@ export default function PrinterManager({ tenantId, storeInfo }: PrinterManagerPr
     setLogs(prev => [`${new Date().toLocaleTimeString('tr-TR')} - ${msg}`, ...prev].slice(0, 30))
   }, [])
 
-  useEffect(() => { autoPrintRef.current = autoPrint }, [autoPrint])
+  useEffect(() => {
+    autoPrintRef.current = autoPrint
+  }, [autoPrint])
+
+  const printTableRef = useRef(true)
+  const printOnlineRef = useRef(true)
+  const printWaiterRef = useRef(false)
+  useEffect(() => { printTableRef.current = printTable }, [printTable])
+  useEffect(() => { printOnlineRef.current = printOnline }, [printOnline])
+  useEffect(() => { printWaiterRef.current = printWaiter }, [printWaiter])
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey('mode'))
       if (saved === 'usb' || saved === 'system') setMode(saved)
       setAutoPrint(localStorage.getItem(storageKey('auto_print')) === '1')
+      setPrintTable(localStorage.getItem(storageKey('print_table')) !== '0')
+      setPrintOnline(localStorage.getItem(storageKey('print_online')) !== '0')
+      setPrintWaiter(localStorage.getItem(storageKey('print_waiter')) === '1')
     } catch {}
   }, [])
 
   useEffect(() => { localStorage.setItem(storageKey('mode'), mode) }, [mode])
   useEffect(() => { localStorage.setItem(storageKey('auto_print'), autoPrint ? '1' : '0') }, [autoPrint])
+  useEffect(() => { localStorage.setItem(storageKey('print_table'), printTable ? '1' : '0') }, [printTable])
+  useEffect(() => { localStorage.setItem(storageKey('print_online'), printOnline ? '1' : '0') }, [printOnline])
+  useEffect(() => { localStorage.setItem(storageKey('print_waiter'), printWaiter ? '1' : '0') }, [printWaiter])
 
   useEffect(() => {
     if (!tenantId) return
@@ -184,6 +210,12 @@ export default function PrinterManager({ tenantId, storeInfo }: PrinterManagerPr
     if (!order?.id || order.id <= lastIdRef.current) return
     lastIdRef.current = order.id
     if (order.customerName === 'Test') return
+    const type = orderType(order)
+    const enabled = type === 'table' ? printTableRef.current : type === 'online' ? printOnlineRef.current : printWaiterRef.current
+    if (!enabled) {
+      addLog('Sipariş #' + order.id + ' fiş filtresine takıldı, atlandı')
+      return
+    }
     addLog('Yeni sipariş #' + order.id + ' → yazdırılıyor')
     try {
       if (mode === 'system') {
@@ -300,13 +332,46 @@ export default function PrinterManager({ tenantId, storeInfo }: PrinterManagerPr
       )}
 
       {(mode === 'system' || connected) && (
-        <label className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-blue-50/60 border border-blue-100 cursor-pointer w-full">
-          <input type="checkbox" checked={autoPrint} onChange={e => setAutoPrint(e.target.checked)} className="w-4 h-4 accent-blue-600" />
-          <div>
-            <p className="text-sm text-gray-800 font-semibold">Otomatik fiş basımı</p>
-            <p className="text-[11px] text-gray-500">Yeni sipariş ve garson çağrılarında fişi otomatik bas</p>
-          </div>
-        </label>
+        <div className="mt-4 space-y-3">
+          <label className="flex items-center gap-3 p-3 rounded-xl bg-blue-50/60 border border-blue-100 cursor-pointer w-full">
+            <input type="checkbox" checked={autoPrint} onChange={e => setAutoPrint(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+            <div>
+              <p className="text-sm text-gray-800 font-semibold">Otomatik fiş basımı</p>
+              <p className="text-[11px] text-gray-500">Yeni sipariş ve garson çağrılarında fişi otomatik bas</p>
+            </div>
+          </label>
+
+          {autoPrint && (
+            <div className="rounded-xl bg-white border border-blue-100 p-4">
+              <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-3">Hangi siparişler fiş olsun?</p>
+              <div className="flex flex-col gap-2">
+                {([
+                  { key: 'printTable', label: 'Masa QR siparişleri', desc: 'Masa koduyla verilen siparişler', icon: Armchair, value: printTable, set: setPrintTable },
+                  { key: 'printOnline', label: 'Online QR siparişleri', desc: 'Online QR menüden gelen siparişler', icon: Globe, value: printOnline, set: setPrintOnline },
+                  { key: 'printWaiter', label: 'Garson çağrıları', desc: 'Masadan yapılan garson çağrıları', icon: Bell, value: printWaiter, set: setPrintWaiter },
+                ]).map(x => {
+                  const Icon = x.icon
+                  const active = x.value
+                  return (
+                    <button key={x.key} onClick={() => x.set(!active)}
+                      className={'flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] ' + (active ? 'bg-blue-600 border-blue-700 text-white shadow-md shadow-blue-600/30' : 'bg-white border-blue-200 text-gray-600 hover:border-blue-300 hover:bg-blue-50')}>
+                      <div className={'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ' + (active ? 'bg-white/25' : 'bg-blue-50')}>
+                        <Icon size={14} className={active ? 'text-white' : 'text-blue-500'} />
+                      </div>
+                      <div className="flex-1">
+                        <p className={'text-sm font-semibold ' + (active ? 'text-white' : 'text-gray-800')}>{x.label}</p>
+                        <p className={'text-[10px] ' + (active ? 'text-white/80' : 'text-gray-400')}>{x.desc}</p>
+                      </div>
+                      <div className={'w-9 h-5 rounded-full transition-colors flex-shrink-0 ' + (active ? 'bg-emerald-400' : 'bg-gray-300')}>
+                        <span className={'block w-4 h-4 rounded-full bg-white shadow transition-all mt-0.5 ' + (active ? 'ml-[18px]' : 'ml-0.5')} />
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {autoPrint && (
