@@ -1,81 +1,101 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Printer, RefreshCw, CheckCircle2, AlertTriangle, Loader2, PlugZap, Unplug, Play } from 'lucide-react'
+import { Printer, Wifi, Usb, CheckCircle2, AlertTriangle, Loader2, PlugZap, Unplug, Play } from 'lucide-react'
 import { buildTestReceipt, buildOrderReceipt } from './escpos'
+import { printReceiptSystem, parseNoteAddress as parseNoteAddressImpl, parseNotePayment as parseNotePaymentImpl, type ReceiptData } from '@/lib/receipt'
 
 interface PrinterManagerProps {
   tenantId?: string
+  storeInfo?: { name: string; address: string; phone: string }
 }
 
 const storageKey = (k: string) => 'brusk_print_' + k
+type PrintMode = 'system' | 'usb'
 
-export default function PrinterManager({ tenantId }: PrinterManagerProps) {
+function orderToReceipt(order: any, storeInfo: { name: string; address: string; phone: string }): ReceiptData {
+  const isWaiter = String(order.platform || '').includes('Garson')
+  const items = isWaiter
+    ? [{ name: String(order.note || 'Garson çağrısı'), price: 0, qty: 1 }]
+    : (order.products || []).map((p: any) => ({ name: String(p.name || ''), price: Number(p.price) || 0, qty: p.quantity || 1, note: p.note }))
+  return {
+    businessName: storeInfo.name || 'İşletme',
+    address: storeInfo.address || '',
+    phone: storeInfo.phone || '',
+    orderId: order.id,
+    trackingCode: order.trackingCode || null,
+    tableNumber: order.tableNumber || null,
+    customerName: order.customerName || '',
+    customerContact: order.customerContact || '',
+    customerAddress: parseNoteAddressImpl(order.note) || '',
+    payment: isWaiter ? 'Garson Çağrı' : (parseNotePaymentImpl(order.note) || ''),
+    dateLabel: new Date(order.createdAt || Date.now()).toLocaleString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    items,
+    total: isWaiter ? 0 : (order.products?.reduce((a: number, p: any) => a + (Number(p.price) || 0) * (p.quantity || 1), 0) || order.totalAmount || 0),
+  }
+}
+
+export default function PrinterManager({ tenantId, storeInfo }: PrinterManagerProps) {
+  const [mode, setMode] = useState<PrintMode>('system')
   const [supported, setSupported] = useState(true)
   const [port, setPort] = useState<SerialPort | null>(null)
   const [connected, setConnected] = useState(false)
   const [autoPrint, setAutoPrint] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [status, setStatus] = useState('Yazıcı bağlı değil')
+  const [status, setStatus] = useState('Sistem yazıcısı kullanılacak')
   const [logs, setLogs] = useState<string[]>([])
-  const [shopName, setShopName] = useState('BRUSKAPP')
-  const [shopAddress, setShopAddress] = useState('')
   const portRef = useRef<SerialPort | null>(null)
   const autoPrintRef = useRef(false)
   const lastIdRef = useRef<number>(0)
-  const shopRef = useRef({ name: 'BRUSKAPP', address: '' })
+  const storeInfoRef = useRef({ name: '', address: '', phone: '' })
+
+  useEffect(() => { storeInfoRef.current = storeInfo || storeInfoRef.current }, [storeInfo])
 
   const addLog = useCallback((msg: string) => {
     setLogs(prev => [`${new Date().toLocaleTimeString('tr-TR')} - ${msg}`, ...prev].slice(0, 30))
   }, [])
 
-  useEffect(() => {
-    autoPrintRef.current = autoPrint
-  }, [autoPrint])
+  useEffect(() => { autoPrintRef.current = autoPrint }, [autoPrint])
 
   useEffect(() => {
-    shopRef.current = { name: shopName, address: shopAddress }
-  }, [shopName, shopAddress])
+    try {
+      const saved = localStorage.getItem(storageKey('mode'))
+      if (saved === 'usb' || saved === 'system') setMode(saved)
+      setAutoPrint(localStorage.getItem(storageKey('auto_print')) === '1')
+    } catch {}
+  }, [])
+
+  useEffect(() => { localStorage.setItem(storageKey('mode'), mode) }, [mode])
+  useEffect(() => { localStorage.setItem(storageKey('auto_print'), autoPrint ? '1' : '0') }, [autoPrint])
 
   useEffect(() => {
     if (!tenantId) return
-    setShopName(localStorage.getItem(storageKey('shop_name')) || 'BRUSKAPP')
-    setShopAddress(localStorage.getItem(storageKey('shop_address')) || '')
-    setAutoPrint(localStorage.getItem(storageKey('auto_print')) === '1')
-
     if (!('serial' in navigator)) {
       setSupported(false)
+    }
+    if (mode !== 'usb') return
+    if (!('serial' in navigator)) {
       setStatus('Tarayıcı Web Serial desteklemiyor')
       return
     }
-
-    // Reconnect to a previously-authorized port
     ;(async () => {
       try {
         const ports = await navigator.serial!.getPorts()
-        if (ports.length > 0) {
-          await openPort(ports[0])
-        }
+        if (ports.length > 0) await openPort(ports[0])
       } catch {}
     })()
-
-    return () => {
-      // keep port open across navigation within same tab
-    }
-  }, [tenantId])
+  }, [tenantId, mode])
 
   async function openPort(p: SerialPort) {
     try {
-      if (!p.writable) {
-        await p.open({ baudRate: 9600 })
-      }
+      if (!p.writable) await p.open({ baudRate: 9600 })
       portRef.current = p
       setPort(p)
       setConnected(true)
       const info = p.getInfo()
       const vendor = info.usbVendorId ? info.usbVendorId.toString(16).padStart(4, '0') : '????'
       const product = info.usbProductId ? info.usbProductId.toString(16).padStart(4, '0') : '????'
-      setStatus(`Bağlı (USB ${vendor}:${product})`)
-      addLog('Yazıcı bağlandı')
+      setStatus(`USB bağlı (${vendor}:${product})`)
+      addLog('USB yazıcı bağlandı')
     } catch (e: any) {
       setStatus('Bağlantı hatası: ' + (e?.message || 'bilinmiyor'))
       addLog('Bağlantı hatası')
@@ -86,11 +106,7 @@ export default function PrinterManager({ tenantId }: PrinterManagerProps) {
     const p = portRef.current
     if (!p?.writable) throw new Error('Yazıcı bağlı değil')
     const writer = p.writable.getWriter()
-    try {
-      await writer.write(data)
-    } finally {
-      writer.releaseLock()
-    }
+    try { await writer.write(data) } finally { writer.releaseLock() }
   }
 
   async function connect() {
@@ -104,9 +120,7 @@ export default function PrinterManager({ tenantId }: PrinterManagerProps) {
         setStatus('Bağlantı iptal edildi / hata')
         addLog('Bağlantı iptal edildi')
       }
-    } finally {
-      setBusy(false)
-    }
+    } finally { setBusy(false) }
   }
 
   async function disconnect() {
@@ -124,145 +138,189 @@ export default function PrinterManager({ tenantId }: PrinterManagerProps) {
     setPort(null)
     setConnected(false)
     setStatus('Yazıcı bağlı değil')
-    addLog('Yazıcı bağlantısı kapatıldı')
+    addLog('USB bağlantısı kapatıldı')
   }
 
-  async function testPrint() {
+  function systemTest() {
+    printReceiptSystem({
+      businessName: storeInfoRef.current.name || 'TEST',
+      address: storeInfoRef.current.address || '',
+      phone: storeInfoRef.current.phone || '',
+      orderId: 'TEST',
+      trackingCode: null,
+      tableNumber: null,
+      customerName: '',
+      customerContact: '',
+      customerAddress: '',
+      payment: '',
+      dateLabel: new Date().toLocaleString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      items: [{ name: 'Test Fişi', price: 1, qty: 1 }],
+      total: 1,
+    })
+    setStatus('Tarayıcı yazdırma penceresi açıldı')
+    addLog('Test fişi yazıcıya gönderildi')
+  }
+
+  async function usbTest() {
     if (!portRef.current) return
     setBusy(true)
     try {
-      await writeBytes(buildTestReceipt(shopRef.current.name))
+      await writeBytes(buildTestReceipt(storeInfoRef.current.name || 'BRUSKAPP'))
       addLog('Test fişi gönderildi')
       setStatus('Test fişi basıldı')
     } catch (e: any) {
       setStatus('Yazdırma hatası: ' + (e?.message || 'bilinmiyor'))
       addLog('Yazdırma hatası')
-    } finally {
-      setBusy(false)
+    } finally { setBusy(false) }
+  }
+
+  async function testPrint() {
+    if (mode === 'system') systemTest()
+    else await usbTest()
+  }
+
+  async function handleNewOrder(order: any) {
+    if (!autoPrintRef.current) return
+    if (!order?.id || order.id <= lastIdRef.current) return
+    lastIdRef.current = order.id
+    if (order.customerName === 'Test') return
+    addLog('Yeni sipariş #' + order.id + ' → yazdırılıyor')
+    try {
+      if (mode === 'system') {
+        printReceiptSystem(orderToReceipt(order, storeInfoRef.current))
+        setStatus('Fiş #' + order.id + ' yazıcıya gönderildi')
+      } else {
+        if (!portRef.current) {
+          addLog('USB yazıcı bağlı değil, fiş atlandı')
+          return
+        }
+        await writeBytes(buildOrderReceipt(order, storeInfoRef.current.name || 'BRUSKAPP', storeInfoRef.current.address))
+        setStatus('Fiş basıldı #' + order.id)
+      }
+      addLog('Fiş basıldı: #' + order.id)
+    } catch (e: any) {
+      addLog('Otomatik basım hatası')
     }
   }
 
-  // Save settings
   useEffect(() => {
-    try {
-      localStorage.setItem(storageKey('auto_print'), autoPrint ? '1' : '0')
-      if (shopName) localStorage.setItem(storageKey('shop_name'), shopName)
-      if (shopAddress) localStorage.setItem(storageKey('shop_address'), shopAddress)
-    } catch {}
-  }, [autoPrint, shopName, shopAddress])
-
-  // Load recent orders on mount to set lastId
-  useEffect(() => {
-    if (!tenantId || !connected) return
+    if (!tenantId) return
     ;(async () => {
       try {
         const res = await fetch('/api/orders?tenantId=' + tenantId, { credentials: 'include' })
         if (res.ok) {
           const arr = await res.json()
-          if (Array.isArray(arr) && arr.length > 0) {
-            lastIdRef.current = arr[0].id || 0
-          }
+          if (Array.isArray(arr) && arr.length > 0) lastIdRef.current = arr[0].id || 0
         }
       } catch {}
     })()
-  }, [tenantId, connected])
+  }, [tenantId])
 
-  // SSE live order stream → auto print
   useEffect(() => {
-    if (!tenantId || !autoPrint || !connected) return
+    if (!tenantId || !autoPrint) return
     const es = new EventSource('/api/orders/events?tenantId=' + tenantId)
     es.addEventListener('new_order', async (ev) => {
-      try {
-        const order = JSON.parse((ev as MessageEvent).data)
-        if (order.id && order.id <= lastIdRef.current) return
-        lastIdRef.current = order.id || lastIdRef.current
-        if (!autoPrintRef.current) return
-        if (order.customerName === 'Test') return
-        addLog('Yeni sipariş #' + order.id + ' → yazdırılıyor')
-        await writeBytes(buildOrderReceipt(order, shopRef.current.name, shopRef.current.address))
-        addLog('Fiş basıldı: #' + order.id)
-      } catch (e: any) {
-        addLog('Otomatik basım hatası')
-      }
+      try { await handleNewOrder(JSON.parse((ev as MessageEvent).data)) } catch {}
     })
     return () => es.close()
-  }, [tenantId, autoPrint, connected])
+  }, [tenantId, autoPrint, mode])
+
+  const modeBtn = (m: PrintMode, label: string, icon: any, desc: string, activeCls: string) => {
+    const Icon = icon
+    const active = mode === m
+    return (
+      <button onClick={() => { setMode(m); setStatus(m === 'system' ? 'Sistem yazıcısı kullanılacak' : 'USB yazıcı bağlamak için "Bağla"ya basın') }}
+        className={'flex flex-1 items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-all active:scale-[0.98] ' + (active ? activeCls : 'bg-white text-gray-600 border-blue-200 hover:border-blue-300 hover:bg-blue-50')}>
+        <div className={'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ' + (active ? 'bg-white/25' : 'bg-blue-50')}>
+          <Icon size={16} className={active ? 'text-white' : 'text-blue-500'} />
+        </div>
+        <div>
+          <p className={'text-sm font-bold ' + (active ? 'text-white' : 'text-gray-800')}>{label}</p>
+          <p className={'text-[10px] ' + (active ? 'text-white/80' : 'text-gray-400')}>{desc}</p>
+        </div>
+      </button>
+    )
+  }
 
   return (
-    <div className="bg-[#0d1117]/80 backdrop-blur-xl border border-[#1a2332] rounded-2xl p-5 shadow-xl shadow-black/10">
+    <div className="rounded-2xl bg-white border border-blue-100 p-6 shadow-sm">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
             <Printer size={20} className="text-white" />
           </div>
           <div>
-            <h3 className="text-white font-semibold text-sm">Fiş Yazıcısı</h3>
+            <h3 className="text-gray-900 font-semibold text-sm">Fiş Yazıcısı</h3>
             <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
-              <span className={'w-1.5 h-1.5 rounded-full ' + (connected ? 'bg-emerald-400 animate-pulse' : 'bg-red-400')} />
+              <span className={'w-1.5 h-1.5 rounded-full ' + (connected || mode === 'system' ? 'bg-emerald-400 animate-pulse' : 'bg-red-400')} />
               {status}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {connected ? (
-            <>
-              <button onClick={testPrint} disabled={busy} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50">
-                {busy ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />} Test Fişi
-              </button>
-              <button onClick={disconnect} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#080b12]/60 border border-[#1a2332] text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-all text-sm font-semibold">
-                <Unplug size={16} /> Bağlantıyı Kapat
-              </button>
-            </>
+          <button onClick={testPrint} disabled={busy}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50">
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />} Test Fişi
+          </button>
+          {mode === 'usb' && (connected ? (
+            <button onClick={disconnect} className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-blue-200 text-gray-600 hover:text-red-500 hover:border-red-300 transition-all text-sm font-semibold">
+              <Unplug size={16} /> Kapat
+            </button>
           ) : (
-            <button onClick={connect} disabled={busy || !supported} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50">
+            <button onClick={connect} disabled={busy || !supported}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50">
               {busy ? <Loader2 size={16} className="animate-spin" /> : <PlugZap size={16} />} Yazıcı Bağla
             </button>
-          )}
+          ))}
         </div>
       </div>
 
-      {!supported && (
-        <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <AlertTriangle size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-amber-200/90 leading-relaxed">
-            Bu tarayıcı <b>Web Serial</b> desteklemiyor. USB fiş yazıcısını bağlamak için Chrome veya Edge (masaüstü) kullanın. Ağ/kablosuz yazıcılar için bu ekran yerine kurulabilir uygulama gerekir.
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        {modeBtn('system', 'Wi-Fi / Kablosuz', Wifi, 'Bilgisayara kurulu tüm yazıcılar kullanılır', 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-600 shadow-md shadow-cyan-500/30')}
+        {modeBtn('usb', 'USB Fiş Yazıcısı', Usb, 'Doğrudan bağlanır (Chrome/Edge)', 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-700 shadow-md shadow-blue-600/30')}
+      </div>
+
+      {mode === 'usb' && !supported && (
+        <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+          <AlertTriangle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-amber-800 leading-relaxed">
+            Bu tarayıcı <b>Web Serial</b> desteklemiyor. USB fiş yazıcısını bağlamak için Chrome veya Edge (masaüstü) kullanın. Bunun yerine <b>Wi-Fi / Kablosuz</b> modunu seçebilirsiniz.
           </p>
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div>
-          <label className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold block mb-1.5">Fiş Başlığı (işletme adı)</label>
-          <input value={shopName} onChange={e => setShopName(e.target.value)} placeholder="BRUSKAPP" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50" />
-        </div>
-        <div>
-          <label className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold block mb-1.5">Adres (opsiyonel)</label>
-          <input value={shopAddress} onChange={e => setShopAddress(e.target.value)} placeholder="İşletme adresi" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50" />
-        </div>
-        <div className="flex items-end">
-          <label className="flex items-center gap-3 p-3 rounded-xl bg-[#080b12]/60 border border-[#1a2332] w-full cursor-pointer">
-            <input type="checkbox" checked={autoPrint} onChange={e => setAutoPrint(e.target.checked)} className="w-4 h-4 accent-blue-500" />
-            <div>
-              <p className="text-sm text-white font-semibold">Otomatik Yazdır</p>
-              <p className="text-[11px] text-gray-500">Yeni siparişlerde fişi otomatik bas</p>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      {logs.length > 0 && (
-        <div className="mt-4 bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-3 max-h-28 overflow-y-auto">
-          {logs.map((l, i) => (
-            <p key={i} className="text-[11px] font-mono text-gray-500 mb-0.5">› {l}</p>
-          ))}
+      {mode === 'system' && (
+        <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-cyan-50 border border-cyan-100">
+          <Wifi size={18} className="text-cyan-600 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-cyan-900 leading-relaxed">
+            Test Fişi'ne basın; tarayıcı açacağı yazdırma penceresinde bilgisayara kurulu yazıcıyı (USB, Wi-Fi veya ağ) seçin ve <b>Her zaman bu yazıcıda yazdır</b> kutucuğunu işaretleyin. Bir kez yaptıktan sonra her siparişte fiş otomatik basılır ve her seferinde tek <b>Yazdır</b> tıklaması gerekir.
+          </p>
         </div>
       )}
 
-      {autoPrint && connected && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
+      {(mode === 'system' || connected) && (
+        <label className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-blue-50/60 border border-blue-100 cursor-pointer w-full">
+          <input type="checkbox" checked={autoPrint} onChange={e => setAutoPrint(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+          <div>
+            <p className="text-sm text-gray-800 font-semibold">Otomatik fiş basımı</p>
+            <p className="text-[11px] text-gray-500">Yeni sipariş ve garson çağrılarında fişi otomatik bas</p>
+          </div>
+        </label>
+      )}
+
+      {autoPrint && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600">
           <CheckCircle2 size={14} />
-          Otomatik basım aktif — bu sayfa açıkken yeni siparişler yazıcıdan düşer.
+          Otomatik basım aktif — bu sayfa açıkken yeni siparişler otomatik yazdırılır.
+        </div>
+      )}
+
+      {logs.length > 0 && (
+        <div className="mt-4 bg-blue-50/40 border border-blue-100 rounded-xl p-3 max-h-28 overflow-y-auto">
+          {logs.map((l, i) => (
+            <p key={i} className="text-[11px] font-mono text-gray-500 mb-0.5">› {l}</p>
+          ))}
         </div>
       )}
     </div>

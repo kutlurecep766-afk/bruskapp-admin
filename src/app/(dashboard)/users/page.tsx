@@ -22,7 +22,6 @@ const ALL_MODULES = [
   { key: 'comments', label: 'Yorum Yönetimi' },
   { key: 'storefront', label: 'QR Menü' },
   { key: 'virtual-pos', label: 'Sanal POS' },
-  { key: 'printer', label: 'Yazıcı' },
   { key: 'support', label: '7/24 Destek' },
 ]
 

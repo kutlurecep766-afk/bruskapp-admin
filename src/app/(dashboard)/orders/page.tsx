@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
+import PrinterManager from '@/components/printer/PrinterManager'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string; dot: string; icon: any }> = {
   pending: { label: 'Bekliyor', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500', icon: Timer },
@@ -266,6 +267,7 @@ export default function OrdersPage() {
   const [storeSaving, setStoreSaving] = useState(false)
   const [storeMsg, setStoreMsg] = useState<string | null>(null)
   const [storeInfo, setStoreInfo] = useState<{ name: string; address: string; phone: string }>({ name: '', address: '', phone: '' })
+  const [tenantId, setTenantId] = useState('')
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const esRef = useRef<EventSource | null>(null)
@@ -291,6 +293,7 @@ export default function OrdersPage() {
       const tenant = await fetch('/api/tenants/me', { credentials: 'include' }).then(r => r.json())
       const tid = tenant?.tenant?.id || tenant?.id
       if (tid) {
+        setTenantId(tid)
         const res = await fetch('/api/orders?tenantId=' + tid + '&limit=300', { credentials: 'include' })
         if (res.ok) setOrders(await res.json())
       }
@@ -789,6 +792,8 @@ export default function OrdersPage() {
             effective={storeEffectiveOnline}
             onChange={setOnlineSettings}
           />
+
+          <PrinterManager tenantId={tenantId} storeInfo={storeInfo} />
 
           {storeMsg && <p className={'text-sm ' + (storeMsg.includes('kaydedildi') ? 'text-emerald-600' : 'text-red-600')}>{storeMsg}</p>}
           <button onClick={saveStoreSettings} disabled={storeSaving || !tableSettings || !onlineSettings}
