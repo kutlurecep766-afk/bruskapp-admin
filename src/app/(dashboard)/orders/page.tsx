@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
-  Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X,
+  Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X, Store, CalendarClock,
+  Play, Pause, Lock,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 
@@ -16,7 +17,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; bor
   cancelled: { label: 'İptal', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500', icon: XCircle },
 }
 
-type TabKey = 'table' | 'online' | 'waiter' | 'history'
+type TabKey = 'table' | 'online' | 'waiter' | 'history' | 'store'
 
 function isTableOrder(o: any) {
   const p = (o.platform || '').trim()
@@ -148,6 +149,10 @@ export default function OrdersPage() {
   const [detail, setDetail] = useState<any>(null)
   const [soundOn, setSoundOn] = useState(true)
   const [historyLimit, setHistoryLimit] = useState(20)
+  const [storeSettings, setStoreSettings] = useState<{ status: string; autoMode: boolean; openTime: string; closeTime: string } | null>(null)
+  const [storeEffective, setStoreEffective] = useState('open')
+  const [storeSaving, setStoreSaving] = useState(false)
+  const [storeMsg, setStoreMsg] = useState<string | null>(null)
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const esRef = useRef<EventSource | null>(null)
@@ -178,6 +183,39 @@ export default function OrdersPage() {
       }
     } catch {} finally { setLoading(false) }
   }, [])
+
+  const loadStoreSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/storefront/admin/me/settings', { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        setStoreSettings(data.settings || null)
+        setStoreEffective(data.effectiveStatus || 'open')
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => { loadStoreSettings() }, [loadStoreSettings])
+
+  const saveStoreSettings = async () => {
+    if (!storeSettings) return
+    setStoreSaving(true); setStoreMsg(null)
+    try {
+      const res = await fetch('/api/storefront/admin/me/settings', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storeSettings),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setStoreSettings(data.settings || storeSettings)
+        setStoreEffective(data.effectiveStatus || 'open')
+        setStoreMsg('Mağaza ayarları kaydedildi.')
+      } else setStoreMsg('Kaydedilemedi.')
+    } catch { setStoreMsg('Bağlantı hatası') }
+    setStoreSaving(false)
+  }
 
   useEffect(() => {
     load()
@@ -249,15 +287,17 @@ export default function OrdersPage() {
     online: onlineOrders.length,
     waiter: pendingWaiter.length,
     history: historyOrders.length,
+    store: 0,
   }
   const pendingFor: Record<TabKey, number> = {
     table: pendingTable.length,
     online: pendingOnline.length,
     waiter: pendingWaiter.length,
     history: 0,
+    store: 0,
   }
 
-  const baseList = tab === 'table' ? tableOrders : tab === 'online' ? onlineOrders : tab === 'waiter' ? waiterCalls : historyOrders
+  const baseList = tab === 'table' ? tableOrders : tab === 'online' ? onlineOrders : tab === 'waiter' ? waiterCalls : tab === 'history' ? historyOrders : []
   const filtered = baseList.filter((o: any) => {
     if (tab !== 'waiter' && filter && o.status !== filter) return false
     if (search) {
@@ -345,6 +385,7 @@ export default function OrdersPage() {
     { key: 'online', label: 'Online', icon: Globe },
     { key: 'waiter', label: 'Garson Çağrıları', icon: Bell },
     { key: 'history', label: 'Geçmiş Siparişler', icon: History },
+    { key: 'store', label: 'Mağaza Ayarları', icon: Store },
   ]
 
   const StatsCards = ({ data }: { data: any }) => (
@@ -392,12 +433,12 @@ export default function OrdersPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-2 px-3 py-2.5 rounded-full bg-white/15 text-white text-xs font-semibold backdrop-blur">
+            <span className={'inline-flex items-center gap-2 px-3 py-2.5 rounded-full text-xs font-bold shadow-md ' + (storeEffective === 'open' ? 'bg-white text-emerald-700' : storeEffective === 'busy' ? 'bg-white text-amber-700' : 'bg-white text-red-700')}>
               <span className="relative flex w-2.5 h-2.5">
-                <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-                <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                <span className={'absolute inline-flex w-full h-full rounded-full animate-ping ' + (storeEffective === 'open' ? 'bg-emerald-400' : storeEffective === 'busy' ? 'bg-amber-400' : 'bg-red-400')} />
+                <span className={'relative inline-flex w-2.5 h-2.5 rounded-full ' + (storeEffective === 'open' ? 'bg-emerald-500' : storeEffective === 'busy' ? 'bg-amber-500' : 'bg-red-500')} />
               </span>
-              Canlı
+              {storeEffective === 'open' ? 'Mağaza Açık' : storeEffective === 'busy' ? 'Mağaza Yoğun' : 'Mağaza Kapalı'}
             </span>
             <button onClick={() => { setSoundOn(v => { localStorage.setItem(SOUND_KEY, (!v) ? '1' : '0'); return !v }) }}
               className={'flex items-center gap-2 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ' + (soundOn ? 'bg-white text-blue-700 shadow-md' : 'bg-white/15 text-white backdrop-blur')}>
@@ -582,6 +623,94 @@ export default function OrdersPage() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      ) : tab === 'store' ? (
+        <div className="space-y-4">
+          <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+            <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
+            <div className="relative">
+              <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><Store size={18} className="text-blue-600" /> Mağaza Ayarları</h3>
+              <p className="text-xs text-gray-500 mb-5">Mağazanızın sipariş alıp almayacağını buradan yönetin. Kapalı veya Yoğun olduğunda QR menüden sipariş alınmaz.</p>
+
+              <div className={'inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-bold mb-6 ' + (storeEffective === 'open' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : storeEffective === 'busy' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200')}>
+                <span className={'relative flex w-2.5 h-2.5 ' + (storeEffective === 'open' ? '' : '')}>
+                  <span className={'absolute inline-flex w-full h-full rounded-full animate-ping ' + (storeEffective === 'open' ? 'bg-emerald-400' : storeEffective === 'busy' ? 'bg-amber-400' : 'bg-red-400')} />
+                  <span className={'relative inline-flex w-2.5 h-2.5 rounded-full ' + (storeEffective === 'open' ? 'bg-emerald-500' : storeEffective === 'busy' ? 'bg-amber-500' : 'bg-red-500')} />
+                </span>
+                {storeEffective === 'open' ? 'Mağaza Açık — siparişler alınıyor' : storeEffective === 'busy' ? 'Mağaza Yoğun — siparişlere ara verildi' : 'Mağaza Kapalı — sipariş alınmıyor'}
+              </div>
+
+              {/* Durum seçimi */}
+              <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-2">Mağaza Durumu</p>
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                {[
+                  { key: 'open', label: 'Açık', desc: 'Siparişler alınır', icon: Play, color: 'emerald', active: 'bg-emerald-500 text-white border-emerald-600 shadow-lg shadow-emerald-500/30', idle: 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50' },
+                  { key: 'busy', label: 'Yoğun', desc: 'Siparişlere ara verilir', icon: Pause, color: 'amber', active: 'bg-amber-500 text-white border-amber-600 shadow-lg shadow-amber-500/30', idle: 'bg-white text-gray-600 border-gray-200 hover:border-amber-300 hover:bg-amber-50' },
+                  { key: 'closed', label: 'Kapalı', desc: 'Sipariş alınmaz', icon: Lock, color: 'red', active: 'bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/30', idle: 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:bg-red-50' },
+                ].map(s => {
+                  const Icon = s.icon
+                  const selected = storeSettings?.status === s.key && !storeSettings?.autoMode
+                  return (
+                    <button key={s.key}
+                      onClick={() => setStoreSettings(prev => ({ ...(prev || { autoMode: false, openTime: '09:00', closeTime: '23:00' }), status: s.key, autoMode: false }))}
+                      className={'flex items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-all active:scale-[0.98] ' + (selected ? s.active : s.idle)}>
+                      <div className={'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ' + (selected ? 'bg-white/25' : 'bg-gray-50')}>
+                        <Icon size={16} className={selected ? 'text-white' : 'text-gray-400'} />
+                      </div>
+                      <div>
+                        <p className={'text-sm font-bold ' + (selected ? 'text-white' : 'text-gray-800')}>{s.label}</p>
+                        <p className={'text-[10px] ' + (selected ? 'text-white/80' : 'text-gray-400')}>{s.desc}</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Otomatik mod */}
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 mb-2">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md shadow-blue-600/30">
+                      <CalendarClock size={17} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                        Günlük Açılış / Kapanış Saati
+                        {storeSettings?.autoMode && (
+                          <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold">OTOMATİK</span>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">Açılış saatinde mağaza otomatik <b>açılır</b>, kapanış saatinde otomatik <b>kapanır</b>.</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setStoreSettings(prev => ({ ...(prev || { status: 'open', autoMode: false, openTime: '09:00', closeTime: '23:00' }), autoMode: !prev?.autoMode }))}
+                    className={'relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ' + (storeSettings?.autoMode ? 'bg-blue-600' : 'bg-gray-300')}>
+                    <span className={'absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-all ' + (storeSettings?.autoMode ? 'left-[22px]' : 'left-0.5')} />
+                  </button>
+                </div>
+                {storeSettings?.autoMode && (
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Açılış Saati</label>
+                      <input type="time" value={storeSettings.openTime || ''} onChange={e => setStoreSettings(prev => ({ ...prev!, openTime: e.target.value }))}
+                        className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Kapanış Saati</label>
+                      <input type="time" value={storeSettings.closeTime || ''} onChange={e => setStoreSettings(prev => ({ ...prev!, closeTime: e.target.value }))}
+                        className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {storeMsg && <p className={'text-sm mb-3 ' + (storeMsg.includes('kaydedildi') ? 'text-emerald-600' : 'text-red-600')}>{storeMsg}</p>}
+              <button onClick={saveStoreSettings} disabled={storeSaving || !storeSettings}
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                {storeSaving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
+              </button>
+            </div>
           </div>
         </div>
       ) : (

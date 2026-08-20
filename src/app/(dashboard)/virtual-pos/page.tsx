@@ -31,6 +31,7 @@ export default function VirtualPosPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [notifCopied, setNotifCopied] = useState(false)
 
   useEffect(() => {
     fetch('/api/payments/virtual-pos/api-keys', { credentials: 'include' })
@@ -254,6 +255,21 @@ export default function VirtualPosPage() {
                 <CheckCircle size={16} /> PayTR bağlantısı aktif — Hesap: <b className="font-mono">{config.paytr.merchantId}</b>
               </div>
             )}
+
+            <div className="mt-5 rounded-2xl bg-blue-50/60 border border-blue-100 p-4">
+              <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <ExternalLink size={11} className="text-blue-600" /> PayTR Bildirim URL (Callback)
+              </p>
+              <p className="text-xs text-gray-500 mb-2.5">Bu adresi PayTR Mağaza Paneli <b className="text-gray-700">Ayarlar {'>'} Bağlantı Ayarları</b> sayfasındaki <b className="text-gray-700">Bildirim URL</b> alanına yapıştırın. Ödemelerin sonucu bu adrese bildirilir.</p>
+              <div className="flex items-center gap-2">
+                <input type="text" readOnly value="https://bruskapp.com/api/payments/virtual-pos/paytr/callback"
+                  className="flex-1 bg-white border border-blue-200 rounded-xl px-3 py-2.5 text-gray-900 text-xs font-mono focus:outline-none" />
+                <button onClick={() => { navigator.clipboard.writeText('https://bruskapp.com/api/payments/virtual-pos/paytr/callback'); setNotifCopied(true); setTimeout(() => setNotifCopied(false), 1800) }}
+                  className={'inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ' + (notifCopied ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105')}>
+                  {notifCopied ? <CheckCircle size={13} /> : <Copy size={13} />} {notifCopied ? 'Kopyalandı' : 'Kopyala'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
