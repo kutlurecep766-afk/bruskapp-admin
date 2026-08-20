@@ -29,6 +29,8 @@ export default function VirtualPosPage() {
   const [linkInstallments, setLinkInstallments] = useState<Array<{ number: number; totalPrice: number; installmentPrice: number }>>([])
   const [linkInstLoading, setLinkInstLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
 
   useEffect(() => {
     fetch('/api/payments/virtual-pos/api-keys', { credentials: 'include' })
@@ -72,6 +74,25 @@ export default function VirtualPosPage() {
       setMessage({ type: 'error', text: data.message || 'Bir hata oluştu, anahtarlar kaydedilemedi.' })
     }
     setSaving(false)
+  }
+
+  const disconnect = async () => {
+    setDisconnecting(true); setMessage(null)
+    const res = await fetch('/api/payments/virtual-pos/disconnect', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'paytr' }),
+    })
+    if (res.ok) {
+      setMessage({ type: 'success', text: 'Sanal POS bağlantısı kesildi. Tüm anahtarlar silindi.' })
+      setConfig((prev: any) => ({ ...prev, paytr: { configured: false, merchantId: '' } }))
+      setPaytrForm({ merchantId: '', merchantKey: '', merchantSecret: '' })
+    } else {
+      const data = await res.json()
+      setMessage({ type: 'error', text: data.message || 'Bağlantı kesilemedi.' })
+    }
+    setDisconnecting(false)
+    setConfirmDisconnect(false)
   }
 
   const createLink = async () => {
@@ -221,6 +242,12 @@ export default function VirtualPosPage() {
                 className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-semibold hover:text-blue-700 hover:underline">
                 <ExternalLink size={13} /> PayTR panelini aç
               </a>
+              {config?.paytr?.configured && (
+                <button onClick={() => setConfirmDisconnect(true)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-red-50 border border-red-200 text-red-600 text-xs font-bold hover:bg-red-100 hover:scale-105 active:scale-95 transition-all">
+                  <Link2 size={13} /> Bağlantıyı Kes
+                </button>
+              )}
             </div>
             {config?.paytr?.configured && (
               <div className="mt-4 flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm">
@@ -300,6 +327,31 @@ export default function VirtualPosPage() {
             ) : (
               <InstallmentSettingsPanel />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Bağlantıyı Kes onay modalı */}
+      {confirmDisconnect && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center"><AlertCircle size={18} className="text-red-600" /></div>
+              <h3 className="text-gray-900 font-bold">Bağlantıyı Kes</h3>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Sanal POS ile bağlantıyı kesmek istediğinize emin misiniz? <b className="text-gray-900">Tüm sanal POS bilgileri silinecektir.</b>
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setConfirmDisconnect(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 transition-colors">
+                Hayır
+              </button>
+              <button onClick={disconnect} disabled={disconnecting}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold shadow-md shadow-red-500/30 hover:from-red-600 hover:to-red-700 disabled:opacity-50 transition-all">
+                {disconnecting ? 'Kesiliyor...' : 'Evet, Kes'}
+              </button>
+            </div>
           </div>
         </div>
       )}
