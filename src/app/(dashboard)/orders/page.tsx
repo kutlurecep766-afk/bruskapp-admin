@@ -9,6 +9,7 @@ import {
 import { buildOrderReceipt } from '@/components/printer/escpos'
 import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
 import PrinterManager from '@/components/printer/PrinterManager'
+import { usePrinter } from '@/components/printer/usePrinter'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string; dot: string; icon: any }> = {
   pending: { label: 'Bekliyor', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500', icon: Timer },
@@ -269,6 +270,8 @@ export default function OrdersPage() {
   const [storeInfo, setStoreInfo] = useState<{ name: string; address: string; phone: string }>({ name: '', address: '', phone: '' })
   const [tenantId, setTenantId] = useState('')
 
+  const printer = usePrinter(tenantId, storeInfo)
+
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const esRef = useRef<EventSource | null>(null)
   const soundRef = useRef(true)
@@ -358,6 +361,7 @@ export default function OrdersPage() {
             const order = JSON.parse((ev as MessageEvent).data)
             const isWaiter = isWaiterCall(order)
             if (order.customerName !== 'Test' && soundRef.current) playChime(isWaiter ? 'waiter' : 'order')
+            printer.handleNewOrder(order)
           } catch {}
           load()
         })
@@ -793,7 +797,7 @@ export default function OrdersPage() {
             onChange={setOnlineSettings}
           />
 
-          <PrinterManager tenantId={tenantId} storeInfo={storeInfo} />
+          <PrinterManager printer={printer} />
 
           {storeMsg && <p className={'text-sm ' + (storeMsg.includes('kaydedildi') ? 'text-emerald-600' : 'text-red-600')}>{storeMsg}</p>}
           <button onClick={saveStoreSettings} disabled={storeSaving || !tableSettings || !onlineSettings}
