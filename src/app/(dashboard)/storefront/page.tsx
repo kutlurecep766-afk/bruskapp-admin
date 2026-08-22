@@ -353,12 +353,18 @@ export default function StorefrontPage() {
           <p className="text-gray-900 text-sm font-semibold mb-1">Online Sipariş QR Kodu</p>
           <p className="text-xs text-gray-500 mb-3">Müşterileriniz bu QR'ı okutarak online sipariş verebilir (adresli teslimat). Bu QR kodu vitrin, web sitesi veya paket üzerine koyabilirsiniz.</p>
           {onlineQrUrl && (
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <img src={onlineQrUrl} alt="Online Sipariş QR" className="w-32 h-32 rounded-xl bg-white p-2 border border-blue-100 shadow-sm" />
-              <button onClick={(e) => { e.preventDefault(); downloadQr(onlineQrUrl, 'onlineQR.png') }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-sm font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer">
-                <Download size={16} /> QR İndir
-              </button>
+              <div className="flex flex-col gap-2 min-w-0">
+                <a href={menuUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-mono font-semibold hover:underline truncate max-w-[260px] sm:max-w-xs">
+                  <Link size={12} className="shrink-0" /> {menuUrl}
+                </a>
+                <button onClick={(e) => { e.preventDefault(); downloadQr(onlineQrUrl, 'onlineQR.png') }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-sm font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer w-fit">
+                  <Download size={16} /> QR İndir
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -376,6 +382,10 @@ export default function StorefrontPage() {
                 <div key={n} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50/50 border border-blue-100 hover:shadow-md hover:shadow-blue-600/10 transition-all">
                   <p className="text-gray-900 text-sm font-bold">Masa {n}</p>
                   <img src={mqr} alt={`Masa ${n} QR`} className="w-24 h-24 rounded-lg bg-white p-1.5 border border-blue-100 shadow-sm" />
+                  <a href={menuUrl + '?masa=' + n} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[10px] text-blue-600 font-mono font-semibold hover:underline truncate max-w-full">
+                    <Link size={11} className="shrink-0" /> {menuUrl + '?masa=' + n}
+                  </a>
                   <button onClick={(e) => { e.preventDefault(); downloadQr(mqr, `masa${n}QR.png`) }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer">
                     <Download size={14} /> İndir

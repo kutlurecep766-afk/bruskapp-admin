@@ -67,24 +67,39 @@ export function buildReceiptHtml(d: ReceiptData): string {
   rows.push('<div class="footer">Bizi tercih ettiğiniz için teşekkür ederiz!</div>')
 
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>${esc(d.payment === 'Garson Çağrı' ? 'Garson Çağrı' : 'Bilgi Fişi')} #${esc(d.orderId)}</title><style>
-    @page { size: 80mm auto; margin: 0; }
-    body { margin: 0; padding: 20px 12px; background: #fff; color: #111; width: 300px; font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'Courier New', monospace; }
-    .head { text-align: center; font-size: 17px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
-    .tag { text-align: center; font-size: 9px; letter-spacing: 2px; color: #666; margin: 3px 0 6px; }
-    .sub { text-align: center; font-size: 11px; color: #333; margin-top: 2px; }
-    .sep { border-top: 1px dashed #999; margin: 10px 0; }
-    .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; padding: 2px 0; }
-    .item { padding: 3px 0; }
-    .item-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; }
-    .item-meta { font-size: 10px; color: #555; }
-    .total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; padding-top: 2px; }
-    .footer { text-align: center; font-size: 10px; color: #777; margin-top: 4px; }
+    @media screen {
+      body { margin: 0; padding: 32px 16px; background: #fff; color: #111; max-width: 460px; margin-left: auto; margin-right: auto; font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'Courier New', monospace; }
+      .head { text-align: center; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+      .tag { text-align: center; font-size: 11px; letter-spacing: 2px; color: #666; margin: 4px 0 8px; }
+      .sub { text-align: center; font-size: 14px; color: #333; margin-top: 2px; }
+      .sep { border-top: 1px dashed #999; margin: 14px 0; }
+      .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 3px 0; }
+      .item { padding: 4px 0; }
+      .item-top { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; font-weight: 700; }
+      .item-meta { font-size: 12px; color: #555; }
+      .total { display: flex; justify-content: space-between; font-size: 19px; font-weight: 900; padding-top: 2px; }
+      .footer { text-align: center; font-size: 12px; color: #777; margin-top: 6px; }
+    }
+    @media print {
+      @page { size: 80mm auto; margin: 0; }
+      body { margin: 0; padding: 20px 12px; background: #fff; color: #111; width: 300px; font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'Courier New', monospace; }
+      .head { text-align: center; font-size: 17px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+      .tag { text-align: center; font-size: 9px; letter-spacing: 2px; color: #666; margin: 3px 0 6px; }
+      .sub { text-align: center; font-size: 11px; color: #333; margin-top: 2px; }
+      .sep { border-top: 1px dashed #999; margin: 10px 0; }
+      .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; padding: 2px 0; }
+      .item { padding: 3px 0; }
+      .item-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; }
+      .item-meta { font-size: 10px; color: #555; }
+      .total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; padding-top: 2px; }
+      .footer { text-align: center; font-size: 10px; color: #777; margin-top: 4px; }
+    }
   </style></head><body>${rows.join('')}</body></html>`
 }
 
 export function openReceiptPdf(d: ReceiptData) {
   const html = buildReceiptHtml(d)
-  const w = window.open('', '_blank', 'width=420,height=700')
+  const w = window.open('', '_blank', 'width=520,height=800')
   if (!w) {
     alert('Lütfen pop-up engelleyicisini açın')
     return
