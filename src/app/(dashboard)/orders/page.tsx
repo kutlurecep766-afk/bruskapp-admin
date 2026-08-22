@@ -88,7 +88,7 @@ function StoreSettingsCard({ title, badge, desc, settings, effective, onChange }
 }) {
   const set = settings || DEFAULT_SCOPE_SETTINGS
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
       <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
       <div className="relative">
         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -97,7 +97,7 @@ function StoreSettingsCard({ title, badge, desc, settings, effective, onChange }
         </div>
         <p className="text-xs text-gray-500 mb-5">{desc}</p>
 
-        <div className={'inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-bold mb-6 ' + (effective === 'open' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : effective === 'busy' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200')}>
+        <div className={'inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border text-xs sm:text-sm font-bold mb-6 ' + (effective === 'open' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : effective === 'busy' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200')}>
           <span className="relative flex w-2.5 h-2.5">
             <span className={'absolute inline-flex w-full h-full rounded-full animate-ping ' + (effective === 'open' ? 'bg-emerald-400' : effective === 'busy' ? 'bg-amber-400' : 'bg-red-400')} />
             <span className={'relative inline-flex w-2.5 h-2.5 rounded-full ' + (effective === 'open' ? 'bg-emerald-500' : effective === 'busy' ? 'bg-amber-500' : 'bg-red-500')} />
@@ -106,7 +106,7 @@ function StoreSettingsCard({ title, badge, desc, settings, effective, onChange }
         </div>
 
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-2">Durum</p>
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {[
             { key: 'open', label: 'Açık', desc: 'Siparişler alınır', icon: Play, active: 'bg-emerald-500 text-white border-emerald-600 shadow-lg shadow-emerald-500/30', idle: 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50' },
             { key: 'busy', label: 'Yoğun', desc: 'Siparişlere ara verilir', icon: Pause, active: 'bg-amber-500 text-white border-amber-600 shadow-lg shadow-amber-500/30', idle: 'bg-white text-gray-600 border-gray-200 hover:border-amber-300 hover:bg-amber-50' },
@@ -771,7 +771,7 @@ export default function OrdersPage() {
         </div>
       ) : tab === 'store' ? (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-white border border-blue-100 p-6 shadow-sm">
+          <div className="rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
               <Store size={18} className="text-blue-600" />
               <h3 className="text-gray-900 font-bold">Mağaza Ayarları</h3>
@@ -801,7 +801,7 @@ export default function OrdersPage() {
 
           {storeMsg && <p className={'text-sm ' + (storeMsg.includes('kaydedildi') ? 'text-emerald-600' : 'text-red-600')}>{storeMsg}</p>}
           <button onClick={saveStoreSettings} disabled={storeSaving || !tableSettings || !onlineSettings}
-            className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
             {storeSaving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
           </button>
         </div>

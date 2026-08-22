@@ -158,7 +158,7 @@ export default function VirtualPosPage() {
               key={p.id}
               onClick={() => { if (p.available) { setProvider(p.id); setTab('keys'); setMessage(null) } }}
               disabled={!p.available}
-              className={'relative overflow-hidden rounded-2xl bg-white border p-5 text-left shadow-sm transition-all duration-300 ' +
+              className={'relative overflow-hidden rounded-2xl bg-white border p-4 sm:p-5 text-left shadow-sm transition-all duration-300 ' +
                 (active ? 'border-blue-400 ring-2 ring-blue-100 shadow-lg shadow-blue-600/10 hover:shadow-xl hover:shadow-blue-600/15' : 'border-blue-100 hover:shadow-lg hover:shadow-blue-600/10') +
                 (p.available ? ' cursor-pointer hover:-translate-y-0.5' : ' cursor-not-allowed opacity-60')}>
               <div className="absolute -top-8 -right-8 w-20 h-20 rounded-full bg-blue-50" />
@@ -199,7 +199,7 @@ export default function VirtualPosPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white border border-blue-100 rounded-full p-1 shadow-sm w-fit overflow-x-auto no-scrollbar">
+      <div className="flex gap-1 bg-white border border-blue-100 rounded-full p-1 shadow-sm w-full max-w-full overflow-x-auto no-scrollbar">
         <button onClick={() => setTab('keys')} className={'px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (tab === 'keys' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}><Link2 size={13} className="inline mr-1.5 -mt-0.5" />API Anahtarları</button>
         <button onClick={() => setTab('pay')} className={'px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (tab === 'pay' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}><HandCoins size={13} className="inline mr-1.5 -mt-0.5" />Ödeme Al</button>
         <button onClick={() => setTab('link')} className={'px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ' + (tab === 'link' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}><Link2 size={13} className="inline mr-1.5 -mt-0.5" />Tahsilat Linki</button>
@@ -214,7 +214,7 @@ export default function VirtualPosPage() {
 
       {/* API Keys */}
       {tab === 'keys' && (
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
           <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
           <div className="relative">
             <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><Link2 size={18} className="text-blue-600" /> PayTR API Anahtarları</h3>
@@ -261,11 +261,11 @@ export default function VirtualPosPage() {
                 <ExternalLink size={11} className="text-blue-600" /> PayTR Bildirim URL (Callback)
               </p>
               <p className="text-xs text-gray-500 mb-2.5">Bu adresi PayTR Mağaza Paneli <b className="text-gray-700">Ayarlar {'>'} Bağlantı Ayarları</b> sayfasındaki <b className="text-gray-700">Bildirim URL</b> alanına yapıştırın. Ödemelerin sonucu bu adrese bildirilir.</p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <input type="text" readOnly value="https://bruskapp.com/api/payments/virtual-pos/paytr/callback"
                   className="flex-1 bg-white border border-blue-200 rounded-xl px-3 py-2.5 text-gray-900 text-xs font-mono focus:outline-none" />
                 <button onClick={() => { navigator.clipboard.writeText('https://bruskapp.com/api/payments/virtual-pos/paytr/callback'); setNotifCopied(true); setTimeout(() => setNotifCopied(false), 1800) }}
-                  className={'inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ' + (notifCopied ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105')}>
+                  className={'inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ' + (notifCopied ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105')}>
                   {notifCopied ? <CheckCircle size={13} /> : <Copy size={13} />} {notifCopied ? 'Kopyalandı' : 'Kopyala'}
                 </button>
               </div>
@@ -276,7 +276,7 @@ export default function VirtualPosPage() {
 
       {/* Ödeme Al */}
       {tab === 'pay' && (
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
           <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
           <div className="relative">
             <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><HandCoins size={18} className="text-blue-600" /> Ödeme Al</h3>
@@ -292,7 +292,7 @@ export default function VirtualPosPage() {
 
       {/* Tahsilat Linki */}
       {tab === 'link' && (
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
           <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
           <div className="relative">
             <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><Link2 size={18} className="text-blue-600" /> Tahsilat Linki Oluştur</h3>
@@ -320,9 +320,9 @@ export default function VirtualPosPage() {
                 </button>
                 {linkResult && (
                   <div className="mt-4 flex items-center gap-2 px-4 py-3 bg-white border border-blue-200 rounded-xl shadow-sm">
-                    <input type="text" value={linkResult} readOnly className="flex-1 bg-transparent text-gray-900 text-sm font-mono focus:outline-none" />
-                    <button onClick={copyLink} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Kopyala"><Copy size={16} /></button>
-                    <a href={linkResult} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Aç"><ExternalLink size={16} /></a>
+                    <input type="text" value={linkResult} readOnly className="flex-1 min-w-0 bg-transparent text-gray-900 text-sm font-mono focus:outline-none" />
+                    <button onClick={copyLink} className="p-2 shrink-0 text-gray-400 hover:text-blue-600 transition-colors" title="Kopyala"><Copy size={16} /></button>
+                    <a href={linkResult} target="_blank" rel="noopener noreferrer" className="p-2 shrink-0 text-gray-400 hover:text-blue-600 transition-colors" title="Aç"><ExternalLink size={16} /></a>
                   </div>
                 )}
               </>
@@ -333,7 +333,7 @@ export default function VirtualPosPage() {
 
       {/* Taksit */}
       {tab === 'installment' && (
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 transition-all duration-300">
           <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-blue-50" />
           <div className="relative">
             <h3 className="text-gray-900 font-bold flex items-center gap-2 mb-1"><Percent size={18} className="text-blue-600" /> Taksit Ayarları</h3>
