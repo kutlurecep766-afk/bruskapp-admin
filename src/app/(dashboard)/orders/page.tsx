@@ -655,17 +655,21 @@ export default function OrdersPage() {
     const cancelled = today.filter(o => o.status === 'cancelled').length
     const dateLabel = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
 
-    const rows = today.map(o => `
+    const rows = today.map(o => {
+      const plat = String(o.platform || '')
+      const platLabel = plat === 'QR Menü' ? 'OnlineQR' : (plat === 'Masa' || plat === 'Masa Siparişi' ? 'Masa' : (plat.includes('Garson') ? 'Garson Çağrı' : plat))
+      return `
       <tr>
         <td>#${o.id}</td>
         <td>${new Date(o.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</td>
-        <td>${(o.platform || '-')}</td>
+        <td>${platLabel}</td>
         <td>${o.tableNumber ? 'Masa ' + o.tableNumber : (o.customerName || '-')}</td>
         <td>${o.customerContact || '-'}</td>
         <td style="text-align:right">${orderTotal(o).toFixed(2)} TL</td>
         <td>${o.status === 'cancelled' ? 'İptal' : o.status === 'delivered' ? 'Teslim' : o.status === 'completed' ? 'Tamam' : 'Diğer'}</td>
       </tr>
-    `).join('')
+    `
+    }).join('')
 
     const w = window.open('', '_blank', 'width=860,height=720')
     if (!w) { alert('Lütfen pop-up engelleyicisini açın'); return }
