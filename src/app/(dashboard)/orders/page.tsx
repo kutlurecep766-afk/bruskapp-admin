@@ -271,6 +271,8 @@ export default function OrdersPage() {
   const [tenantId, setTenantId] = useState('')
   const [blockedDevices, setBlockedDevices] = useState<any[]>([])
   const [blockMsg, setBlockMsg] = useState<string | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<any>(null)
+  const [cancelReason, setCancelReason] = useState('')
 
   const printer = usePrinter(tenantId, storeInfo)
 
@@ -1037,7 +1039,7 @@ export default function OrdersPage() {
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <CheckCircle2 size={13} /> Teslim Edildi
                         </button>
-                        <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'cancelled') }} disabled={updating === o.id}
+                        <button onClick={e => { e.stopPropagation(); setCancelTarget(o); setCancelReason('') }} disabled={updating === o.id}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-500 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <XCircle size={13} /> İptal
                         </button>
@@ -1221,6 +1223,61 @@ export default function OrdersPage() {
                     )
                   })()
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* İptal Sebebi Modalı */}
+      {cancelTarget && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-blue-950/60 backdrop-blur-sm" onClick={() => setCancelTarget(null)}>
+          <div className="w-full md:max-w-md bg-white rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl animate-fadeIn" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-br from-red-600 via-red-600 to-rose-600 p-6">
+              <div className="md:hidden w-10 h-1 rounded-full bg-white/40 mx-auto mb-5" />
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
+                  <XCircle size={22} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold">Siparişi İptal Et</h3>
+                  <p className="text-white/80 text-xs mt-0.5">#{cancelTarget.id} · {cancelTarget.customerName}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-3">İptal Sebebi (müşteriye gösterilir)</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {['Ürün eksik', 'Hizmet bölgesi dışı', 'Adres bulunamadı', 'Müşteri talebi', 'Stok yok', 'Ödeme alınamadı'].map(opt => {
+                  const active = cancelReason === opt
+                  return (
+                    <button key={opt} onClick={() => setCancelReason(opt)}
+                      className={'px-3.5 py-2 rounded-full text-xs font-bold border transition-all active:scale-95 ' + (active ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-600/30' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:bg-red-50')}>
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+              <textarea value={cancelReason} onChange={e => setCancelReason(e.target.value)}
+                placeholder="Veya özel bir sebep yazın..."
+                rows={3}
+                className="w-full bg-blue-50/40 border border-blue-100 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 resize-none" />
+
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => setCancelTarget(null)}
+                  className="flex-1 py-3 rounded-full bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 transition-all">
+                  Vazgeç
+                </button>
+                <button onClick={async () => {
+                  const reason = cancelReason.trim()
+                  if (!reason) { alert('İptal sebebi girin veya seçin.'); return }
+                  await updateStatus(cancelTarget.id, 'cancelled', reason)
+                  setCancelTarget(null)
+                }} disabled={updating === cancelTarget.id}
+                  className="flex-1 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold shadow-md shadow-red-500/30 hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-50">
+                  {updating === cancelTarget.id ? 'İptal Ediliyor...' : 'İptal Et'}
+                </button>
               </div>
             </div>
           </div>
