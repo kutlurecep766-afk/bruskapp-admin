@@ -4,7 +4,7 @@ import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
   Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X, Store, CalendarClock,
-  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock,
+  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock, FileBarChart,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
@@ -21,6 +21,10 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; bor
 }
 
 type TabKey = 'table' | 'online' | 'waiter' | 'history' | 'store'
+
+function esc(s: any): string {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string))
+}
 
 function isTableOrder(o: any) {
   const p = (o.platform || '').trim()
@@ -273,6 +277,7 @@ export default function OrdersPage() {
   const [blockMsg, setBlockMsg] = useState<string | null>(null)
   const [cancelTarget, setCancelTarget] = useState<any>(null)
   const [cancelReason, setCancelReason] = useState('')
+  const [statsScope, setStatsScope] = useState<'today' | 'all'>('today')
 
   const printer = usePrinter(tenantId, storeInfo)
 
@@ -453,17 +458,33 @@ export default function OrdersPage() {
     return true
   }).slice(0, tab === 'history' ? historyLimit : 200)
 
+  const isToday = (o: any) => {
+    const d = new Date(o.createdAt)
+    const now = new Date()
+    return d.toDateString() === now.toDateString()
+  }
+
+  const todayTable = tableOrders.filter(isToday)
+  const todayOnline = onlineOrders.filter(isToday)
+  const todayWaiter = waiterCalls.filter(isToday)
+
+  const statsFor = (list: any[]) => ({
+    total: list.length,
+    pending: list.filter(o => o.status === 'pending').length,
+    completed: list.filter(o => o.status === 'completed' || o.status === 'delivered').length,
+    cancelled: list.filter(o => o.status === 'cancelled').length,
+    revenue: list.filter(o => o.status !== 'cancelled').reduce((a, o) => a + orderTotal(o), 0),
+  })
+
   const tabStats = {
-    table: {
-      total: tableOrders.length, pending: pendingTable.length,
-      completed: tableOrders.filter(o => o.status === 'completed').length,
-      revenue: tableOrders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + orderTotal(o), 0),
-    },
-    online: {
-      total: onlineOrders.length, pending: pendingOnline.length,
-      completed: onlineOrders.filter(o => o.status === 'completed').length,
-      revenue: onlineOrders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + orderTotal(o), 0),
-    },
+    table: statsFor(tableOrders),
+    online: statsFor(onlineOrders),
+  } as Record<TabKey, any>
+
+  const todayStats = {
+    table: statsFor(todayTable),
+    online: statsFor(todayOnline),
+    waiter: { total: todayWaiter.length, pending: todayWaiter.filter(o => o.status === 'pending').length, completed: todayWaiter.filter(o => o.status === 'completed').length, cancelled: 0, revenue: 0 },
   } as Record<TabKey, any>
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
@@ -621,6 +642,64 @@ export default function OrdersPage() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+  }
+
+  const openDailyReport = () => {
+    const fmt = (n: number) => '₺' + (isFinite(n) ? n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00')
+    const today = orders.filter(isToday)
+    const active = today.filter(o => o.status !== 'cancelled')
+    const revenue = active.reduce((a, o) => a + orderTotal(o), 0)
+    const total = today.length
+    const completed = today.filter(o => o.status === 'completed' || o.status === 'delivered').length
+    const pending = today.filter(o => o.status === 'pending').length
+    const cancelled = today.filter(o => o.status === 'cancelled').length
+    const dateLabel = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
+
+    const rows = today.map(o => `
+      <tr>
+        <td>#${o.id}</td>
+        <td>${new Date(o.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</td>
+        <td>${(o.platform || '-')}</td>
+        <td>${o.tableNumber ? 'Masa ' + o.tableNumber : (o.customerName || '-')}</td>
+        <td>${o.customerContact || '-'}</td>
+        <td style="text-align:right">${orderTotal(o).toFixed(2)} TL</td>
+        <td>${o.status === 'cancelled' ? 'İptal' : o.status === 'delivered' ? 'Teslim' : o.status === 'completed' ? 'Tamam' : 'Diğer'}</td>
+      </tr>
+    `).join('')
+
+    const w = window.open('', '_blank', 'width=860,height=720')
+    if (!w) { alert('Lütfen pop-up engelleyicisini açın'); return }
+    w.document.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Gün Sonu Raporu ${esc(dateLabel)}</title><style>
+      body { font-family: Arial, sans-serif; margin: 32px; color: #111; }
+      h1 { font-size: 20px; margin-bottom: 4px; }
+      .sub { color: #666; font-size: 13px; margin-bottom: 20px; }
+      .cards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+      .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px 18px; min-width: 110px; }
+      .card b { display: block; font-size: 20px; }
+      .card span { font-size: 11px; color: #666; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { border-bottom: 1px solid #eee; padding: 8px 10px; text-align: left; }
+      th { background: #f7f7f7; font-size: 11px; text-transform: uppercase; color: #555; }
+      .tot { margin-top: 20px; font-size: 16px; font-weight: 700; }
+      @media print { body { margin: 16px; } }
+    </style></head><body>
+      <h1>Gün Sonu Raporu</h1>
+      <div class="sub">${esc(storeInfo.name || 'İşletme')} · ${esc(dateLabel)} · ${today.length} sipariş</div>
+      <div class="cards">
+        <div class="card"><b>${total}</b><span>Toplam Sipariş</span></div>
+        <div class="card"><b>${pending}</b><span>Bekleyen</span></div>
+        <div class="card"><b>${completed}</b><span>Tamamlanan</span></div>
+        <div class="card"><b>${cancelled}</b><span>İptal</span></div>
+        <div class="card"><b>${fmt(revenue)}</b><span>Ciro</span></div>
+      </div>
+      <table>
+        <thead><tr><th>No</th><th>Saat</th><th>Platform</th><th>Müşteri</th><th>Telefon</th><th>Tutar</th><th>Durum</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="tot">Gün Sonu Toplam: ${fmt(revenue)}</div>
+    </body></html>`)
+    w.document.close()
+    w.focus()
   }
 
   const TABS: { key: TabKey; label: string; icon: any }[] = [
@@ -931,7 +1010,24 @@ export default function OrdersPage() {
         </div>
       ) : (
         <>
-          <StatsCards data={tabStats[tab] || { total: 0, pending: 0, completed: 0, revenue: 0 }} />
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex gap-1 bg-white border border-blue-100 rounded-full p-1 shadow-sm">
+              <button onClick={() => setStatsScope('today')}
+                className={'px-4 py-2 rounded-full text-xs font-bold transition-all ' + (statsScope === 'today' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}>
+                Bugün
+              </button>
+              <button onClick={() => setStatsScope('all')}
+                className={'px-4 py-2 rounded-full text-xs font-bold transition-all ' + (statsScope === 'all' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-500 hover:text-blue-600')}>
+                Tümü
+              </button>
+            </div>
+            <button onClick={openDailyReport}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/30 hover:from-emerald-700 hover:to-teal-700 hover:scale-105 active:scale-95 transition-all">
+              <FileBarChart size={15} /> Gün Sonu Raporu
+            </button>
+          </div>
+
+          <StatsCards data={(statsScope === 'today' ? todayStats[tab] : tabStats[tab]) || { total: 0, pending: 0, completed: 0, revenue: 0 }} />
 
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap">
