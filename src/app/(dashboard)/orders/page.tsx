@@ -1051,38 +1051,39 @@ export default function OrdersPage() {
                           </button>
                         )}
                         <button onClick={e => { e.stopPropagation(); updateStatus(o.id, 'delivered') }} disabled={updating === o.id}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <CheckCircle2 size={13} /> Teslim Edildi
                         </button>
                         <button onClick={e => { e.stopPropagation(); setCancelTarget(o); setCancelReason('') }} disabled={updating === o.id}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-500 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-red-500 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <XCircle size={13} /> İptal
                         </button>
+                        <span className="w-px h-6 bg-blue-100 mx-1 hidden md:block" />
                         <button onClick={e => { e.stopPropagation(); viewReceipt(o) }}
-                          className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 active:scale-95 transition-all">
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 active:scale-95 transition-all">
                           <FileText size={13} /> Fişi Görüntüle
                         </button>
                         <button onClick={e => { e.stopPropagation(); printReceipt(o) }} disabled={printerBusy}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-gray-700 text-xs font-bold border border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <Printer size={13} /> Yazdır
                         </button>
                         <button onClick={e => { e.stopPropagation(); downloadEvidence(o) }}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all">
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-gray-700 text-xs font-bold border border-gray-200 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 hover:scale-105 active:scale-95 transition-all">
                           <ShieldBan size={13} /> Kayıt İndir
                         </button>
                         {isOrderBlocked(o) ? (
                           <>
-                            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-600 text-white text-xs font-bold border border-red-600 shadow-md shadow-red-600/30">
+                            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold border border-red-600 shadow-md shadow-red-600/30">
                               <Ban size={13} /> Cihaz Engellendi
                             </span>
                             <button onClick={e => { e.stopPropagation(); unblockByOrder(o) }}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-emerald-600 text-xs font-bold border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 hover:scale-105 active:scale-95 transition-all">
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 hover:scale-105 active:scale-95 transition-all">
                               <Unlock size={13} /> Engeli Kaldır
                             </button>
                           </>
                         ) : (
                           <button onClick={e => { e.stopPropagation(); blockOrder(o) }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-600 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all">
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-xs font-bold border border-red-200 hover:bg-red-100 hover:border-red-300 hover:scale-105 active:scale-95 transition-all">
                             <Ban size={13} /> Cihazı Engelle
                           </button>
                         )}
@@ -1214,30 +1215,34 @@ export default function OrdersPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
-                <button onClick={() => viewReceipt(detail)}
-                  className="flex-1 py-3 rounded-full bg-white border-2 border-blue-200 text-blue-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95">
-                  <FileText size={15} className="inline mr-1.5 -mt-0.5" /> Fişi Görüntüle (PDF)
-                </button>
-                <button onClick={() => { printReceipt(detail); setDetail(null) }} disabled={printerBusy}
-                  className="flex-1 py-3 rounded-full bg-white border-2 border-blue-600 text-blue-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95 disabled:opacity-50">
-                  <Printer size={15} className="inline mr-1.5 -mt-0.5" /> Fiş Yazdır
-                </button>
-                <button onClick={() => downloadEvidence(detail)}
-                  className="flex-1 py-3 rounded-full bg-white border-2 border-blue-200 text-gray-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95">
-                  <ShieldBan size={15} className="inline mr-1.5 -mt-0.5" /> Kayıt İndir
-                </button>
-                {isOrderBlocked(detail) ? (
-                  <button onClick={() => unblockByOrder(detail)}
-                    className="flex-1 py-3 rounded-full bg-white border-2 border-emerald-200 text-emerald-600 text-sm font-bold hover:bg-emerald-50 transition-all active:scale-95">
-                    <Unlock size={15} className="inline mr-1.5 -mt-0.5" /> Engeli Kaldır
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button onClick={() => viewReceipt(detail)}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold hover:bg-blue-100 hover:border-blue-300 hover:shadow-md hover:shadow-blue-600/10 active:scale-95 transition-all">
+                    <FileText size={16} /> Fişi Görüntüle (PDF)
                   </button>
-                ) : (
-                  <button onClick={() => blockOrder(detail)}
-                    className="flex-1 py-3 rounded-full bg-white border-2 border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 transition-all active:scale-95">
-                    <Ban size={15} className="inline mr-1.5 -mt-0.5" /> Cihazı Engelle
+                  <button onClick={() => { printReceipt(detail); setDetail(null) }} disabled={printerBusy}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 active:scale-95 transition-all disabled:opacity-50">
+                    <Printer size={16} /> Fiş Yazdır
                   </button>
-                )}
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button onClick={() => downloadEvidence(detail)}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-bold hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 hover:shadow-md hover:shadow-amber-500/10 active:scale-95 transition-all">
+                    <ShieldBan size={16} /> Kayıt İndir
+                  </button>
+                  {isOrderBlocked(detail) ? (
+                    <button onClick={() => unblockByOrder(detail)}
+                      className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold hover:bg-emerald-100 hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-500/10 active:scale-95 transition-all">
+                      <Unlock size={16} /> Engeli Kaldır
+                    </button>
+                  ) : (
+                    <button onClick={() => blockOrder(detail)}
+                      className="flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-bold hover:bg-red-100 hover:border-red-300 hover:shadow-md hover:shadow-red-500/10 active:scale-95 transition-all">
+                      <Ban size={16} /> Cihazı Engelle
+                    </button>
+                  )}
+                </div>
                 {detail.status !== 'delivered' && detail.status !== 'completed' && detail.status !== 'cancelled' && (
                   (() => {
                     const online = isOnlineOrder(detail)
@@ -1245,13 +1250,13 @@ export default function OrdersPage() {
                       <>
                         {online && detail.status === 'preparing' && (
                           <button onClick={() => { updateStatus(detail.id, 'out_for_delivery') }} disabled={updating === detail.id}
-                            className="flex-1 py-3 rounded-full bg-purple-50 border-2 border-purple-500 text-purple-700 text-sm font-bold hover:bg-purple-100 transition-all active:scale-95 disabled:opacity-50">
-                            <Truck size={15} className="inline mr-1.5 -mt-0.5" /> Yola Çıktı
+                            className="flex w-full items-center justify-center gap-2 py-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 text-sm font-bold hover:bg-purple-100 hover:border-purple-300 active:scale-95 transition-all disabled:opacity-50">
+                            <Truck size={16} /> Yola Çıktı
                           </button>
                         )}
                         <button onClick={() => { updateStatus(detail.id, 'delivered'); setDetail(null) }} disabled={updating === detail.id}
-                          className="flex-1 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 transition-all active:scale-95 disabled:opacity-50">
-                          <CheckCircle2 size={15} className="inline mr-1.5 -mt-0.5" /> Teslim Edildi
+                          className="flex w-full items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all disabled:opacity-50">
+                          <CheckCircle2 size={16} /> Teslim Edildi
                         </button>
                       </>
                     )
