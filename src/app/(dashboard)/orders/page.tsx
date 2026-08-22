@@ -4,7 +4,7 @@ import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
   Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X, Store, CalendarClock,
-  Play, Pause, Lock, FileText,
+  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
@@ -269,6 +269,8 @@ export default function OrdersPage() {
   const [storeMsg, setStoreMsg] = useState<string | null>(null)
   const [storeInfo, setStoreInfo] = useState<{ name: string; address: string; phone: string }>({ name: '', address: '', phone: '' })
   const [tenantId, setTenantId] = useState('')
+  const [blockedDevices, setBlockedDevices] = useState<any[]>([])
+  const [blockMsg, setBlockMsg] = useState<string | null>(null)
 
   const printer = usePrinter(tenantId, storeInfo)
 
@@ -317,6 +319,8 @@ export default function OrdersPage() {
   }, [])
 
   useEffect(() => { loadStoreSettings() }, [loadStoreSettings])
+
+  useEffect(() => { loadBlocked() }, [tenantId])
 
   useEffect(() => {
     fetch('/api/storefront/admin/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
@@ -527,6 +531,79 @@ export default function OrdersPage() {
       items: (o.products || []).map((p: any) => ({ name: p.name, price: Number(p.price) || 0, qty: p.quantity || 1, note: p.note })),
       total: orderTotal(o),
     })
+  }
+
+  const loadBlocked = async () => {
+    try {
+      const res = await fetch('/api/orders/blocked', { credentials: 'include' })
+      if (res.ok) setBlockedDevices(await res.json())
+    } catch {}
+  }
+
+  const blockOrder = async (o: any) => {
+    if (!window.confirm(`#${o.id} siparişinin cihazını engellemek istediğinize emin misiniz? Bu cihazdan bir daha sipariş alınamaz.`)) return
+    try {
+      const res = await fetch(`/api/orders/${o.id}/block`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: `Sipariş #${o.id} işletme tarafından engellendi` }),
+      })
+      if (res.ok) {
+        setBlockMsg(`#${o.id} siparişinin cihazı engellendi.`)
+        loadBlocked()
+      } else {
+        const data = await res.json()
+        setBlockMsg(data?.message || 'Engelleme yapılamadı')
+      }
+    } catch { setBlockMsg('Bağlantı hatası') }
+  }
+
+  const unblockDevice = async (b: any) => {
+    if (!window.confirm('Bu cihazın engelini kaldırmak istediğinize emin misiniz?')) return
+    try {
+      const res = await fetch(`/api/orders/${b.id}/unblock`, {
+        method: 'POST', credentials: 'include',
+      })
+      if (res.ok) {
+        setBlockMsg('Cihaz engeli kaldırıldı.')
+        loadBlocked()
+      } else setBlockMsg('Kaldırılamadı')
+    } catch { setBlockMsg('Bağlantı hatası') }
+  }
+
+  const downloadEvidence = (o: any) => {
+    const lines = [
+      'SAHTE SİPARİŞ / HUKUKİ İNCELEME KAYDI',
+      '----------------------------------------',
+      'İşletme: ' + (storeInfo.name || '-'),
+      'Sipariş No: #' + o.id,
+      'Tarih/Saat: ' + new Date(o.createdAt || Date.now()).toLocaleString('tr-TR'),
+      'Platform: ' + (o.platform || '-'),
+      'Masa: ' + (o.tableNumber || '-'),
+      'Müşteri Adı: ' + (o.customerName || '-'),
+      'Telefon: ' + (o.customerContact || '-'),
+      'Toplam: ' + orderTotal(o).toFixed(2) + ' TL',
+      '',
+      'TEKNİK KAYITLAR',
+      '----------------------------------------',
+      'IP Adresi: ' + (o.ipAddress || 'kayıt yok'),
+      'Cihaz Kimliği: ' + (o.deviceId || 'kayıt yok'),
+      'Not: ' + (o.note || '-'),
+      '',
+      'Bu kayıt; IP adresi, cihaz kimliği ve zaman bilgisi içerir.',
+      'Kişinin tespiti için yetkili makamlara (savcılık/emniyet)',
+      'başvurulabilir; IP üzerinden internet servis sağlayıcıdan',
+      'abone bilgisi talep edilebilir.',
+    ]
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `siparis-${o.id}-kayit.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   const TABS: { key: TabKey; label: string; icon: any }[] = [
@@ -799,6 +876,36 @@ export default function OrdersPage() {
 
           <PrinterManager printer={printer} />
 
+          <div className="rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <ShieldBan size={18} className="text-red-600" />
+                <h3 className="text-gray-900 font-bold">Engellenen Cihazlar</h3>
+              </div>
+              <button onClick={loadBlocked} className="text-[10px] text-blue-600 font-semibold hover:underline">Yenile</button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">Engellenen cihazlardan (IP/cihaz kimliği) sipariş alınamaz. Engeli kaldırmak için listeden kaldırın.</p>
+            {blockMsg && <p className={'text-sm mb-3 ' + (blockMsg.includes('engellendi') || blockMsg.includes('kaldırıldı') ? 'text-emerald-600' : 'text-red-600')}>{blockMsg}</p>}
+            {blockedDevices.length === 0 ? (
+              <p className="text-xs text-gray-400 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3">Henüz engellenen cihaz yok.</p>
+            ) : (
+              <div className="space-y-2">
+                {blockedDevices.map(b => (
+                  <div key={b.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-red-50/50 border border-red-100">
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-800 font-mono font-semibold truncate">{b.deviceId}</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">IP: {b.ipAddress || '-'} · {new Date(b.createdAt).toLocaleString('tr-TR')}</p>
+                    </div>
+                    <button onClick={() => unblockDevice(b)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-red-600 border border-red-200 text-xs font-bold hover:bg-red-50 transition-all flex-shrink-0">
+                      <Unlock size={13} /> Kaldır
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {storeMsg && <p className={'text-sm ' + (storeMsg.includes('kaydedildi') ? 'text-emerald-600' : 'text-red-600')}>{storeMsg}</p>}
           <button onClick={saveStoreSettings} disabled={storeSaving || !tableSettings || !onlineSettings}
             className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
@@ -942,6 +1049,14 @@ export default function OrdersPage() {
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                           <Printer size={13} /> Yazdır
                         </button>
+                        <button onClick={e => { e.stopPropagation(); downloadEvidence(o) }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all">
+                          <ShieldBan size={13} /> Kayıt İndir
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); blockOrder(o) }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-600 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all">
+                          <Ban size={13} /> Cihazı Engelle
+                        </button>
                       </div>
                     )
                   })()}
@@ -1078,6 +1193,14 @@ export default function OrdersPage() {
                 <button onClick={() => { printReceipt(detail); setDetail(null) }} disabled={printerBusy}
                   className="flex-1 py-3 rounded-full bg-white border-2 border-blue-600 text-blue-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95 disabled:opacity-50">
                   <Printer size={15} className="inline mr-1.5 -mt-0.5" /> Fiş Yazdır
+                </button>
+                <button onClick={() => downloadEvidence(detail)}
+                  className="flex-1 py-3 rounded-full bg-white border-2 border-blue-200 text-gray-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95">
+                  <ShieldBan size={15} className="inline mr-1.5 -mt-0.5" /> Kayıt İndir
+                </button>
+                <button onClick={() => blockOrder(detail)}
+                  className="flex-1 py-3 rounded-full bg-white border-2 border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 transition-all active:scale-95">
+                  <Ban size={15} className="inline mr-1.5 -mt-0.5" /> Cihazı Engelle
                 </button>
                 {detail.status !== 'delivered' && detail.status !== 'completed' && detail.status !== 'cancelled' && (
                   (() => {
