@@ -318,9 +318,16 @@ export default function OrdersPage() {
     } catch {}
   }, [])
 
+  const loadBlocked = useCallback(async () => {
+    try {
+      const res = await fetch('/api/orders/blocked', { credentials: 'include' })
+      if (res.ok) setBlockedDevices(await res.json())
+    } catch {}
+  }, [])
+
   useEffect(() => { loadStoreSettings() }, [loadStoreSettings])
 
-  useEffect(() => { loadBlocked() }, [tenantId])
+  useEffect(() => { loadBlocked() }, [loadBlocked])
 
   useEffect(() => {
     fetch('/api/storefront/admin/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
@@ -531,13 +538,6 @@ export default function OrdersPage() {
       items: (o.products || []).map((p: any) => ({ name: p.name, price: Number(p.price) || 0, qty: p.quantity || 1, note: p.note })),
       total: orderTotal(o),
     })
-  }
-
-  const loadBlocked = async () => {
-    try {
-      const res = await fetch('/api/orders/blocked', { credentials: 'include' })
-      if (res.ok) setBlockedDevices(await res.json())
-    } catch {}
   }
 
   const blockOrder = async (o: any) => {
