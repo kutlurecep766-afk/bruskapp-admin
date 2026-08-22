@@ -573,6 +573,21 @@ export default function OrdersPage() {
     } catch { setBlockMsg('Bağlantı hatası') }
   }
 
+  const isOrderBlocked = (o: any) => {
+    if (!blockedDevices.length) return false
+    return blockedDevices.some(b => (o.deviceId && b.deviceId === o.deviceId) || (o.ipAddress && b.ipAddress === o.ipAddress))
+  }
+
+  const blockedRecordFor = (o: any) => {
+    return blockedDevices.find(b => (o.deviceId && b.deviceId === o.deviceId) || (o.ipAddress && b.ipAddress === o.ipAddress))
+  }
+
+  const unblockByOrder = async (o: any) => {
+    const rec = blockedRecordFor(o)
+    if (rec) await unblockDevice(rec)
+    else setBlockMsg('Bu sipariş için engel kaydı bulunamadı')
+  }
+
   const downloadEvidence = (o: any) => {
     const lines = [
       'SAHTE SİPARİŞ / HUKUKİ İNCELEME KAYDI',
@@ -1055,10 +1070,22 @@ export default function OrdersPage() {
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-gray-700 text-xs font-bold border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 active:scale-95 transition-all">
                           <ShieldBan size={13} /> Kayıt İndir
                         </button>
-                        <button onClick={e => { e.stopPropagation(); blockOrder(o) }}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-600 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all">
-                          <Ban size={13} /> Cihazı Engelle
-                        </button>
+                        {isOrderBlocked(o) ? (
+                          <>
+                            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-600 text-white text-xs font-bold border border-red-600 shadow-md shadow-red-600/30">
+                              <Ban size={13} /> Cihaz Engellendi
+                            </span>
+                            <button onClick={e => { e.stopPropagation(); unblockByOrder(o) }}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-emerald-600 text-xs font-bold border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 hover:scale-105 active:scale-95 transition-all">
+                              <Unlock size={13} /> Engeli Kaldır
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={e => { e.stopPropagation(); blockOrder(o) }}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-red-600 text-xs font-bold border border-red-200 hover:bg-red-50 hover:border-red-300 hover:scale-105 active:scale-95 transition-all">
+                            <Ban size={13} /> Cihazı Engelle
+                          </button>
+                        )}
                       </div>
                     )
                   })()}
@@ -1200,10 +1227,17 @@ export default function OrdersPage() {
                   className="flex-1 py-3 rounded-full bg-white border-2 border-blue-200 text-gray-700 text-sm font-bold hover:bg-blue-50 transition-all active:scale-95">
                   <ShieldBan size={15} className="inline mr-1.5 -mt-0.5" /> Kayıt İndir
                 </button>
-                <button onClick={() => blockOrder(detail)}
-                  className="flex-1 py-3 rounded-full bg-white border-2 border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 transition-all active:scale-95">
-                  <Ban size={15} className="inline mr-1.5 -mt-0.5" /> Cihazı Engelle
-                </button>
+                {isOrderBlocked(detail) ? (
+                  <button onClick={() => unblockByOrder(detail)}
+                    className="flex-1 py-3 rounded-full bg-white border-2 border-emerald-200 text-emerald-600 text-sm font-bold hover:bg-emerald-50 transition-all active:scale-95">
+                    <Unlock size={15} className="inline mr-1.5 -mt-0.5" /> Engeli Kaldır
+                  </button>
+                ) : (
+                  <button onClick={() => blockOrder(detail)}
+                    className="flex-1 py-3 rounded-full bg-white border-2 border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 transition-all active:scale-95">
+                    <Ban size={15} className="inline mr-1.5 -mt-0.5" /> Cihazı Engelle
+                  </button>
+                )}
                 {detail.status !== 'delivered' && detail.status !== 'completed' && detail.status !== 'cancelled' && (
                   (() => {
                     const online = isOnlineOrder(detail)
