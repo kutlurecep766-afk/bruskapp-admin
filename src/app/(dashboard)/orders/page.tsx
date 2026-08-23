@@ -4,7 +4,7 @@ import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
   Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X, Store, CalendarClock,
-  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock, FileBarChart,
+  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock, FileBarChart, Download,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
@@ -264,7 +264,11 @@ export default function OrdersPage() {
   const [updating, setUpdating] = useState<number | null>(null)
   const [detail, setDetail] = useState<any>(null)
   const [soundOn, setSoundOn] = useState(true)
-  const [historyLimit, setHistoryLimit] = useState(20)
+  const [historyLimit, setHistoryLimit] = useState(100)
+  const [historyFrom, setHistoryFrom] = useState('')
+  const [historyTo, setHistoryTo] = useState('')
+  const [historyList, setHistoryList] = useState<any[]>([])
+  const [historyPreset, setHistoryPreset] = useState('7d')
   const [tableSettings, setTableSettings] = useState<StoreScopeSettings | null>(null)
   const [onlineSettings, setOnlineSettings] = useState<StoreScopeSettings | null>(null)
   const [storeEffectiveTable, setStoreEffectiveTable] = useState('open')
@@ -332,9 +336,45 @@ export default function OrdersPage() {
     } catch {}
   }, [])
 
+  const loadHistory = useCallback(async (from: string, to: string, limit: number) => {
+    if (!tenantId) return
+    try {
+      const params = new URLSearchParams({ tenantId, limit: String(limit) })
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+      const res = await fetch('/api/orders?' + params.toString(), { credentials: 'include' })
+      if (res.ok) setHistoryList(await res.json())
+    } catch {}
+  }, [tenantId])
+
   useEffect(() => { loadStoreSettings() }, [loadStoreSettings])
 
   useEffect(() => { loadBlocked() }, [loadBlocked])
+
+  useEffect(() => {
+    if (tab !== 'history') return
+    const now = new Date()
+    const iso = (d: Date) => d.toISOString()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+
+    let from = ''
+    let to = ''
+    if (historyPreset === 'today') { from = iso(startOfToday); to = iso(endOfToday) }
+    else if (historyPreset === 'yesterday') {
+      const yd = new Date(startOfToday); yd.setDate(yd.getDate() - 1)
+      const yde = new Date(startOfToday); yde.setMilliseconds(-1)
+      from = iso(yd); to = iso(yde)
+    }
+    else if (historyPreset === '7d') { from = iso(new Date(startOfToday.getTime() - 6 * 86400000)); to = iso(endOfToday) }
+    else if (historyPreset === '14d') { from = iso(new Date(startOfToday.getTime() - 13 * 86400000)); to = iso(endOfToday) }
+    else if (historyPreset === '30d') { from = iso(new Date(startOfToday.getTime() - 29 * 86400000)); to = iso(endOfToday) }
+    else if (historyPreset === 'all') { from = ''; to = '' }
+
+    const f = historyFrom || from
+    const t = historyTo || to
+    loadHistory(f, t, historyLimit)
+  }, [tab, historyPreset, historyFrom, historyTo, historyLimit, loadHistory])
 
   useEffect(() => {
     fetch('/api/storefront/admin/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
@@ -446,7 +486,7 @@ export default function OrdersPage() {
     store: 0,
   }
 
-  const baseList = tab === 'table' ? tableOrders : tab === 'online' ? onlineOrders : tab === 'waiter' ? waiterCalls : tab === 'history' ? historyOrders : []
+  const baseList = tab === 'table' ? tableOrders : tab === 'online' ? onlineOrders : tab === 'waiter' ? waiterCalls : tab === 'history' ? historyList.filter(isHistorical) : []
   const filtered = baseList.filter((o: any) => {
     if (tab !== 'waiter' && filter && o.status !== filter) return false
     if (search) {
@@ -638,6 +678,39 @@ export default function OrdersPage() {
     const a = document.createElement('a')
     a.href = url
     a.download = `siparis-${o.id}-kayit.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const downloadHistory = () => {
+    const list = historyList.filter(isHistorical)
+    if (list.length === 0) { alert('İndirilecek sipariş yok'); return }
+    const esc = (v: any) => {
+      const s = String(v ?? '')
+      return /[",;\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+    }
+    const header = ['Sipariş No', 'Tarih', 'Saat', 'Platform', 'Masa', 'Müşteri', 'Telefon', 'Ürünler', 'Toplam', 'Ödeme', 'Durum']
+    const rows = list.map(o => [
+      o.id,
+      new Date(o.createdAt).toLocaleDateString('tr-TR'),
+      new Date(o.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      String(o.platform || ''),
+      o.tableNumber || '',
+      o.customerName || '',
+      o.customerContact || '',
+      (o.products || []).map((p: any) => `${p.quantity}x ${p.name}`).join('; '),
+      orderTotal(o).toFixed(2),
+      parseReceiptPayment(o.note) || '',
+      o.status,
+    ].map(esc).join(';'))
+    const csv = '\uFEFF' + [header.join(';'), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `siparis-gecmisi-${new Date().toISOString().slice(0, 10)}.csv`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -871,18 +944,44 @@ export default function OrdersPage() {
         </div>
       ) : tab === 'history' ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <History size={16} className="text-blue-600" />
-              Tamamlanan ve iptal edilen siparişler
-            </div>
-            <div className="flex items-center gap-2">
-              {[20, 50, 100].map(n => (
-                <button key={n} onClick={() => setHistoryLimit(n)}
-                  className={'px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ' + (historyLimit === n ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50')}>
-                  {n} Kayıt
+          <div className="rounded-2xl bg-white border border-blue-100 p-4 sm:p-5 shadow-sm">
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <History size={16} className="text-blue-600" />
+                Tamamlanan ve iptal edilen siparişler
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button onClick={downloadHistory}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-emerald-600/30 hover:from-emerald-700 hover:to-teal-700 hover:scale-105 active:scale-95 transition-all">
+                  <Download size={14} /> Toplu İndir (CSV)
                 </button>
-              ))}
+                <select value={historyLimit} onChange={e => setHistoryLimit(Number(e.target.value))}
+                  className="bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:border-blue-600">
+                  {[50, 100, 250, 500, 1000, 5000].map(n => <option key={n} value={n}>{n} Kayıt</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+              <div className="flex gap-1 bg-blue-50/60 border border-blue-100 rounded-xl p-1 overflow-x-auto no-scrollbar w-max">
+                {[
+                  { k: 'today', l: 'Bugün' }, { k: 'yesterday', l: 'Dün' }, { k: '7d', l: 'Son 7 Gün' },
+                  { k: '14d', l: 'Son 2 Hafta' }, { k: '30d', l: 'Son 30 Gün' }, { k: 'all', l: 'Tümü (5 yıl)' },
+                ].map(p => (
+                  <button key={p.k} onClick={() => { setHistoryPreset(p.k); setHistoryFrom(''); setHistoryTo('') }}
+                    className={'px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ' + (historyPreset === p.k && !historyFrom && !historyTo ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-600 hover:text-blue-600')}>
+                    {p.l}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <input type="date" value={historyFrom} onChange={e => { setHistoryFrom(e.target.value); setHistoryPreset('') }}
+                  className="bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:border-blue-600" />
+                <span className="text-xs text-gray-400">→</span>
+                <input type="date" value={historyTo} onChange={e => { setHistoryTo(e.target.value); setHistoryPreset('') }}
+                  className="bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:border-blue-600" />
+                <span className="text-[10px] text-gray-400">{historyList.length} sipariş</span>
+              </div>
             </div>
           </div>
 
@@ -892,7 +991,7 @@ export default function OrdersPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
                   <History className="w-8 h-8 text-blue-300" />
                 </div>
-                <p className="text-gray-500 text-sm font-semibold">Geçmiş sipariş bulunmuyor</p>
+                <p className="text-gray-500 text-sm font-semibold">Seçilen tarih aralığında sipariş bulunmuyor</p>
               </div>
             ) : filtered.map(o => {
               const meta = isOnlineOrder(o) ? PLATFORM_META.online : PLATFORM_META.table
