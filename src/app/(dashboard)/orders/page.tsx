@@ -962,24 +962,28 @@ export default function OrdersPage() {
               </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-              <div className="flex gap-1 bg-blue-50/60 border border-blue-100 rounded-xl p-1 overflow-x-auto no-scrollbar w-max">
-                {[
-                  { k: 'today', l: 'Bugün' }, { k: 'yesterday', l: 'Dün' }, { k: '7d', l: 'Son 7 Gün' },
-                  { k: '14d', l: 'Son 2 Hafta' }, { k: '30d', l: 'Son 30 Gün' }, { k: 'all', l: 'Tümü (5 yıl)' },
-                ].map(p => (
-                  <button key={p.k} onClick={() => { setHistoryPreset(p.k); setHistoryFrom(''); setHistoryTo('') }}
-                    className={'px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ' + (historyPreset === p.k && !historyFrom && !historyTo ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-600 hover:text-blue-600')}>
-                    {p.l}
-                  </button>
-                ))}
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-1 bg-blue-50/60 border border-blue-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
+                <div className="flex gap-1 w-max">
+                  {[
+                    { k: 'today', l: 'Bugün' }, { k: 'yesterday', l: 'Dün' }, { k: '7d', l: 'Son 7 Gün' },
+                    { k: '14d', l: 'Son 2 Hafta' }, { k: '30d', l: 'Son 30 Gün' }, { k: 'all', l: 'Tümü (5 yıl)' },
+                  ].map(p => (
+                    <button key={p.k} onClick={() => { setHistoryPreset(p.k); setHistoryFrom(''); setHistoryTo('') }}
+                      className={'px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ' + (historyPreset === p.k && !historyFrom && !historyTo ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-600 hover:text-blue-600')}>
+                      {p.l}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <input type="date" value={historyFrom} onChange={e => { setHistoryFrom(e.target.value); setHistoryPreset('') }}
-                  className="bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:border-blue-600" />
-                <span className="text-xs text-gray-400">→</span>
-                <input type="date" value={historyTo} onChange={e => { setHistoryTo(e.target.value); setHistoryPreset('') }}
-                  className="bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:border-blue-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <input type="date" value={historyFrom} onChange={e => { setHistoryFrom(e.target.value); setHistoryPreset('') }}
+                    className="flex-1 sm:flex-none bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:border-blue-600" />
+                  <span className="text-xs text-gray-400">→</span>
+                  <input type="date" value={historyTo} onChange={e => { setHistoryTo(e.target.value); setHistoryPreset('') }}
+                    className="flex-1 sm:flex-none bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:border-blue-600" />
+                </div>
                 <span className="text-[10px] text-gray-400">{historyList.length} sipariş</span>
               </div>
             </div>
