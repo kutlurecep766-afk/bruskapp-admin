@@ -526,7 +526,7 @@ export default function OrdersPage() {
   })
 
   /* ---------------- MASA YÖNETİMİ ---------------- */
-  const isActiveOrder = (o: any) => o.status === 'pending' || o.status === 'preparing' || o.status === 'out_for_delivery'
+  const isActiveOrder = (o: any) => o.status === 'pending' || o.status === 'preparing' || o.status === 'out_for_delivery' || o.status === 'delivered'
   const masaNumbers = Array.isArray(storefrontData?.masaNumbers) ? storefrontData.masaNumbers : []
   const masaProducts = Array.isArray(storefrontData?.products) ? storefrontData.products.filter((p: any) => (p.status || 'active') !== 'soldout') : []
 
@@ -1182,6 +1182,7 @@ export default function OrdersPage() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                         {occupied.map((n: number) => {
                           const total = tableTotal(n)
+                          const orderCount = activeTableOrders(n).length
                           const last = activeTableOrders(n)[0]
                           return (
                             <button key={n} onClick={() => setTableModal(n)}
@@ -1198,7 +1199,7 @@ export default function OrdersPage() {
                               <p className="text-lg font-bold text-gray-900 mt-3">Masa {n}</p>
                               {last && (
                                 <div className="mt-1">
-                                  <p className="text-[10px] text-gray-500 truncate">{last.products?.length || 0} ürün · {new Date(last.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                  <p className="text-[10px] text-gray-500 truncate">{orderCount} sipariş · son: {new Date(last.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
                                   <p className="text-sm font-bold text-emerald-700 mt-1">₺{total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</p>
                                 </div>
                               )}
@@ -1706,33 +1707,48 @@ export default function OrdersPage() {
             </div>
 
             <div className="p-5 space-y-5 overflow-y-auto flex-1">
-              {/* En son sipariş */}
+              {/* Masaya ait tüm siparişler */}
               {(() => {
                 const active = activeTableOrders(tableModal)
-                const last = active[0]
-                if (last) {
+                if (active.length > 0) {
+                  const grand = active.reduce((a, o) => a + orderTotal(o), 0)
                   return (
                     <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                        Son Sipariş <span className="text-slate-300">#{last.id}</span>
-                        <StatusBadge o={last} />
-                      </p>
-                      <div className="rounded-2xl bg-slate-50/80 border border-slate-100 p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] text-slate-500">{new Date(last.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
-                          <span className="text-xs font-bold text-slate-900">₺{orderTotal(last).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Masaya Ait Siparişler ({active.length})</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500">Toplam</span>
+                          <span className="text-lg font-bold text-emerald-700">₺{grand.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <div className="space-y-1.5">
-                          {(last.products || []).map((p: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between text-xs">
-                              <span className="text-slate-700 truncate pr-2">
-                                {p.quantity > 1 && <b className="text-emerald-600">{p.quantity}× </b>}
-                                {p.name}
-                              </span>
-                              <span className="text-slate-500 whitespace-nowrap">₺{((Number(p.price) || 0) * (p.quantity || 1)).toFixed(2)}</span>
+                      </div>
+                      <div className="space-y-3">
+                        {active.map((o) => (
+                          <div key={o.id} className="rounded-2xl bg-slate-50/80 border border-slate-100 overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-slate-100">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-slate-800">Sipariş #{o.id}</span>
+                                <StatusBadge o={o} />
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                                  <Clock size={11} /> {new Date(o.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <span className="text-sm font-bold text-slate-900">₺{orderTotal(o).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                              </div>
                             </div>
-                          ))}
-                        </div>
+                            <div className="px-4 py-3 space-y-1.5">
+                              {(o.products || []).map((p: any, i: number) => (
+                                <div key={i} className="flex items-center justify-between text-xs">
+                                  <span className="text-slate-700 truncate pr-2">
+                                    {p.quantity > 1 && <b className="text-emerald-600">{p.quantity}× </b>}
+                                    {p.name}
+                                  </span>
+                                  <span className="text-slate-500 whitespace-nowrap">₺{((Number(p.price) || 0) * (p.quantity || 1)).toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )
