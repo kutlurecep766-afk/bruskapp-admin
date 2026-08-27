@@ -560,6 +560,7 @@ export default function OrdersPage() {
           totalAmount: Math.round(total * 100) / 100,
           note: tableNote.trim() ? 'Genel Not: ' + tableNote.trim() : '',
           tableNumber: n,
+          tableKey: (storefrontData?.tableKeys as Record<string, string> | undefined)?.[String(n)] || undefined,
           deviceId: 'panel-masa-' + n,
         }),
       })

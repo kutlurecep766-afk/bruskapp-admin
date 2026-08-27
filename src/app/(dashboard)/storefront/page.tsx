@@ -226,17 +226,20 @@ export default function StorefrontPage() {
       paymentMethodsTable,
       paymentMethodsOnline,
     }
-    if (tid) {
-      await fetch(`/api/storefront/admin/${tid}/config`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify(payload),
-      })
-    } else {
-      await fetch('/api/storefront/admin/me/config', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify(payload),
-      })
-    }
+    try {
+      if (tid) {
+        await fetch(`/api/storefront/admin/${tid}/config`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify(payload),
+        })
+      } else {
+        await fetch('/api/storefront/admin/me/config', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify(payload),
+        })
+      }
+      await loadData()
+    } catch {}
     setSaving(false)
   }
 
