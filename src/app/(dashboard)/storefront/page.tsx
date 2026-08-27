@@ -260,7 +260,17 @@ export default function StorefrontPage() {
   const slug = storefront?.slug || ''
   const menuUrl = slug ? `https://bruskapp.com/menu/${slug}` : ''
   const onlineQrUrl = menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}` : ''
-  const masaQrUrl = (num: number) => menuUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl + '?masa=' + num)}` : ''
+  const masaLink = (num: number) => {
+    if (!menuUrl) return ''
+    const keys = (storefront as any)?.tableKeys || {}
+    const key = keys[String(num)]
+    return menuUrl + '?masa=' + num + (key ? '&t=' + key : '')
+  }
+  const masaQrUrl = (num: number) => {
+    const url = masaLink(num)
+    if (!url) return ''
+    return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`
+  }
 
   const downloadQr = async (url: string, filename: string) => {
     try {
@@ -382,9 +392,9 @@ export default function StorefrontPage() {
                 <div key={n} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50/50 border border-blue-100 hover:shadow-md hover:shadow-blue-600/10 transition-all">
                   <p className="text-gray-900 text-sm font-bold">Masa {n}</p>
                   <img src={mqr} alt={`Masa ${n} QR`} className="w-24 h-24 rounded-lg bg-white p-1.5 border border-blue-100 shadow-sm" />
-                  <a href={menuUrl + '?masa=' + n} target="_blank" rel="noopener noreferrer"
+                  <a href={masaLink(n)} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-[10px] text-blue-600 font-mono font-semibold hover:underline truncate max-w-full">
-                    <Link size={11} className="shrink-0" /> {menuUrl + '?masa=' + n}
+                    <Link size={11} className="shrink-0" /> {masaLink(n)}
                   </a>
                   <button onClick={(e) => { e.preventDefault(); downloadQr(mqr, `masa${n}QR.png`) }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all cursor-pointer">
