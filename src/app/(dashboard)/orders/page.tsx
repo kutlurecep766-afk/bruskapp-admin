@@ -4,7 +4,7 @@ import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
   Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X, Store, CalendarClock,
-  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock, FileBarChart, Download,
+  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock, FileBarChart, Download, Table2,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
@@ -20,7 +20,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; bor
   cancelled: { label: 'İptal', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500', icon: XCircle },
 }
 
-type TabKey = 'table' | 'online' | 'waiter' | 'history' | 'store'
+type TabKey = 'table' | 'online' | 'waiter' | 'history' | 'store' | 'masa'
 
 function esc(s: any): string {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string))
@@ -269,6 +269,10 @@ export default function OrdersPage() {
   const [historyTo, setHistoryTo] = useState('')
   const [historyList, setHistoryList] = useState<any[]>([])
   const [historyPreset, setHistoryPreset] = useState('7d')
+  const [tableModal, setTableModal] = useState<number | null>(null)
+  const [tableCart, setTableCart] = useState<Record<string, number>>({})
+  const [tableNote, setTableNote] = useState('')
+  const [submittingTable, setSubmittingTable] = useState(false)
   const [tableSettings, setTableSettings] = useState<StoreScopeSettings | null>(null)
   const [onlineSettings, setOnlineSettings] = useState<StoreScopeSettings | null>(null)
   const [storeEffectiveTable, setStoreEffectiveTable] = useState('open')
@@ -276,6 +280,7 @@ export default function OrdersPage() {
   const [storeSaving, setStoreSaving] = useState(false)
   const [storeMsg, setStoreMsg] = useState<string | null>(null)
   const [storeInfo, setStoreInfo] = useState<{ name: string; address: string; phone: string }>({ name: '', address: '', phone: '' })
+  const [storefrontData, setStorefrontData] = useState<any>(null)
   const [tenantId, setTenantId] = useState('')
   const [blockedDevices, setBlockedDevices] = useState<any[]>([])
   const [blockMsg, setBlockMsg] = useState<string | null>(null)
@@ -379,6 +384,7 @@ export default function OrdersPage() {
   useEffect(() => {
     fetch('/api/storefront/admin/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
       if (!d) return
+      setStorefrontData(d)
       setStoreInfo({ name: d.shopName || d.name || '', address: d.address || '', phone: d.phone || '' })
     }).catch(() => {})
   }, [])
@@ -477,6 +483,7 @@ export default function OrdersPage() {
     waiter: pendingWaiter.length,
     history: historyOrders.length,
     store: 0,
+    masa: 0,
   }
   const pendingFor: Record<TabKey, number> = {
     table: pendingTable.length,
@@ -484,6 +491,7 @@ export default function OrdersPage() {
     waiter: pendingWaiter.length,
     history: 0,
     store: 0,
+    masa: 0,
   }
 
   const baseList = tab === 'table' ? tableOrders : tab === 'online' ? onlineOrders : tab === 'waiter' ? waiterCalls : tab === 'history' ? historyList.filter(isHistorical) : []
@@ -515,6 +523,68 @@ export default function OrdersPage() {
     cancelled: list.filter(o => o.status === 'cancelled').length,
     revenue: list.filter(o => o.status !== 'cancelled').reduce((a, o) => a + orderTotal(o), 0),
   })
+
+  /* ---------------- MASA YÖNETİMİ ---------------- */
+  const isActiveOrder = (o: any) => o.status === 'pending' || o.status === 'preparing' || o.status === 'out_for_delivery' || o.status === 'delivered'
+  const masaNumbers = Array.isArray(storefrontData?.masaNumbers) ? storefrontData.masaNumbers : []
+  const masaProducts = Array.isArray(storefrontData?.products) ? storefrontData.products.filter((p: any) => (p.status || 'active') !== 'soldout') : []
+
+  const tableOrdersByNum = (n: number) => orders.filter(o => isTableOrder(o) && o.tableNumber === n)
+  const activeTableOrders = (n: number) => tableOrdersByNum(n).filter(isActiveOrder)
+  const tableOccupied = (n: number) => activeTableOrders(n).length > 0
+  const tableTotal = (n: number) => activeTableOrders(n).reduce((a, o) => a + orderTotal(o), 0)
+
+  const masaProductsList: { id: string; name: string; price: number }[] = masaProducts.map((p: any) => ({ id: p.id, name: p.name, price: parseFloat(p.price) || 0 }))
+
+  const submitTableOrder = async (n: number) => {
+    const items = Object.entries(tableCart).filter(([, q]) => q > 0)
+    if (items.length === 0) { alert('Ürün seçin.'); return }
+    const products = items.map(([id, q]) => {
+      const p = masaProductsList.find(x => x.id === id)
+      return { name: p?.name || id, price: p?.price || 0, quantity: q }
+    })
+    const total = products.reduce((a, p) => a + p.price * p.quantity, 0)
+    setSubmittingTable(true)
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          platform: 'Masa',
+          customerName: `Masa ${n}`,
+          customerContact: '',
+          products,
+          totalAmount: Math.round(total * 100) / 100,
+          note: tableNote.trim() ? 'Genel Not: ' + tableNote.trim() : '',
+          tableNumber: n,
+          deviceId: 'panel-masa-' + n,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || 'Sipariş oluşturulamadı')
+      setTableCart({}); setTableNote('')
+      await load()
+      setTableModal(null)
+      setBlockMsg(`Masa ${n} siparişi oluşturuldu (#${data.id})`)
+    } catch (e: any) {
+      alert('Sipariş oluşturulamadı: ' + (e?.message || 'Hata'))
+    } finally { setSubmittingTable(false) }
+  }
+
+  const clearTable = async (n: number) => {
+    const active = activeTableOrders(n)
+    if (active.length === 0) { setBlockMsg(`Masa ${n} zaten boş.`); return }
+    if (!window.confirm(`Masa ${n} tamamlanıp boşaltılsın mı? (${active.length} aktif sipariş tamamlanır)`)) return
+    for (const o of active) {
+      if (o.status !== 'completed' && o.status !== 'cancelled') {
+        try { await fetch('/api/orders/' + o.id + '/status', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'completed' }) }) } catch {}
+      }
+    }
+    await load()
+    setBlockMsg(`Masa ${n} boşaltıldı.`)
+  }
 
   const tabStats = {
     table: statsFor(tableOrders),
@@ -783,6 +853,7 @@ export default function OrdersPage() {
     { key: 'table', label: 'Masa', icon: Armchair },
     { key: 'online', label: 'Online', icon: Globe },
     { key: 'waiter', label: 'Garson Çağrıları', icon: Bell },
+    { key: 'masa', label: 'Masa Yönetimi', icon: Table2 },
     { key: 'history', label: 'Geçmiş Siparişler', icon: History },
     { key: 'store', label: 'Mağaza Ayarları', icon: Store },
   ]
@@ -1048,6 +1119,61 @@ export default function OrdersPage() {
               )
             })}
           </div>
+        </div>
+      ) : tab === 'masa' ? (
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+              <div className="flex items-center gap-2">
+                <Table2 size={18} className="text-blue-600" />
+                <h3 className="text-gray-900 font-bold">Masa Yönetimi</h3>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Dolu</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gray-300" /> Boş</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">Masaya sipariş gelince otomatik dolu olur. Panelden masaya sipariş ekleyebilir veya masayı boşaltabilirsiniz. QR kodlar her zaman okutulabilir.</p>
+          </div>
+
+          {blockMsg && <p className={'text-sm ' + (blockMsg.includes('oluşturuldu') || blockMsg.includes('boşaltıldı') ? 'text-emerald-600' : 'text-red-600')}>{blockMsg}</p>}
+
+          {masaNumbers.length === 0 ? (
+            <div className="rounded-2xl bg-white border border-dashed border-blue-200 py-20 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <Table2 className="w-8 h-8 text-blue-300" />
+              </div>
+              <p className="text-gray-500 text-sm font-semibold">Masa tanımlanmamış</p>
+              <p className="text-gray-400 text-xs mt-1.5">QR Menü → Masa Numaraları bölümünden masa ekleyin.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              {masaNumbers.map((n: number) => {
+                const occupied = tableOccupied(n)
+                const active = activeTableOrders(n)
+                const total = tableTotal(n)
+                return (
+                  <button key={n} onClick={() => setTableModal(n)}
+                    className={'relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all hover:-translate-y-0.5 active:scale-[0.98] ' + (occupied ? 'bg-white border-emerald-300 shadow-md shadow-emerald-600/10 hover:shadow-lg' : 'bg-white border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md')}>
+                    <div className={'absolute top-0 inset-x-0 h-1 ' + (occupied ? 'bg-emerald-500' : 'bg-gray-200')} />
+                    <div className="flex items-center justify-between">
+                      <div className={'w-10 h-10 rounded-full flex items-center justify-center ' + (occupied ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500')}>
+                        <Table2 size={18} />
+                      </div>
+                      <span className={'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold ' + (occupied ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500')}>
+                        <span className={'w-1.5 h-1.5 rounded-full ' + (occupied ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400')} />
+                        {occupied ? 'Dolu' : 'Boş'}
+                      </span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-900 mt-3">Masa {n}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">
+                      {occupied ? active.length + ' aktif sipariş · ₺' + total.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : 'Sipariş bekleniyor'}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       ) : tab === 'store' ? (
         <div className="space-y-4">
@@ -1466,6 +1592,109 @@ export default function OrdersPage() {
                   })()
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Masa Detay Modalı */}
+      {tableModal !== null && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-blue-950/60 backdrop-blur-sm" onClick={() => setTableModal(null)}>
+          <div className="w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl animate-fadeIn flex flex-col max-h-[92dvh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-6 flex-shrink-0">
+              <div className="md:hidden w-10 h-1 rounded-full bg-white/40 mx-auto mb-5" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
+                    <Table2 size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">Masa {tableModal}</h3>
+                    <p className="text-white/80 text-xs mt-0.5">
+                      {tableOccupied(tableModal) ? activeTableOrders(tableModal).length + ' aktif sipariş · ₺' + tableTotal(tableModal).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : 'Boş'}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setTableModal(null)} className="w-9 h-9 -mr-1 -mt-1 rounded-full bg-white text-blue-700 flex items-center justify-center hover:bg-blue-50 active:scale-90 transition-all flex-shrink-0">
+                  <X size={17} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-5 overflow-y-auto flex-1">
+              {/* Aktif siparişler */}
+              {activeTableOrders(tableModal).length > 0 ? (
+                <div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Aktif Siparişler</p>
+                  <div className="space-y-2">
+                    {activeTableOrders(tableModal).map(o => (
+                      <div key={o.id} className="rounded-xl bg-blue-50/60 border border-blue-100 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-gray-800">#{o.id}</span>
+                          <StatusBadge o={o} />
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {(o.products || []).map((p: any, i: number) => (
+                            <span key={i} className="text-[10px] bg-white text-gray-700 px-2 py-1 rounded-full border border-blue-100">
+                              {p.quantity > 1 && <b>{p.quantity}×</b>} {p.name}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[11px] text-gray-500">{new Date(o.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-xs font-bold text-gray-900">₺{orderTotal(o).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 text-center">
+                  <p className="text-xs text-gray-500">Masa boş — henüz sipariş yok.</p>
+                </div>
+              )}
+
+              {/* Ürün ekle */}
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Masa {tableModal} için Sipariş Al</p>
+                {masaProductsList.length === 0 ? (
+                  <p className="text-xs text-gray-400 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3">Ürün tanımlı değil. QR Menü'den ürün ekleyin.</p>
+                ) : (
+                  <div className="rounded-xl bg-blue-50/40 border border-blue-100 p-3 space-y-1.5 max-h-52 overflow-y-auto">
+                    {masaProductsList.map(p => {
+                      const q = tableCart[p.id] || 0
+                      return (
+                        <div key={p.id} className="flex items-center gap-2 bg-white rounded-lg border border-blue-100 px-3 py-2">
+                          <span className="flex-1 min-w-0 text-xs text-gray-800 font-medium truncate">{p.name}</span>
+                          <span className="text-[10px] text-gray-500 whitespace-nowrap">₺{p.price.toFixed(2)}</span>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button onClick={() => setTableCart(c => ({ ...c, [p.id]: Math.max(0, (c[p.id] || 0) - 1) }))}
+                              className="w-6 h-6 rounded-md bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 active:scale-90 transition-all">−</button>
+                            <span className="w-6 text-center text-xs font-bold text-gray-900">{q}</span>
+                            <button onClick={() => setTableCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))}
+                              className="w-6 h-6 rounded-md bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 active:scale-90 transition-all">+</button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+                <input value={tableNote} onChange={e => setTableNote(e.target.value)} placeholder="Sipariş notu (opsiyonel)"
+                  className="mt-2 w-full bg-blue-50/40 border border-blue-100 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-blue-600 resize-none" />
+              </div>
+            </div>
+
+            <div className="p-5 pt-0 flex gap-2 flex-shrink-0">
+              {tableOccupied(tableModal) && (
+                <button onClick={() => clearTable(tableModal)}
+                  className="flex-1 py-3 rounded-xl bg-white border-2 border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 active:scale-95 transition-all">
+                  Masayı Boşalt
+                </button>
+              )}
+              <button onClick={() => submitTableOrder(tableModal)} disabled={submittingTable}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all disabled:opacity-50">
+                {submittingTable ? 'Gönderiliyor...' : 'Siparişi Gönder'}
+              </button>
             </div>
           </div>
         </div>
