@@ -4,7 +4,7 @@ import {
   ShoppingBag, Search, Clock, CheckCircle2, XCircle, Timer, Bell, UtensilsCrossed,
   Globe, Armchair, Banknote, Layers, TrendingUp, MapPin, Phone,
   Printer, Volume2, VolumeX, Eye, History, Loader2, Truck, X, Store, CalendarClock,
-  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock, FileBarChart, Download, Table2,
+  Play, Pause, Lock, FileText, ShieldBan, Ban, Unlock, FileBarChart, Download,
 } from 'lucide-react'
 import { buildOrderReceipt } from '@/components/printer/escpos'
 import { openReceiptPdf, parseNoteAddress as parseReceiptAddress, parseNotePayment as parseReceiptPayment } from '@/lib/receipt'
@@ -273,6 +273,7 @@ export default function OrdersPage() {
   const [tableCart, setTableCart] = useState<Record<string, number>>({})
   const [tableNote, setTableNote] = useState('')
   const [submittingTable, setSubmittingTable] = useState(false)
+  const [tableSearch, setTableSearch] = useState('')
   const [tableSettings, setTableSettings] = useState<StoreScopeSettings | null>(null)
   const [onlineSettings, setOnlineSettings] = useState<StoreScopeSettings | null>(null)
   const [storeEffectiveTable, setStoreEffectiveTable] = useState('open')
@@ -525,7 +526,7 @@ export default function OrdersPage() {
   })
 
   /* ---------------- MASA YÖNETİMİ ---------------- */
-  const isActiveOrder = (o: any) => o.status === 'pending' || o.status === 'preparing' || o.status === 'out_for_delivery' || o.status === 'delivered'
+  const isActiveOrder = (o: any) => o.status === 'pending' || o.status === 'preparing' || o.status === 'out_for_delivery'
   const masaNumbers = Array.isArray(storefrontData?.masaNumbers) ? storefrontData.masaNumbers : []
   const masaProducts = Array.isArray(storefrontData?.products) ? storefrontData.products.filter((p: any) => (p.status || 'active') !== 'soldout') : []
 
@@ -575,14 +576,15 @@ export default function OrdersPage() {
 
   const clearTable = async (n: number) => {
     const active = activeTableOrders(n)
-    if (active.length === 0) { setBlockMsg(`Masa ${n} zaten boş.`); return }
-    if (!window.confirm(`Masa ${n} tamamlanıp boşaltılsın mı? (${active.length} aktif sipariş tamamlanır)`)) return
+    if (active.length === 0) { setBlockMsg(`Masa ${n} zaten boş.`); setTableModal(null); return }
     for (const o of active) {
       if (o.status !== 'completed' && o.status !== 'cancelled') {
         try { await fetch('/api/orders/' + o.id + '/status', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'completed' }) }) } catch {}
       }
     }
+    setTableCart({}); setTableNote('')
     await load()
+    setTableModal(null)
     setBlockMsg(`Masa ${n} boşaltıldı.`)
   }
 
@@ -853,7 +855,7 @@ export default function OrdersPage() {
     { key: 'table', label: 'Masa', icon: Armchair },
     { key: 'online', label: 'Online', icon: Globe },
     { key: 'waiter', label: 'Garson Çağrıları', icon: Bell },
-    { key: 'masa', label: 'Masa Yönetimi', icon: Table2 },
+    { key: 'masa', label: 'Masa Yönetimi', icon: Armchair },
     { key: 'history', label: 'Geçmiş Siparişler', icon: History },
     { key: 'store', label: 'Mağaza Ayarları', icon: Store },
   ]
@@ -1127,7 +1129,7 @@ export default function OrdersPage() {
             <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                  <Table2 className="w-7 h-7 text-white" />
+                  <Armchair className="w-7 h-7 text-white" />
                 </div>
                 <div>
                   <h3 className="text-white font-bold text-xl">Masa Yönetimi</h3>
@@ -1153,44 +1155,101 @@ export default function OrdersPage() {
           {masaNumbers.length === 0 ? (
             <div className="rounded-3xl bg-white border border-dashed border-slate-200 py-20 text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
-                <Table2 className="w-8 h-8 text-slate-300" />
+                <Armchair className="w-8 h-8 text-slate-300" />
               </div>
               <p className="text-gray-500 text-sm font-semibold">Masa tanımlanmamış</p>
               <p className="text-gray-400 text-xs mt-1.5">QR Menü → Masa Numaraları bölümünden masa ekleyin.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-              {masaNumbers.map((n: number) => {
-                const occupied = tableOccupied(n)
-                const active = activeTableOrders(n)
-                const total = tableTotal(n)
-                const last = active[0]
+            <>
+              {/* Dolu Masalar */}
+              {(() => {
+                const occupied = masaNumbers.filter((n: number) => tableOccupied(n))
                 return (
-                  <button key={n} onClick={() => setTableModal(n)}
-                    className={'group relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all duration-300 hover:-translate-y-1 ' + (occupied ? 'bg-white border-emerald-300 shadow-lg shadow-emerald-600/10 hover:shadow-xl hover:shadow-emerald-600/15' : 'bg-white border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md')}>
-                    <div className={'absolute top-0 inset-x-0 h-1.5 ' + (occupied ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-slate-200')} />
-                    <div className="flex items-center justify-between">
-                      <div className={'w-11 h-11 rounded-xl flex items-center justify-center transition-colors ' + (occupied ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200')}>
-                        <Table2 size={20} />
-                      </div>
-                      <span className={'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ' + (occupied ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500')}>
-                        <span className={'w-1.5 h-1.5 rounded-full ' + (occupied ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400')} />
-                        {occupied ? 'Dolu' : 'Boş'}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Dolu Masalar
                       </span>
+                      <span className="text-xs text-slate-400">{occupied.length}</span>
                     </div>
-                    <p className="text-lg font-bold text-gray-900 mt-3">Masa {n}</p>
-                    {occupied && last ? (
-                      <div className="mt-1">
-                        <p className="text-[10px] text-gray-500 truncate">{last.products?.length || 0} ürün · {new Date(last.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
-                        <p className="text-sm font-bold text-emerald-700 mt-1">₺{total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</p>
+                    {occupied.length === 0 ? (
+                      <div className="rounded-2xl bg-slate-50/80 border border-dashed border-slate-200 py-12 text-center">
+                        <p className="text-sm text-slate-500 font-semibold">Şu anda dolu masa yok</p>
+                        <p className="text-xs text-slate-400 mt-1">Sipariş geldiğinde masalar otomatik dolu görünür.</p>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-slate-400 mt-1.5">Sipariş almak için tıklayın</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                        {occupied.map((n: number) => {
+                          const total = tableTotal(n)
+                          const last = activeTableOrders(n)[0]
+                          return (
+                            <button key={n} onClick={() => setTableModal(n)}
+                              className="group relative overflow-hidden rounded-2xl border-2 border-emerald-300 bg-white p-4 text-left shadow-lg shadow-emerald-600/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-600/15">
+                              <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
+                              <div className="flex items-center justify-between">
+                                <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                                  <Armchair size={20} />
+                                </div>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Dolu
+                                </span>
+                              </div>
+                              <p className="text-lg font-bold text-gray-900 mt-3">Masa {n}</p>
+                              {last && (
+                                <div className="mt-1">
+                                  <p className="text-[10px] text-gray-500 truncate">{last.products?.length || 0} ürün · {new Date(last.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                  <p className="text-sm font-bold text-emerald-700 mt-1">₺{total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
                     )}
-                  </button>
+                  </div>
                 )
-              })}
-            </div>
+              })()}
+
+              {/* Boş Masalar */}
+              {(() => {
+                const empty = masaNumbers.filter((n: number) => !tableOccupied(n))
+                return (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 mt-6">
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold">
+                        <span className="w-2 h-2 rounded-full bg-slate-400" /> Boş Masalar
+                      </span>
+                      <span className="text-xs text-slate-400">{empty.length}</span>
+                    </div>
+                    {empty.length === 0 ? (
+                      <div className="rounded-2xl bg-slate-50/80 border border-dashed border-slate-200 py-12 text-center">
+                        <p className="text-sm text-slate-500 font-semibold">Boş masa yok</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                        {empty.map((n: number) => (
+                          <button key={n} onClick={() => setTableModal(n)}
+                            className="group relative overflow-hidden rounded-2xl border-2 border-slate-200 bg-white p-4 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md">
+                            <div className="absolute top-0 inset-x-0 h-1.5 bg-slate-200 group-hover:bg-slate-300 transition-colors" />
+                            <div className="flex items-center justify-between">
+                              <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-500 group-hover:bg-slate-200 flex items-center justify-center transition-colors">
+                                <Armchair size={20} />
+                              </div>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" /> Boş
+                              </span>
+                            </div>
+                            <p className="text-lg font-bold text-gray-900 mt-3">Masa {n}</p>
+                            <p className="text-[10px] text-slate-400 mt-1.5">Sipariş almak için tıklayın</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </>
           )}
         </div>
       ) : tab === 'store' ? (
@@ -1625,7 +1684,7 @@ export default function OrdersPage() {
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={'w-12 h-12 rounded-2xl flex items-center justify-center ' + (tableOccupied(tableModal) ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20' : 'bg-white/10')}>
-                    <Table2 size={22} className="text-white" />
+                    <Armchair size={22} className="text-white" />
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-xl">Masa {tableModal}</h3>
@@ -1681,7 +1740,7 @@ export default function OrdersPage() {
                 return (
                   <div className="rounded-2xl bg-slate-50/80 border border-dashed border-slate-200 p-6 text-center">
                     <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
-                      <Table2 size={20} className="text-slate-400" />
+                      <Armchair size={20} className="text-slate-400" />
                     </div>
                     <p className="text-sm text-slate-500 font-semibold">Masa {tableModal} boş</p>
                     <p className="text-xs text-slate-400 mt-1">Aşağıdan sipariş alabilirsiniz.</p>
@@ -1696,35 +1755,55 @@ export default function OrdersPage() {
                   <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">Ürün tanımlı değil. QR Menü'den ürün ekleyin.</p>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
-                      {masaProductsList.map(p => {
-                        const q = tableCart[p.id] || 0
-                        return (
-                          <div key={p.id} className={'relative rounded-xl border-2 p-3 transition-all ' + (q > 0 ? 'border-emerald-400 bg-emerald-50/60 shadow-sm' : 'border-slate-100 bg-white hover:border-emerald-200')}>
-                            <div className="flex items-start justify-between gap-1">
-                              <span className="flex-1 min-w-0 text-xs text-slate-800 font-semibold leading-tight truncate">{p.name}</span>
-                              <span className="text-[11px] text-slate-500 whitespace-nowrap">₺{p.price.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between mt-2">
-                              {q > 0 ? (
-                                <div className="flex items-center gap-1.5">
-                                  <button onClick={() => setTableCart(c => ({ ...c, [p.id]: Math.max(0, (c[p.id] || 0) - 1) }))}
-                                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 text-base font-bold hover:bg-slate-50 active:scale-90 transition-all">−</button>
-                                  <span className="w-5 text-center text-sm font-bold text-slate-900">{q}</span>
-                                  <button onClick={() => setTableCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))}
-                                    className="w-7 h-7 rounded-lg bg-emerald-500 text-white text-base font-bold hover:bg-emerald-600 active:scale-90 transition-all">+</button>
-                                </div>
-                              ) : (
-                                <button onClick={() => setTableCart(c => ({ ...c, [p.id]: 1 }))}
-                                  className="w-full py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-emerald-500 hover:text-white active:scale-95 transition-all">
-                                  Ekle
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
+                    <div className="relative mb-2">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input value={tableSearch} onChange={e => setTableSearch(e.target.value)} placeholder="Ürün ara..."
+                        className="w-full bg-slate-50/80 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+                      {tableSearch && (
+                        <button onClick={() => setTableSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                          <X size={14} />
+                        </button>
+                      )}
                     </div>
+                    {(() => {
+                      const filtered = tableSearch
+                        ? masaProductsList.filter(p => p.name.toLowerCase().includes(tableSearch.toLowerCase()))
+                        : masaProductsList
+                      if (filtered.length === 0) {
+                        return <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">"{tableSearch}" için ürün bulunamadı.</p>
+                      }
+                      return (
+                        <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+                          {filtered.map(p => {
+                            const q = tableCart[p.id] || 0
+                            return (
+                              <div key={p.id} className={'relative rounded-xl border-2 p-3 transition-all ' + (q > 0 ? 'border-emerald-400 bg-emerald-50/60 shadow-sm' : 'border-slate-100 bg-white hover:border-emerald-200')}>
+                                <div className="flex items-start justify-between gap-1">
+                                  <span className="flex-1 min-w-0 text-xs text-slate-800 font-semibold leading-tight truncate">{p.name}</span>
+                                  <span className="text-[11px] text-slate-500 whitespace-nowrap">₺{p.price.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between mt-2">
+                                  {q > 0 ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <button onClick={() => setTableCart(c => ({ ...c, [p.id]: Math.max(0, (c[p.id] || 0) - 1) }))}
+                                        className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 text-base font-bold hover:bg-slate-50 active:scale-90 transition-all">−</button>
+                                      <span className="w-5 text-center text-sm font-bold text-slate-900">{q}</span>
+                                      <button onClick={() => setTableCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))}
+                                        className="w-7 h-7 rounded-lg bg-emerald-500 text-white text-base font-bold hover:bg-emerald-600 active:scale-90 transition-all">+</button>
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => setTableCart(c => ({ ...c, [p.id]: 1 }))}
+                                      className="w-full py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-emerald-500 hover:text-white active:scale-95 transition-all">
+                                      Ekle
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })()}
                     {Object.values(tableCart).some(q => q > 0) && (
                       <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 flex items-center justify-between">
                         <span className="text-xs text-slate-500">Seçilen: <b className="text-slate-800">{Object.values(tableCart).reduce((a, b) => a + b, 0)} ürün</b></span>
