@@ -1122,53 +1122,71 @@ export default function OrdersPage() {
         </div>
       ) : tab === 'masa' ? (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-white border border-blue-100 p-4 sm:p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
-              <div className="flex items-center gap-2">
-                <Table2 size={18} className="text-blue-600" />
-                <h3 className="text-gray-900 font-bold">Masa Yönetimi</h3>
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0f172a] border border-slate-800 p-6 lg:p-8">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
+            <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <Table2 className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-xl">Masa Yönetimi</h3>
+                  <p className="text-sm text-slate-400 mt-0.5">Masaları görün, sipariş alın, otomatik dolu/boş takibi</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Dolu</span>
-                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gray-300" /> Boş</span>
+              <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-emerald-300">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> {masaNumbers.filter((n: number) => tableOccupied(n)).length} Dolu
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-slate-300">
+                  <span className="w-2 h-2 rounded-full bg-slate-500" /> {masaNumbers.filter((n: number) => !tableOccupied(n)).length} Boş
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white">
+                  {masaNumbers.length} Masa
+                </span>
               </div>
             </div>
-            <p className="text-xs text-gray-500">Masaya sipariş gelince otomatik dolu olur. Panelden masaya sipariş ekleyebilir veya masayı boşaltabilirsiniz. QR kodlar her zaman okutulabilir.</p>
           </div>
 
-          {blockMsg && <p className={'text-sm ' + (blockMsg.includes('oluşturuldu') || blockMsg.includes('boşaltıldı') ? 'text-emerald-600' : 'text-red-600')}>{blockMsg}</p>}
+          {blockMsg && <p className={'text-sm px-4 py-3 rounded-xl ' + (blockMsg.includes('oluşturuldu') || blockMsg.includes('boşaltıldı') ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-600 bg-red-50 border border-red-200')}>{blockMsg}</p>}
 
           {masaNumbers.length === 0 ? (
-            <div className="rounded-2xl bg-white border border-dashed border-blue-200 py-20 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
-                <Table2 className="w-8 h-8 text-blue-300" />
+            <div className="rounded-3xl bg-white border border-dashed border-slate-200 py-20 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
+                <Table2 className="w-8 h-8 text-slate-300" />
               </div>
               <p className="text-gray-500 text-sm font-semibold">Masa tanımlanmamış</p>
               <p className="text-gray-400 text-xs mt-1.5">QR Menü → Masa Numaraları bölümünden masa ekleyin.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {masaNumbers.map((n: number) => {
                 const occupied = tableOccupied(n)
                 const active = activeTableOrders(n)
                 const total = tableTotal(n)
+                const last = active[0]
                 return (
                   <button key={n} onClick={() => setTableModal(n)}
-                    className={'relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all hover:-translate-y-0.5 active:scale-[0.98] ' + (occupied ? 'bg-white border-emerald-300 shadow-md shadow-emerald-600/10 hover:shadow-lg' : 'bg-white border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md')}>
-                    <div className={'absolute top-0 inset-x-0 h-1 ' + (occupied ? 'bg-emerald-500' : 'bg-gray-200')} />
+                    className={'group relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all duration-300 hover:-translate-y-1 ' + (occupied ? 'bg-white border-emerald-300 shadow-lg shadow-emerald-600/10 hover:shadow-xl hover:shadow-emerald-600/15' : 'bg-white border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md')}>
+                    <div className={'absolute top-0 inset-x-0 h-1.5 ' + (occupied ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-slate-200')} />
                     <div className="flex items-center justify-between">
-                      <div className={'w-10 h-10 rounded-full flex items-center justify-center ' + (occupied ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500')}>
-                        <Table2 size={18} />
+                      <div className={'w-11 h-11 rounded-xl flex items-center justify-center transition-colors ' + (occupied ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200')}>
+                        <Table2 size={20} />
                       </div>
-                      <span className={'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold ' + (occupied ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500')}>
-                        <span className={'w-1.5 h-1.5 rounded-full ' + (occupied ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400')} />
+                      <span className={'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ' + (occupied ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500')}>
+                        <span className={'w-1.5 h-1.5 rounded-full ' + (occupied ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400')} />
                         {occupied ? 'Dolu' : 'Boş'}
                       </span>
                     </div>
                     <p className="text-lg font-bold text-gray-900 mt-3">Masa {n}</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">
-                      {occupied ? active.length + ' aktif sipariş · ₺' + total.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : 'Sipariş bekleniyor'}
-                    </p>
+                    {occupied && last ? (
+                      <div className="mt-1">
+                        <p className="text-[10px] text-gray-500 truncate">{last.products?.length || 0} ürün · {new Date(last.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="text-sm font-bold text-emerald-700 mt-1">₺{total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</p>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1.5">Sipariş almak için tıklayın</p>
+                    )}
                   </button>
                 )
               })}
@@ -1599,88 +1617,124 @@ export default function OrdersPage() {
 
       {/* Masa Detay Modalı */}
       {tableModal !== null && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-blue-950/60 backdrop-blur-sm" onClick={() => setTableModal(null)}>
-          <div className="w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl animate-fadeIn flex flex-col max-h-[92dvh]" onClick={e => e.stopPropagation()}>
-            <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-6 flex-shrink-0">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/60 backdrop-blur-sm" onClick={() => setTableModal(null)}>
+          <div className="w-full md:max-w-xl bg-white rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl animate-fadeIn flex flex-col max-h-[92dvh]" onClick={e => e.stopPropagation()}>
+            <div className="relative bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0f172a] p-6 flex-shrink-0">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
               <div className="md:hidden w-10 h-1 rounded-full bg-white/40 mx-auto mb-5" />
-              <div className="flex items-center justify-between">
+              <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
-                    <Table2 size={20} className="text-white" />
+                  <div className={'w-12 h-12 rounded-2xl flex items-center justify-center ' + (tableOccupied(tableModal) ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20' : 'bg-white/10')}>
+                    <Table2 size={22} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-lg">Masa {tableModal}</h3>
-                    <p className="text-white/80 text-xs mt-0.5">
-                      {tableOccupied(tableModal) ? activeTableOrders(tableModal).length + ' aktif sipariş · ₺' + tableTotal(tableModal).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : 'Boş'}
-                    </p>
+                    <h3 className="text-white font-bold text-xl">Masa {tableModal}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + (tableOccupied(tableModal) ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-slate-300')}>
+                        <span className={'w-1.5 h-1.5 rounded-full ' + (tableOccupied(tableModal) ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400')} />
+                        {tableOccupied(tableModal) ? 'Dolu' : 'Boş'}
+                      </span>
+                      {tableOccupied(tableModal) && (
+                        <span className="text-white/90 text-xs font-semibold">₺{tableTotal(tableModal).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <button onClick={() => setTableModal(null)} className="w-9 h-9 -mr-1 -mt-1 rounded-full bg-white text-blue-700 flex items-center justify-center hover:bg-blue-50 active:scale-90 transition-all flex-shrink-0">
+                <button onClick={() => setTableModal(null)} className="w-9 h-9 -mr-1 -mt-1 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all flex-shrink-0">
                   <X size={17} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
 
             <div className="p-5 space-y-5 overflow-y-auto flex-1">
-              {/* Aktif siparişler */}
-              {activeTableOrders(tableModal).length > 0 ? (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Aktif Siparişler</p>
-                  <div className="space-y-2">
-                    {activeTableOrders(tableModal).map(o => (
-                      <div key={o.id} className="rounded-xl bg-blue-50/60 border border-blue-100 p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-bold text-gray-800">#{o.id}</span>
-                          <StatusBadge o={o} />
+              {/* En son sipariş */}
+              {(() => {
+                const active = activeTableOrders(tableModal)
+                const last = active[0]
+                if (last) {
+                  return (
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                        Son Sipariş <span className="text-slate-300">#{last.id}</span>
+                        <StatusBadge o={last} />
+                      </p>
+                      <div className="rounded-2xl bg-slate-50/80 border border-slate-100 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] text-slate-500">{new Date(last.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-xs font-bold text-slate-900">₺{orderTotal(last).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {(o.products || []).map((p: any, i: number) => (
-                            <span key={i} className="text-[10px] bg-white text-gray-700 px-2 py-1 rounded-full border border-blue-100">
-                              {p.quantity > 1 && <b>{p.quantity}×</b>} {p.name}
-                            </span>
+                        <div className="space-y-1.5">
+                          {(last.products || []).map((p: any, i: number) => (
+                            <div key={i} className="flex items-center justify-between text-xs">
+                              <span className="text-slate-700 truncate pr-2">
+                                {p.quantity > 1 && <b className="text-emerald-600">{p.quantity}× </b>}
+                                {p.name}
+                              </span>
+                              <span className="text-slate-500 whitespace-nowrap">₺{((Number(p.price) || 0) * (p.quantity || 1)).toFixed(2)}</span>
+                            </div>
                           ))}
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-[11px] text-gray-500">{new Date(o.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
-                          <span className="text-xs font-bold text-gray-900">₺{orderTotal(o).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
-                        </div>
                       </div>
-                    ))}
+                    </div>
+                  )
+                }
+                return (
+                  <div className="rounded-2xl bg-slate-50/80 border border-dashed border-slate-200 p-6 text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
+                      <Table2 size={20} className="text-slate-400" />
+                    </div>
+                    <p className="text-sm text-slate-500 font-semibold">Masa {tableModal} boş</p>
+                    <p className="text-xs text-slate-400 mt-1">Aşağıdan sipariş alabilirsiniz.</p>
                   </div>
-                </div>
-              ) : (
-                <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 text-center">
-                  <p className="text-xs text-gray-500">Masa boş — henüz sipariş yok.</p>
-                </div>
-              )}
+                )
+              })()}
 
               {/* Ürün ekle */}
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Masa {tableModal} için Sipariş Al</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Masa {tableModal} için Sipariş Al</p>
                 {masaProductsList.length === 0 ? (
-                  <p className="text-xs text-gray-400 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3">Ürün tanımlı değil. QR Menü'den ürün ekleyin.</p>
+                  <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">Ürün tanımlı değil. QR Menü'den ürün ekleyin.</p>
                 ) : (
-                  <div className="rounded-xl bg-blue-50/40 border border-blue-100 p-3 space-y-1.5 max-h-52 overflow-y-auto">
-                    {masaProductsList.map(p => {
-                      const q = tableCart[p.id] || 0
-                      return (
-                        <div key={p.id} className="flex items-center gap-2 bg-white rounded-lg border border-blue-100 px-3 py-2">
-                          <span className="flex-1 min-w-0 text-xs text-gray-800 font-medium truncate">{p.name}</span>
-                          <span className="text-[10px] text-gray-500 whitespace-nowrap">₺{p.price.toFixed(2)}</span>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <button onClick={() => setTableCart(c => ({ ...c, [p.id]: Math.max(0, (c[p.id] || 0) - 1) }))}
-                              className="w-6 h-6 rounded-md bg-gray-100 text-gray-600 text-sm font-bold hover:bg-gray-200 active:scale-90 transition-all">−</button>
-                            <span className="w-6 text-center text-xs font-bold text-gray-900">{q}</span>
-                            <button onClick={() => setTableCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))}
-                              className="w-6 h-6 rounded-md bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 active:scale-90 transition-all">+</button>
+                  <>
+                    <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+                      {masaProductsList.map(p => {
+                        const q = tableCart[p.id] || 0
+                        return (
+                          <div key={p.id} className={'relative rounded-xl border-2 p-3 transition-all ' + (q > 0 ? 'border-emerald-400 bg-emerald-50/60 shadow-sm' : 'border-slate-100 bg-white hover:border-emerald-200')}>
+                            <div className="flex items-start justify-between gap-1">
+                              <span className="flex-1 min-w-0 text-xs text-slate-800 font-semibold leading-tight truncate">{p.name}</span>
+                              <span className="text-[11px] text-slate-500 whitespace-nowrap">₺{p.price.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                              {q > 0 ? (
+                                <div className="flex items-center gap-1.5">
+                                  <button onClick={() => setTableCart(c => ({ ...c, [p.id]: Math.max(0, (c[p.id] || 0) - 1) }))}
+                                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 text-base font-bold hover:bg-slate-50 active:scale-90 transition-all">−</button>
+                                  <span className="w-5 text-center text-sm font-bold text-slate-900">{q}</span>
+                                  <button onClick={() => setTableCart(c => ({ ...c, [p.id]: (c[p.id] || 0) + 1 }))}
+                                    className="w-7 h-7 rounded-lg bg-emerald-500 text-white text-base font-bold hover:bg-emerald-600 active:scale-90 transition-all">+</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setTableCart(c => ({ ...c, [p.id]: 1 }))}
+                                  className="w-full py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-emerald-500 hover:text-white active:scale-95 transition-all">
+                                  Ekle
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                        )
+                      })}
+                    </div>
+                    {Object.values(tableCart).some(q => q > 0) && (
+                      <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">Seçilen: <b className="text-slate-800">{Object.values(tableCart).reduce((a, b) => a + b, 0)} ürün</b></span>
+                        <span className="text-sm font-bold text-slate-900">₺{masaProductsList.reduce((a, p) => a + (tableCart[p.id] || 0) * p.price, 0).toFixed(2)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
                 <input value={tableNote} onChange={e => setTableNote(e.target.value)} placeholder="Sipariş notu (opsiyonel)"
-                  className="mt-2 w-full bg-blue-50/40 border border-blue-100 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-blue-600 resize-none" />
+                  className="mt-2 w-full bg-slate-50/60 border border-slate-200 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
               </div>
             </div>
 
@@ -1691,8 +1745,8 @@ export default function OrdersPage() {
                   Masayı Boşalt
                 </button>
               )}
-              <button onClick={() => submitTableOrder(tableModal)} disabled={submittingTable}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all disabled:opacity-50">
+              <button onClick={() => submitTableOrder(tableModal)} disabled={submittingTable || !Object.values(tableCart).some(q => q > 0)}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-bold shadow-md shadow-emerald-600/30 hover:from-emerald-700 hover:to-teal-700 active:scale-95 transition-all disabled:opacity-50">
                 {submittingTable ? 'Gönderiliyor...' : 'Siparişi Gönder'}
               </button>
             </div>
