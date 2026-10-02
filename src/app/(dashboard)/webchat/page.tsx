@@ -6,6 +6,8 @@ interface Product {
   name: string
   price: string
   description: string
+  unit?: string
+  options?: { name: string; price?: string }[]
 }
 
 interface FAQ {
@@ -25,6 +27,7 @@ interface Config {
   faqs: FAQ[]
   systemPrompt: string
   knowledgeBase: string
+  modes?: { orders?: boolean; appointments?: boolean; reservations?: boolean }
 }
 
 export default function WebchatPage() {
@@ -74,10 +77,10 @@ export default function WebchatPage() {
 
   const addProduct = () => {
     if (!config) return
-    setConfig({ ...config, products: [...config.products, { name: '', price: '', description: '' }] })
+    setConfig({ ...config, products: [...config.products, { name: '', price: '', description: '', unit: '', options: [] }] })
   }
 
-  const updateProduct = (i: number, key: string, value: string) => {
+  const updateProduct = (i: number, key: string, value: any) => {
     if (!config) return
     const products = [...config.products]
     products[i] = { ...products[i], [key]: value }
@@ -225,6 +228,21 @@ export default function WebchatPage() {
             </div>
             <button onClick={addProduct} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition-all"><Plus size={14} /> Ekle</button>
           </div>
+          <div className="mb-5 rounded-xl bg-[#080b12]/60 border border-[#1a2332] p-4">
+            <p className="text-white text-sm font-semibold mb-2">AI ne alsın?</p>
+            <div className="flex flex-wrap gap-4">
+              {[{ k: 'orders', l: 'Sipariş' }, { k: 'appointments', l: 'Randevu' }, { k: 'reservations', l: 'Rezervasyon' }].map(m => {
+                const on = (config.modes as any)?.[m.k] !== false
+                return (
+                  <label key={m.k} className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+                    <input type="checkbox" checked={on} onChange={e => setConfig({ ...config, modes: { ...(config.modes || {}), [m.k]: e.target.checked } })} className="accent-emerald-500 w-4 h-4" />
+                    {m.l}
+                  </label>
+                )
+              })}
+            </div>
+            <p className="text-[10px] text-gray-500 mt-2">Kapalı olan türü AI almaz. Ürün/hizmetleri aşağıya ekleyin.</p>
+          </div>
           <div className="space-y-3">
             {config.products.map((p, i) => (
               <div key={i} className="flex gap-3 items-start bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-3 transition-all hover:border-emerald-500/20">
@@ -233,6 +251,10 @@ export default function WebchatPage() {
                   <div className="flex gap-2">
                     <input type="text" value={p.price} onChange={e => updateProduct(i, 'price', e.target.value)} placeholder="Fiyat" className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
                     <input type="text" value={p.description} onChange={e => updateProduct(i, 'description', e.target.value)} placeholder="Açıklama" className="flex-[2] bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
+                  </div>
+                  <div className="flex gap-2">
+                    <input type="text" value={p.unit || ''} onChange={e => updateProduct(i, 'unit', e.target.value)} placeholder="Birim (adet/kg/gram/set/porsiyon)" className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
+                    <input type="text" value={(p.options || []).map(o => o.name).join(', ')} onChange={e => updateProduct(i, 'options', e.target.value.split(',').map(s => ({ name: s.trim() })).filter(o => o.name))} placeholder="Seçenekler (virgülle: Acı, Normal, Az)" className="flex-[2] bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
                   </div>
                 </div>
                 <button onClick={() => removeProduct(i)} className="p-2 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
