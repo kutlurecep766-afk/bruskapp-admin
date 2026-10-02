@@ -81,10 +81,13 @@ export default function ChatbotIntegrationsPage() {
 
   const fetchConnections = async () => {
     try {
-      const res = await fetch('/api/zernio/connections', { credentials: 'include' })
+      const tid = currentTenantId || await getTenantId()
+      const res = await fetch('/api/zernio/connections' + (tid ? ('?tenantId=' + tid) : ''), { credentials: 'include' })
       if (res.ok) {
         const json = await res.json()
-        setConnections(json.data?.[0] || null)
+        const list = json.data || []
+        const mine = tid ? (list.find((c: any) => c.tenantId === tid) || null) : (list[0] || null)
+        setConnections(mine)
       }
     } catch {}
     setLoading(false)
@@ -401,7 +404,7 @@ export default function ChatbotIntegrationsPage() {
                             <h3 className="text-white font-semibold text-sm">{p.label}</h3>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <div className={'w-2 h-2 rounded-full ' + (isConnected ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-600')} />
-                              <p className="text-[10px] text-gray-500">{isConnected ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : 'Bağlı') : 'Bağlı değil'}</p>
+                              <p className="text-[10px] text-gray-500">{isConnected ? (p.key === 'telegram' && telegramBotInfo ? '@' + (telegramBotInfo.username || '') : ((connections?.platforms || []).find((x: any) => x.platform === p.key)?.username ? '@' + (connections?.platforms || []).find((x: any) => x.platform === p.key)?.username : 'Bağlı')) : 'Bağlı değil'}</p>
                             </div>
                           </div>
                         </div>
