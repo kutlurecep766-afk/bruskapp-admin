@@ -32,8 +32,8 @@ function isTableOrder(o: any) {
   return (p === 'Masa' || p === 'Masa Siparişi' || o.tableNumber)
 }
 function isOnlineOrder(o: any) {
-  const p = (o.platform || '').trim()
-  return (p === 'QR Menü' || p === 'Online' || p === 'Online Sipariş')
+  if (isTableOrder(o) || isWaiterCall(o)) return false
+  return true
 }
 function isWaiterCall(o: any) {
   return (o.platform || '').includes('Garson')
