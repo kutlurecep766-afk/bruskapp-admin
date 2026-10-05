@@ -28,6 +28,15 @@ export default function AppointmentsPage() {
   const [filter, setFilter] = useState('')
   const [search, setSearch] = useState('')
   const [updating, setUpdating] = useState<number | null>(null)
+  const [editId, setEditId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState<{ customerName: string; date: string; time: string; service: string }>({ customerName: '', date: '', time: '', service: '' })
+
+  const openEdit = (a: any) => {
+    setEditId(a.id)
+    const d = a.date ? new Date(a.date) : null
+    const iso = d && !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : ''
+    setEditForm({ customerName: a.customerName || '', date: iso, time: a.time || '', service: a.service || '' })
+  }
 
   const load = useCallback(async () => {
     try {
@@ -45,8 +54,25 @@ export default function AppointmentsPage() {
   const updateStatus = async (id: number, status: string) => {
     setUpdating(id)
     try {
-      await fetch('/api/appointments/' + id + '/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ status }) })
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a))
+      const res = await fetch('/api/appointments/' + id + '/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ status }) })
+      if (res.ok) setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a))
+    } catch {} finally { setUpdating(null) }
+  }
+
+  const cancelAppt = async (id: number) => {
+    if (!confirm('Bu randevuyu iptal etmek istediğinize emin misiniz?')) return
+    setUpdating(id)
+    try {
+      const res = await fetch('/api/appointments/' + id + '/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ notes: 'Panelden iptal edildi' }) })
+      if (res.ok) setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' } : a))
+    } catch {} finally { setUpdating(null) }
+  }
+
+  const updateAppt = async (id: number, patch: any) => {
+    setUpdating(id)
+    try {
+      const res = await fetch('/api/appointments/' + id + '/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(patch) })
+      if (res.ok) { const upd = await res.json(); setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...upd } : a)) }
     } catch {} finally { setUpdating(null) }
   }
 
@@ -178,17 +204,46 @@ export default function AppointmentsPage() {
                 </div>
                 {a.notes && <p className="text-[11px] text-gray-500 italic mb-3">{a.notes}</p>}
 
-                {next.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-blue-50">
-                    {next.map(nv => {
-                      const nm = STATUS_META[nv]
-                      return (
-                        <button key={nv} disabled={updating === a.id} onClick={() => updateStatus(a.id, nv)}
-                          className={'px-3 py-2 rounded-lg text-xs font-semibold border transition-all hover:brightness-95 active:scale-95 disabled:opacity-40 ' + nm.chip}>
-                          {ACTION_LABEL[nv] || nm.label}
-                        </button>
-                      )
-                    })}
+                <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-blue-50">
+                  {next.filter(nv => nv !== 'cancelled').map(nv => {
+                    const nm = STATUS_META[nv]
+                    return (
+                      <button key={nv} disabled={updating === a.id} onClick={() => updateStatus(a.id, nv)}
+                        className={'px-3 py-2 rounded-lg text-xs font-semibold border transition-all hover:brightness-95 active:scale-95 disabled:opacity-40 ' + nm.chip}>
+                        {ACTION_LABEL[nv] || nm.label}
+                      </button>
+                    )
+                  })}
+                  {a.status !== 'cancelled' && a.status !== 'completed' && (
+                    <button disabled={updating === a.id} onClick={() => openEdit(a)}
+                      className="px-3 py-2 rounded-lg text-xs font-semibold border border-slate-200 text-gray-600 hover:bg-slate-50 active:scale-95 disabled:opacity-40">
+                      Düzenle
+                    </button>
+                  )}
+                  {a.status !== 'cancelled' && a.status !== 'completed' && (
+                    <button disabled={updating === a.id} onClick={() => cancelAppt(a.id)}
+                      className={'px-3 py-2 rounded-lg text-xs font-semibold border transition-all hover:brightness-95 active:scale-95 disabled:opacity-40 ' + STATUS_META.cancelled.chip}>
+                      İptal
+                    </button>
+                  )}
+                </div>
+
+                {editId === a.id && (
+                  <div className="mt-3 pt-3 border-t border-blue-50 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input value={editForm.customerName} onChange={e => setEditForm(f => ({ ...f, customerName: e.target.value }))} placeholder="Ad Soyad"
+                      className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-gray-900 focus:outline-none focus:border-blue-400" />
+                    <input value={editForm.service} onChange={e => setEditForm(f => ({ ...f, service: e.target.value }))} placeholder="Hizmet"
+                      className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-gray-900 focus:outline-none focus:border-blue-400" />
+                    <input type="date" value={editForm.date} onChange={e => setEditForm(f => ({ ...f, date: e.target.value }))}
+                      className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-gray-900 focus:outline-none focus:border-blue-400" />
+                    <input value={editForm.time} onChange={e => setEditForm(f => ({ ...f, time: e.target.value }))} placeholder="Saat (ör. 14:00)"
+                      className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-gray-900 focus:outline-none focus:border-blue-400" />
+                    <div className="flex gap-2 sm:col-span-2">
+                      <button disabled={updating === a.id}
+                        onClick={async () => { await updateAppt(a.id, { customerName: editForm.customerName, service: editForm.service, time: editForm.time, date: editForm.date || undefined }); setEditId(null) }}
+                        className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 active:scale-95 disabled:opacity-40">Kaydet</button>
+                      <button onClick={() => setEditId(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-gray-500 text-xs font-semibold hover:bg-slate-50">Vazgeç</button>
+                    </div>
                   </div>
                 )}
               </div>
