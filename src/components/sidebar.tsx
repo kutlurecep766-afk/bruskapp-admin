@@ -4,10 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users,
-  MessageSquare, Bell, ShoppingCart, CalendarCheck,
+  MessageSquare, Bell, ShoppingCart,
   BarChart3, Cog, Shield, MessageCircle,
   Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Crown,
-  Zap, Sparkles, HeartHandshake, Activity, Store, CreditCard,
+  Zap, Sparkles, HeartHandshake, Activity, Store,
 } from 'lucide-react'
 
 const ALL_MODULES = [
@@ -15,8 +15,6 @@ const ALL_MODULES = [
   { key: 'customers', label: 'Müşteriler', icon: Users, href: '/customers', perm: 'customers' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
-  { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
-  { key: 'appointments', label: 'Randevular', icon: CalendarCheck, href: '/appointments', perm: 'appointments' },
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
@@ -26,8 +24,6 @@ const ALL_MODULES = [
   { key: 'system-health', label: 'Sistem Durumu', icon: Activity, href: '/system-health', perm: 'system-health' },
   { key: 'bulk-messages', label: 'Toplu Mesaj', icon: Send, href: '/bulk-messages', perm: 'bulk-messages' },
   { key: 'reminder-templates', label: 'Hatırlatma Şablonları', icon: Bell, href: '/reminder-templates', perm: 'reminder-templates' },
-  { key: 'storefront', label: 'QR Menü', icon: Store, href: '/storefront', perm: 'storefront' },
-  { key: 'virtual-pos', label: 'Sanal POS', icon: CreditCard, href: '/virtual-pos', perm: 'virtual-pos' },
   { key: 'support', label: '7/24 Destek', icon: HeartHandshake, href: '/support', perm: 'support' },
 
 ]
@@ -115,21 +111,9 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
             </Link>
           )}
           {isSuperAdmin && (
-            <Link href="/whatsapp" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/whatsapp') ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
-              <MessageCircle size={18} className={isActive('/whatsapp') ? 'text-green-400' : 'text-gray-500 group-hover:text-gray-300'} />
-              {!collapsed && <span>WhatsApp</span>}
-            </Link>
-          )}
-          {isSuperAdmin && (
             <Link href="/isletmeler" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/isletmeler') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
               <Store size={18} className={isActive('/isletmeler') ? 'text-emerald-400' : 'text-gray-500 group-hover:text-gray-300'} />
               {!collapsed && <span>İşletmeler</span>}
-            </Link>
-          )}
-          {isSuperAdmin && (
-            <Link href="/instagram" className={'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ' + (isActive('/instagram') ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
-              <MessageCircle size={18} className={isActive('/instagram') ? 'text-pink-400' : 'text-gray-500 group-hover:text-gray-300'} />
-              {!collapsed && <span>Instagram</span>}
             </Link>
           )}
           {visibleItems.map((item) => {

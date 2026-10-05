@@ -35,6 +35,12 @@ function isOnlineOrder(o: any) {
   if (isTableOrder(o) || isWaiterCall(o)) return false
   return true
 }
+function isChatOrder(o: any) {
+  if (isTableOrder(o) || isWaiterCall(o)) return false
+  const p = (o.platform || '').toLowerCase()
+  if (p.includes('qr')) return false
+  return true
+}
 function isWaiterCall(o: any) {
   return (o.platform || '').includes('Garson')
 }
@@ -260,7 +266,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
   const [search, setSearch] = useState('')
-  const [tab, setTab] = useState<TabKey>('table')
+  const [tab, setTab] = useState<TabKey>('online')
   const [updating, setUpdating] = useState<number | null>(null)
   const [detail, setDetail] = useState<any>(null)
   const [soundOn, setSoundOn] = useState(true)
@@ -317,7 +323,7 @@ export default function OrdersPage() {
       if (tid) {
         setTenantId(tid)
         const res = await fetch('/api/orders?tenantId=' + tid + '&limit=300', { credentials: 'include' })
-        if (res.ok) setOrders(await res.json())
+        if (res.ok) setOrders((await res.json()).filter(isChatOrder))
       }
     } catch {} finally { setLoading(false) }
   }, [])
@@ -349,7 +355,7 @@ export default function OrdersPage() {
       if (from) params.set('from', from)
       if (to) params.set('to', to)
       const res = await fetch('/api/orders?' + params.toString(), { credentials: 'include' })
-      if (res.ok) setHistoryList(await res.json())
+      if (res.ok) setHistoryList((await res.json()).filter(isChatOrder))
     } catch {}
   }, [tenantId])
 
@@ -853,12 +859,8 @@ export default function OrdersPage() {
   }
 
   const TABS: { key: TabKey; label: string; icon: any }[] = [
-    { key: 'table', label: 'Masa', icon: Armchair },
-    { key: 'online', label: 'Online', icon: Globe },
-    { key: 'waiter', label: 'Garson Çağrıları', icon: Bell },
-    { key: 'masa', label: 'Masa Yönetimi', icon: Armchair },
+    { key: 'online', label: 'Siparişler', icon: Globe },
     { key: 'history', label: 'Geçmiş Siparişler', icon: History },
-    { key: 'store', label: 'Mağaza Ayarları', icon: Store },
   ]
 
   const StatsCards = ({ data }: { data: any }) => (
@@ -901,7 +903,7 @@ export default function OrdersPage() {
               <h1 className="text-xl lg:text-2xl font-bold text-white tracking-tight">Sipariş Yönetimi</h1>
               <p className="text-sm text-blue-100 mt-0.5 flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5" />
-                Masa, online ve garson çağrıları tek ekranda
+                WhatsApp / Instagram / Telegram'den gelen siparişler
               </p>
             </div>
           </div>
