@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users,
-  MessageSquare, Bell, ShoppingCart,
+  MessageSquare, Bell, ShoppingCart, CalendarCheck,
   BarChart3, Cog, Shield, MessageCircle,
   Send, Headphones, MessageCircleWarning, Link2, Radio, Megaphone, AlertTriangle, Crown,
   Zap, Sparkles, HeartHandshake, Activity, Store,
@@ -15,6 +15,8 @@ const ALL_MODULES = [
   { key: 'customers', label: 'Müşteriler', icon: Users, href: '/customers', perm: 'customers' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
+  { key: 'appointments', label: 'Randevular', icon: CalendarCheck, href: '/appointments', perm: 'appointments' },
+  { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
