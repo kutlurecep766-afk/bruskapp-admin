@@ -8,11 +8,29 @@ interface Product {
   description: string
   unit?: string
   options?: { name: string; price?: string }[]
+  soldOut?: boolean
+}
+
+interface Service {
+  name: string
+  duration: string
+  price: string
 }
 
 interface FAQ {
   question: string
   answer: string
+}
+
+interface Settings {
+  requireName?: boolean
+  requirePhone?: boolean
+  requireAddress?: boolean
+  requireLocation?: boolean
+  requireNote?: boolean
+  requireService?: boolean
+  requireDate?: boolean
+  requireTime?: boolean
 }
 
 interface Config {
@@ -24,11 +42,31 @@ interface Config {
   email: string
   welcomeMessage: string
   products: Product[]
+  services?: Service[]
+  orderSettings?: Settings
+  appointmentSettings?: Settings
   faqs: FAQ[]
   systemPrompt: string
   knowledgeBase: string
   modes?: { orders?: boolean; appointments?: boolean; reservations?: boolean }
 }
+
+const ORDER_FIELDS: { k: keyof Settings; l: string }[] = [
+  { k: 'requireName', l: 'Ad Soyad' },
+  { k: 'requirePhone', l: 'Telefon' },
+  { k: 'requireAddress', l: 'Adres' },
+  { k: 'requireLocation', l: 'Konum' },
+  { k: 'requireNote', l: 'Sipariş Notu' },
+]
+
+const APPT_FIELDS: { k: keyof Settings; l: string }[] = [
+  { k: 'requireName', l: 'Ad Soyad' },
+  { k: 'requirePhone', l: 'Telefon' },
+  { k: 'requireService', l: 'Hizmet' },
+  { k: 'requireDate', l: 'Tarih' },
+  { k: 'requireTime', l: 'Saat' },
+  { k: 'requireNote', l: 'Not' },
+]
 
 export default function WebchatPage() {
   const [config, setConfig] = useState<Config | null>(null)
@@ -77,7 +115,31 @@ export default function WebchatPage() {
 
   const addProduct = () => {
     if (!config) return
-    setConfig({ ...config, products: [...config.products, { name: '', price: '', description: '', unit: '', options: [] }] })
+    setConfig({ ...config, products: [...config.products, { name: '', price: '', description: '', unit: '', options: [], soldOut: false }] })
+  }
+
+  const addService = () => {
+    if (!config) return
+    setConfig({ ...config, services: [...(config.services || []), { name: '', duration: '', price: '' }] })
+  }
+
+  const updateService = (i: number, key: string, value: any) => {
+    if (!config) return
+    const services = [...(config.services || [])]
+    services[i] = { ...services[i], [key]: value }
+    setConfig({ ...config, services })
+  }
+
+  const removeService = (i: number) => {
+    if (!config) return
+    setConfig({ ...config, services: (config.services || []).filter((_, idx) => idx !== i) })
+  }
+
+  const toggleSetting = (which: 'orderSettings' | 'appointmentSettings', key: string) => {
+    if (!config) return
+    const cur: any = { ...((config as any)[which] || {}) }
+    cur[key] = !cur[key]
+    setConfig({ ...config, [which]: cur } as Config)
   }
 
   const updateProduct = (i: number, key: string, value: any) => {
@@ -222,8 +284,8 @@ export default function WebchatPage() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20"><Plus size={18} className="text-white" /></div>
               <div>
-                <h2 className="text-white font-semibold">Ürün / Hizmetler</h2>
-                <p className="text-xs text-gray-500">AI asistanın müşterilere anlatacağı ürün ve hizmetler</p>
+                <h2 className="text-white font-semibold">Sipariş Ayarları</h2>
+                <p className="text-xs text-gray-500">Ürünler, stok durumu ve sipariş kuralları (AI buna göre satış yapar)</p>
               </div>
             </div>
             <button onClick={addProduct} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition-all"><Plus size={14} /> Ekle</button>
@@ -257,10 +319,79 @@ export default function WebchatPage() {
                     <input type="text" value={(p.options || []).map(o => o.name).join(', ')} onChange={e => updateProduct(i, 'options', e.target.value.split(',').map(s => ({ name: s.trim() })).filter(o => o.name))} placeholder="Seçenekler (virgülle: Acı, Normal, Az)" className="flex-[2] bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
                   </div>
                 </div>
-                <button onClick={() => removeProduct(i)} className="p-2 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                <div className="flex flex-col items-center gap-2">
+                  <button onClick={() => updateProduct(i, 'soldOut', !p.soldOut)} title="Stok durumu"
+                    className={'px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ' + (p.soldOut ? 'bg-red-500/15 text-red-400 border-red-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20')}>
+                    {p.soldOut ? 'Bitti' : 'Stokta'}
+                  </button>
+                  <button onClick={() => removeProduct(i)} className="p-2 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                </div>
               </div>
             ))}
             {config.products.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Henüz ürün eklenmemiş</p>}
+          </div>
+
+          <div className="mt-5 pt-5 border-t border-[#1a2332]">
+            <p className="text-white text-sm font-semibold mb-1">Sipariş için alınacak bilgiler</p>
+            <p className="text-[10px] text-gray-500 mb-3">İşaretlediğin alanlar <b className="text-gray-300">zorunlu</b> olur; AI siparişi bu alanlar tamamlanmadan onaylamaz.</p>
+            <div className="flex flex-wrap gap-3">
+              {ORDER_FIELDS.map(f => {
+                const on = !!(config.orderSettings as any)?.[f.k]
+                return (
+                  <label key={f.k} className={'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all ' + (on ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-[#080b12]/60 border-[#1a2332] text-gray-400')}>
+                    <input type="checkbox" checked={on} onChange={() => toggleSetting('orderSettings', f.k)} className="accent-emerald-500 w-4 h-4" />
+                    {f.l}
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Randevu Ayarları */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/5 rounded-full blur-2xl" />
+        <div className="relative">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20"><Plus size={18} className="text-white" /></div>
+              <div>
+                <h2 className="text-white font-semibold">Randevu Ayarları</h2>
+                <p className="text-xs text-gray-500">Hizmetler ve randevuda alınacak bilgiler</p>
+              </div>
+            </div>
+            <button onClick={addService} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition-all"><Plus size={14} /> Hizmet Ekle</button>
+          </div>
+
+          <div className="space-y-3">
+            {(config.services || []).map((s, i) => (
+              <div key={i} className="flex gap-3 items-start bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-3 transition-all hover:border-sky-500/20">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input type="text" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} placeholder="Hizmet adı (ör. Saç Kesimi)" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
+                  <input type="text" value={s.duration} onChange={e => updateService(i, 'duration', e.target.value)} placeholder="Süre (ör. 30 dk)" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
+                  <input type="text" value={s.price} onChange={e => updateService(i, 'price', e.target.value)} placeholder="Ücret (ör. 300 TL)" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
+                </div>
+                <button onClick={() => removeService(i)} className="p-2 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+              </div>
+            ))}
+            {(config.services || []).length === 0 && <p className="text-gray-500 text-sm text-center py-4">Henüz hizmet eklenmemiş</p>}
+          </div>
+
+          <div className="mt-5 pt-5 border-t border-[#1a2332]">
+            <p className="text-white text-sm font-semibold mb-1">Randevu için alınacak bilgiler</p>
+            <p className="text-[10px] text-gray-500 mb-3">İşaretlediğin alanlar <b className="text-gray-300">zorunlu</b> olur; AI randevuyu bu alanlar tamamlanmadan oluşturmaz.</p>
+            <div className="flex flex-wrap gap-3">
+              {APPT_FIELDS.map(f => {
+                const on = !!(config.appointmentSettings as any)?.[f.k]
+                return (
+                  <label key={f.k} className={'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all ' + (on ? 'bg-sky-500/10 border-sky-500/30 text-sky-300' : 'bg-[#080b12]/60 border-[#1a2332] text-gray-400')}>
+                    <input type="checkbox" checked={on} onChange={() => toggleSetting('appointmentSettings', f.k)} className="accent-sky-500 w-4 h-4" />
+                    {f.l}
+                  </label>
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
