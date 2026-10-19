@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, ShoppingCart, CalendarCheck, MessageCircle, AlertTriangle, Info, RefreshCw, Sparkles, Search, Clock, Flame } from 'lucide-react'
+import { Bell, ShoppingCart, CalendarCheck, MessageCircle, AlertTriangle, Info, RefreshCw, Sparkles, Search, Clock, Flame, HelpCircle, Settings2, Loader2, Check } from 'lucide-react'
 
 interface FeedItem {
   id: string
@@ -16,6 +16,7 @@ interface Feed {
   priority: FeedItem[]
   secondary: FeedItem[]
   aiFilled: boolean
+  settings?: { includeKinds?: string[]; priorityKinds?: string[] }
 }
 
 const KIND_META: Record<string, { icon: any; chip: string; dot: string; label: string; grad: string }> = {
@@ -24,10 +25,13 @@ const KIND_META: Record<string, { icon: any; chip: string; dot: string; label: s
   reservation: { icon: CalendarCheck, chip: 'bg-indigo-50 text-indigo-600 border-indigo-200', dot: 'bg-indigo-500', label: 'Rezervasyon', grad: 'from-indigo-500 to-purple-600' },
   request: { icon: MessageCircle, chip: 'bg-blue-50 text-blue-600 border-blue-200', dot: 'bg-blue-500', label: 'Talep', grad: 'from-blue-600 to-blue-700' },
   complaint: { icon: AlertTriangle, chip: 'bg-red-50 text-red-600 border-red-200', dot: 'bg-red-500', label: 'Şikayet', grad: 'from-rose-500 to-red-600' },
+  question: { icon: HelpCircle, chip: 'bg-amber-50 text-amber-600 border-amber-200', dot: 'bg-amber-500', label: 'Soru', grad: 'from-amber-500 to-orange-600' },
   info: { icon: Info, chip: 'bg-slate-50 text-slate-600 border-slate-200', dot: 'bg-slate-400', label: 'Bilgi', grad: 'from-slate-500 to-slate-600' },
 }
 
-const KIND_ORDER = ['order', 'appointment', 'reservation', 'request', 'complaint', 'info']
+const KIND_ORDER = ['order', 'appointment', 'reservation', 'request', 'complaint', 'question', 'info']
+const DEFAULT_INCLUDE = ['order', 'appointment', 'reservation', 'request', 'complaint', 'question']
+const DEFAULT_PRIORITY = ['order', 'appointment', 'reservation', 'request']
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -45,13 +49,22 @@ export default function BildirimlerimPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState('')
-  const [priorityKinds, setPriorityKinds] = useState<string[]>(['order', 'appointment', 'reservation', 'request'])
+  const [priorityKinds, setPriorityKinds] = useState<string[]>(DEFAULT_PRIORITY)
+  const [includeKinds, setIncludeKinds] = useState<string[]>(DEFAULT_INCLUDE)
+  const [showSettings, setShowSettings] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [savedSettings, setSavedSettings] = useState(false)
 
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
     try {
       const res = await fetch('/api/notifications/feed', { credentials: 'include' })
-      if (res.ok) setFeed(await res.json())
+      if (res.ok) {
+        const d = await res.json()
+        setFeed(d)
+        if (Array.isArray(d?.settings?.includeKinds) && d.settings.includeKinds.length) setIncludeKinds(d.settings.includeKinds)
+        if (Array.isArray(d?.settings?.priorityKinds) && d.settings.priorityKinds.length) setPriorityKinds(d.settings.priorityKinds)
+      }
     } catch {} finally { setLoading(false); setRefreshing(false) }
   }, [])
 
@@ -59,11 +72,38 @@ export default function BildirimlerimPage() {
     load()
     fetch('/api/webchat/config', { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
-      .then(cfg => { const pk = cfg?.feedSettings?.priorityKinds; if (Array.isArray(pk) && pk.length) setPriorityKinds(pk) })
+      .then(cfg => {
+        const pk = cfg?.feedSettings?.priorityKinds
+        const ik = cfg?.feedSettings?.includeKinds
+        if (Array.isArray(pk) && pk.length) setPriorityKinds(pk)
+        if (Array.isArray(ik) && ik.length) setIncludeKinds(ik)
+      })
       .catch(() => {})
     const t = setInterval(() => load(true), 20000)
     return () => clearInterval(t)
   }, [load])
+
+  const toggleInclude = (k: string) => setIncludeKinds(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k])
+  const togglePriority = (k: string) => setPriorityKinds(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k])
+
+  const saveSettings = async () => {
+    setSavingSettings(true)
+    try {
+      const priority = priorityKinds.filter(k => includeKinds.includes(k))
+      const res = await fetch('/api/webchat/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ feedSettings: { includeKinds, priorityKinds: priority } }),
+      })
+      if (res.ok) {
+        setPriorityKinds(priority)
+        setSavedSettings(true)
+        setTimeout(() => setSavedSettings(false), 2000)
+        load(true)
+      }
+    } catch {} finally { setSavingSettings(false) }
+  }
 
   const priority = feed?.priority || []
   const secondary = feed?.secondary || []
@@ -85,6 +125,8 @@ export default function BildirimlerimPage() {
   const secondaryList = secondary.filter(matches)
 
   const currentPriorityLabels = KIND_ORDER.filter(k => priorityKinds.includes(k)).map(k => KIND_META[k]?.label || k)
+  const currentIncludeLabels = KIND_ORDER.filter(k => includeKinds.includes(k)).map(k => KIND_META[k]?.label || k)
+  const currentSecondaryLabels = KIND_ORDER.filter(k => includeKinds.includes(k) && !priorityKinds.includes(k)).map(k => KIND_META[k]?.label || k)
 
   if (loading) return (
     <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
@@ -155,15 +197,62 @@ export default function BildirimlerimPage() {
         </div>
       </div>
 
-      {/* Priority config note */}
-      <div className="flex items-start gap-3 rounded-2xl bg-white border border-blue-100 px-4 py-3 shadow-sm">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow">
-          <Flame className="w-4 h-4 text-white" />
+      {/* Feed settings */}
+      <div className="rounded-2xl bg-white border border-blue-100 shadow-sm overflow-hidden">
+        <div className="flex items-start gap-3 px-4 py-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow">
+            <Flame className="w-4 h-4 text-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-gray-900">Bu sayfaya düşenler: {currentIncludeLabels.join(', ') || 'Yok'}</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">Öncelikli bölüm: <span className="font-semibold text-gray-700">{currentPriorityLabels.join(', ') || 'Yok'}</span></p>
+            <p className="text-[11px] text-gray-400 mt-0.5">Burayı elle ayarlayabilir veya Chatbot sohbetinden söyleyebilirsiniz: "siparişler ve en çok sorulan sorular düşsün, siparişler öncelikli olsun".</p>
+          </div>
+          <button onClick={() => setShowSettings(s => !s)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-blue-50 text-blue-600 text-[11px] font-bold hover:bg-blue-100 active:scale-95 transition-all shrink-0">
+            <Settings2 size={13} /> Ayarla
+          </button>
         </div>
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-gray-900">Öncelikli bölümüne düşenler: {currentPriorityLabels.join(', ') || 'Yok'}</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Bu ayarı Chatbot sayfasındaki sohbetten değiştirebilirsiniz: "siparişler öncelikli olsun, şikayetler diğer bölüme düşsün" gibi.</p>
-        </div>
+        {showSettings && (
+          <div className="border-t border-blue-50 px-4 py-4 bg-slate-50/40">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {KIND_ORDER.filter(k => k !== 'info').map(k => {
+                const meta = KIND_META[k] || KIND_META.info
+                const Icon = meta.icon
+                const inInc = includeKinds.includes(k)
+                const inPri = priorityKinds.includes(k)
+                return (
+                  <div key={k} className="flex items-center justify-between gap-3 rounded-xl bg-white border border-blue-100 px-3 py-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={'w-8 h-8 rounded-full bg-gradient-to-br ' + meta.grad + ' flex items-center justify-center shrink-0'}>
+                        <Icon className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-800 truncate">{meta.label}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button onClick={() => toggleInclude(k)}
+                        className={'px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ' + (inInc ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-gray-400 border-gray-200')}>
+                        Göster
+                      </button>
+                      <button onClick={() => inInc && togglePriority(k)} disabled={!inInc}
+                        className={'px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all disabled:opacity-40 ' + (inPri && inInc ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-400 border-gray-200')}>
+                        Öncelikli
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex items-center justify-end gap-2 mt-3">
+              <button onClick={() => setShowSettings(false)} className="px-4 py-2 rounded-xl border border-blue-100 text-gray-500 text-xs font-semibold hover:bg-white transition-all">Kapat</button>
+              <button onClick={saveSettings} disabled={savingSettings}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white text-xs font-bold hover:shadow-md active:scale-95 transition-all disabled:opacity-50">
+                {savingSettings ? <Loader2 size={14} className="animate-spin" /> : savedSettings ? <Check size={14} /> : null}
+                {savingSettings ? 'Kaydediliyor...' : savedSettings ? 'Kaydedildi' : 'Kaydet'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -198,8 +287,8 @@ export default function BildirimlerimPage() {
       </div>
 
       {/* Two rows: Öncelikli / Diğer */}
-      <Section title="Öncelikli" subtitle="Sipariş, randevu, rezervasyon ve talepler" items={priorityList} />
-      <Section title="Diğer" subtitle="Şikayetler ve diğer kayıtlar" items={secondaryList} />
+      <Section title="Öncelikli" subtitle={currentPriorityLabels.join(', ') || 'Kayıt yok'} items={priorityList} />
+      <Section title="Diğer" subtitle={currentSecondaryLabels.join(', ') || 'Kayıt yok'} items={secondaryList} />
 
       {feed?.aiFilled && (
         <p className="flex items-center gap-2 text-[11px] text-gray-400 justify-center">

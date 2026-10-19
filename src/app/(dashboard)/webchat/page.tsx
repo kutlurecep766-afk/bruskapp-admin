@@ -20,6 +20,7 @@ interface UnknownQ {
   question: string
   platform?: string
   count: number
+  context?: string
   createdAt: string
 }
 
@@ -354,6 +355,12 @@ export default function WebchatPage() {
                       <X size={14} />
                     </button>
                   </div>
+                  {q.context && (
+                    <div className="mb-2 rounded-lg bg-white border border-blue-100 px-3 py-2">
+                      <p className="text-[10px] font-semibold text-blue-500 uppercase tracking-wide mb-1">Konuşma özeti</p>
+                      <p className="text-[11px] text-gray-500 whitespace-pre-wrap leading-relaxed break-words">{q.context}</p>
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-1.5 mb-2">
                     <span className="px-2 py-0.5 rounded-full bg-white border border-blue-100 text-[10px] text-blue-600 font-semibold">{q.count || 1} kez soruldu</span>
                     {q.platform && <span className="px-2 py-0.5 rounded-full bg-white border border-blue-100 text-[10px] text-gray-500">{q.platform}</span>}
