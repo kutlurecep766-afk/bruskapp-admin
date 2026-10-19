@@ -1,120 +1,70 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { MessageCircle, Plus, Trash2, Save, Zap, Loader2, CheckCircle2, Send, RotateCcw, Bot, AlertTriangle } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Bot, Send, RotateCcw, AlertTriangle, Loader2, Sparkles } from 'lucide-react'
 
-interface Product {
-  name: string
-  price: string
-  description: string
-  unit?: string
-  options?: { name: string; price?: string }[]
-  soldOut?: boolean
-}
-
-interface Service {
-  name: string
-  duration: string
-  price: string
-}
-
-interface FAQ {
-  question: string
-  answer: string
-}
-
-interface Settings {
-  requireName?: boolean
-  requirePhone?: boolean
-  requireAddress?: boolean
-  requireLocation?: boolean
-  requireNote?: boolean
-  requireService?: boolean
-  requireDate?: boolean
-  requireTime?: boolean
-}
+type Msg = { role: 'user' | 'assistant'; content: string }
 
 interface Config {
-  businessName: string
-  description: string
-  address: string
-  phone: string
-  hours: string
-  email: string
-  welcomeMessage: string
-  products: Product[]
-  services?: Service[]
-  orderSettings?: Settings
-  appointmentSettings?: Settings
-  faqs: FAQ[]
-  systemPrompt: string
-  knowledgeBase: string
-  modes?: { orders?: boolean; appointments?: boolean; reservations?: boolean }
+  businessName?: string
+  description?: string
+  knowledgeBase?: string
+  systemPrompt?: string
+  products?: any[]
+  services?: any[]
+  faqs?: any[]
+  welcomeMessage?: string
 }
 
-const ORDER_FIELDS: { k: keyof Settings; l: string }[] = [
-  { k: 'requireName', l: 'Ad Soyad' },
-  { k: 'requirePhone', l: 'Telefon' },
-  { k: 'requireAddress', l: 'Adres' },
-  { k: 'requireLocation', l: 'Konum' },
-  { k: 'requireNote', l: 'Sipariş Notu' },
-]
+const GREETING: Msg = {
+  role: 'assistant',
+  content: 'Merhaba! Ben işletmenizin yapay zeka asistanıyım.\n\nBuradan her şeyi benimle yönetebilirsiniz: işletmenizi tanıtın, ürün/hizmet ve fiyatlarınızı ekleyin, çalışma saatleri, adres, teslimat/kampanya kuralları ve sık sorduğunuz soruları anlatın — hepsini otomatik ayarlarım.\n\nMüşterilerinizin sorularını da bana sorabilirsiniz; kısa ve net özetlerim.',
+}
 
-const APPT_FIELDS: { k: keyof Settings; l: string }[] = [
-  { k: 'requireName', l: 'Ad Soyad' },
-  { k: 'requirePhone', l: 'Telefon' },
-  { k: 'requireService', l: 'Hizmet' },
-  { k: 'requireDate', l: 'Tarih' },
-  { k: 'requireTime', l: 'Saat' },
-  { k: 'requireNote', l: 'Not' },
+const QUICK = [
+  'İşletmemi tanıtayım',
+  'Ürün ve fiyatlarımızı ekle',
+  'Çalışma saatleri ve adres',
+  'Sık sorulan soruları ekle',
+  'Kampanya kuralı ekle',
 ]
 
 export default function WebchatPage() {
   const [config, setConfig] = useState<Config | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [webcampaigns, setWebcampaigns] = useState<any[]>([])
-  const [showCampaignForm, setShowCampaignForm] = useState(false)
-  const [campaignTitle, setCampaignTitle] = useState('')
-  const [campaignDiscount, setCampaignDiscount] = useState('')
-  const [campaignDesc, setCampaignDesc] = useState('')
-
-  const saveWebCampaign = async () => {
-    if (!campaignTitle) return
-    await fetch('/api/campaigns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ title: campaignTitle, description: campaignDesc, type: 'discount', discount: campaignDiscount ? parseInt(campaignDiscount) : null, status: 'active' }) })
-    setShowCampaignForm(false)
-    setCampaignTitle(''); setCampaignDiscount(''); setCampaignDesc('')
-    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns)
-  }
-
-  const deleteCampaign = async (id: string) => {
-    if (!confirm('Kampanyayi silmek istediginize emin misiniz?')) return
-    await fetch('/api/campaigns/' + id, { method: 'DELETE', credentials: 'include' })
-    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns)
-  }
-
-  const toggleCampaign = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'passive' : 'active'
-    await fetch('/api/campaigns/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ status: newStatus }) })
-    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns)
-  }
-  const [saved, setSaved] = useState(false)
-
-  const [chat, setChat] = useState<{ role: string; content: string }[]>([
-    { role: 'assistant', content: 'Merhaba! Ben kurulum asistanınızım. İşletmenizi tanıtmaya başlayın (ad, ne sattığınız, ürün/hizmet ve fiyatlar, çalışma saatleri, adres...). Sorularımla tamamlayıp ayarları otomatik dolduracağım.' },
-  ])
-  const [chatInput, setChatInput] = useState('')
-  const [chatBusy, setChatBusy] = useState(false)
+  const [chat, setChat] = useState<Msg[]>([GREETING])
+  const [input, setInput] = useState('')
+  const [busy, setBusy] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [resetBusy, setResetBusy] = useState(false)
-  const chatEndRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chat, chatBusy])
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const taRef = useRef<HTMLTextAreaElement>(null)
 
-  const sendChat = async () => {
-    const text = chatInput.trim()
-    if (!text || chatBusy) return
-    const msgs = [...chat, { role: 'user', content: text }]
-    setChat(msgs); setChatInput(''); setChatBusy(true)
+  useEffect(() => {
+    fetch('/api/webchat/config', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setConfig(d) })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [chat, busy])
+
+  useEffect(() => {
+    const el = taRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px'
+  }, [input])
+
+  const configured = !!(config && ((config.products && config.products.length > 0) || (config.services && config.services.length > 0) || (config.faqs && config.faqs.length > 0) || (config.knowledgeBase && config.knowledgeBase.trim()) || (config.systemPrompt && config.systemPrompt.trim())))
+
+  const send = useCallback(async (textArg?: string) => {
+    const text = (textArg ?? input).trim()
+    if (!text || busy) return
+    const msgs: Msg[] = [...chat, { role: 'user', content: text }]
+    setChat(msgs); setInput(''); setBusy(true)
     try {
       const res = await fetch('/api/webchat/train', {
         method: 'POST',
@@ -131,7 +81,11 @@ export default function WebchatPage() {
       }
     } catch {
       setChat([...msgs, { role: 'assistant', content: 'Bağlantı hatası. Lütfen tekrar deneyin.' }])
-    } finally { setChatBusy(false) }
+    } finally { setBusy(false) }
+  }, [input, busy, chat])
+
+  const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
   const doReset = async () => {
@@ -147,476 +101,114 @@ export default function WebchatPage() {
     } catch {} finally { setResetBusy(false) }
   }
 
-  useEffect(() => {
-    fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns).catch(() => {})
-    fetch('/api/webchat/config', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setConfig(d) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
-
-  const update = (key: string, value: any) => {
-    if (!config) return
-    setConfig({ ...config, [key]: value })
-  }
-
-  const addProduct = () => {
-    if (!config) return
-    setConfig({ ...config, products: [...config.products, { name: '', price: '', description: '', unit: '', options: [], soldOut: false }] })
-  }
-
-  const addService = () => {
-    if (!config) return
-    setConfig({ ...config, services: [...(config.services || []), { name: '', duration: '', price: '' }] })
-  }
-
-  const updateService = (i: number, key: string, value: any) => {
-    if (!config) return
-    const services = [...(config.services || [])]
-    services[i] = { ...services[i], [key]: value }
-    setConfig({ ...config, services })
-  }
-
-  const removeService = (i: number) => {
-    if (!config) return
-    setConfig({ ...config, services: (config.services || []).filter((_, idx) => idx !== i) })
-  }
-
-  const toggleSetting = (which: 'orderSettings' | 'appointmentSettings', key: string) => {
-    if (!config) return
-    const cur: any = { ...((config as any)[which] || {}) }
-    cur[key] = !cur[key]
-    setConfig({ ...config, [which]: cur } as Config)
-  }
-
-  const updateProduct = (i: number, key: string, value: any) => {
-    if (!config) return
-    const products = [...config.products]
-    products[i] = { ...products[i], [key]: value }
-    setConfig({ ...config, products })
-  }
-
-  const removeProduct = (i: number) => {
-    if (!config) return
-    setConfig({ ...config, products: config.products.filter((_, idx) => idx !== i) })
-  }
-
-  const addFaq = () => {
-    if (!config) return
-    setConfig({ ...config, faqs: [...config.faqs, { question: '', answer: '' }] })
-  }
-
-  const updateFaq = (i: number, key: string, value: string) => {
-    if (!config) return
-    const faqs = [...config.faqs]
-    faqs[i] = { ...faqs[i], [key]: value }
-    setConfig({ ...config, faqs })
-  }
-
-  const removeFaq = (i: number) => {
-    if (!config) return
-    setConfig({ ...config, faqs: config.faqs.filter((_, idx) => idx !== i) })
-  }
-
-  const save = async () => {
-    if (!config) return
-    setSaving(true)
-    setSaved(false)
-    try {
-      const res = await fetch('/api/webchat/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(config),
-      })
-      if (res.ok) {
-        setSaved(true)
-        setTimeout(() => setSaved(false), 2000)
-      }
-    } catch {} finally { setSaving(false) }
-  }
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  if (!config) return <div className="text-gray-500 text-center py-20">Yapılandırma yüklenemedi</div>
-
   return (
-    <div className="space-y-6 pb-12 max-w-4xl">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-8">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <MessageCircle className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Chatbot Ayarları</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Web sitenizdeki yapay zeka asistanını tamamen size özel şekillendirin</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button onClick={() => setShowReset(true)} className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all">
-              <RotateCcw size={16} /> Sıfırla
-            </button>
-            <button onClick={save} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/10">
-              {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor...</> : <><Save size={16} /> Kaydet</>}
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-3xl mx-auto">
+      <div className="flex flex-col h-[calc(100dvh-8.5rem)] min-h-[520px] rounded-3xl border border-[#1a2332] overflow-hidden shadow-2xl shadow-black/40 bg-gradient-to-b from-[#0f1420] to-[#0a0e14]">
 
-      {saved && (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-emerald-500/20 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><CheckCircle2 className="w-4 h-4 text-emerald-400" /></div>
-            <p className="text-emerald-400 text-sm font-medium">Tüm değişiklikler kaydedildi!</p>
-          </div>
-        </div>
-      )}
-
-      {/* Sohbetle Eğit */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 sm:p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl" />
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><Bot size={18} className="text-white" /></div>
-            <div>
-              <h2 className="text-white font-semibold">Sohbetle Eğit</h2>
-              <p className="text-xs text-gray-500">Yapay zekaya işletmenizi konuşarak anlatın; ayarlar otomatik doldurulur</p>
+        {/* Header */}
+        <div className="relative flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-[#1a2332] bg-[#0d1117]/70">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
+              <Bot size={20} className="text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">Yapay Zeka Asistanı</h1>
+              <p className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5">
+                <span className={'w-1.5 h-1.5 rounded-full ' + (configured ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse')} />
+                {configured ? 'Eğitildi · işletmenizi tanıyor' : 'Henüz eğitilmedi · sohbetle başlayın'}
+              </p>
             </div>
           </div>
-          <div className="rounded-xl bg-[#080b12]/70 border border-[#1a2332] p-3 sm:p-4">
-            <div className="h-72 overflow-y-auto space-y-3 pr-1">
-              {chat.map((m, i) => (
-                <div key={i} className={'flex gap-2 ' + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
-                  {m.role !== 'user' && (
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0"><Bot size={14} className="text-blue-400" /></div>
-                  )}
-                  <div className={'max-w-[82%] px-3.5 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words ' + (m.role === 'user' ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-[#111827] text-gray-200 border border-[#1a2332] rounded-bl-sm')}>{m.content}</div>
-                </div>
-              ))}
-              {chatBusy && (
-                <div className="flex gap-2 justify-start">
-                  <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0"><Bot size={14} className="text-blue-400" /></div>
-                  <div className="px-4 py-2.5 rounded-2xl bg-[#111827] border border-[#1a2332]"><Loader2 className="w-4 h-4 text-blue-400 animate-spin" /></div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-            <div className="flex gap-2 mt-3">
-              <textarea
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
-                rows={1}
-                placeholder="İşletmenizi anlatın... (Enter ile gönder)"
-                className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 resize-none"
-              />
-              <button onClick={sendChat} disabled={chatBusy || !chatInput.trim()} className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-40 flex items-center gap-2">
-                {chatBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send size={16} />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* İşletme Bilgileri */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl" />
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><MessageCircle size={18} className="text-white" /></div>
-            <div>
-              <h2 className="text-white font-semibold">İşletme Bilgileri</h2>
-              <p className="text-xs text-gray-500">AI asistanın işletmenizi tanıması için temel bilgiler</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-gray-500 block mb-1.5">İşletme Adı</label>
-              <input type="text" value={config.businessName} onChange={e => update('businessName', e.target.value)} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1.5">E-posta</label>
-              <input type="email" value={config.email} onChange={e => update('email', e.target.value)} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1.5">Telefon</label>
-              <input type="text" value={config.phone} onChange={e => update('phone', e.target.value)} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1.5">Çalışma Saatleri</label>
-              <input type="text" value={config.hours} onChange={e => update('hours', e.target.value)} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors" />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-xs text-gray-500 block mb-1.5">Adres</label>
-              <input type="text" value={config.address} onChange={e => update('address', e.target.value)} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors" />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-xs text-gray-500 block mb-1.5">Açıklama</label>
-              <textarea value={config.description} onChange={e => update('description', e.target.value)} rows={2} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors resize-none" />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-xs text-gray-500 block mb-1.5">Karşılama Mesajı</label>
-              <textarea value={config.welcomeMessage} onChange={e => update('welcomeMessage', e.target.value)} rows={2} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors resize-none" />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-xs text-gray-500 block mb-1.5">Sistem Promptu</label>
-              <textarea value={config.systemPrompt} onChange={e => update('systemPrompt', e.target.value)} rows={2} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors resize-none" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Ürün / Hizmetler */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-2xl" />
-        <div className="relative">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20"><Plus size={18} className="text-white" /></div>
-              <div>
-                <h2 className="text-white font-semibold">Sipariş Ayarları</h2>
-                <p className="text-xs text-gray-500">Ürünler, stok durumu ve sipariş kuralları (AI buna göre satış yapar)</p>
-              </div>
-            </div>
-            <button onClick={addProduct} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition-all"><Plus size={14} /> Ekle</button>
-          </div>
-          <div className="mb-5 rounded-xl bg-[#080b12]/60 border border-[#1a2332] p-4">
-            <p className="text-white text-sm font-semibold mb-2">AI ne alsın?</p>
-            <div className="flex flex-wrap gap-4">
-              {[{ k: 'orders', l: 'Sipariş' }, { k: 'appointments', l: 'Randevu' }, { k: 'reservations', l: 'Rezervasyon' }].map(m => {
-                const on = (config.modes as any)?.[m.k] !== false
-                return (
-                  <label key={m.k} className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-                    <input type="checkbox" checked={on} onChange={e => setConfig({ ...config, modes: { ...(config.modes || {}), [m.k]: e.target.checked } })} className="accent-emerald-500 w-4 h-4" />
-                    {m.l}
-                  </label>
-                )
-              })}
-            </div>
-            <p className="text-[10px] text-gray-500 mt-2">Kapalı olan türü AI almaz. Ürün/hizmetleri aşağıya ekleyin.</p>
-          </div>
-          <div className="space-y-3">
-            {config.products.map((p, i) => (
-              <div key={i} className="flex gap-3 items-start bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-3 transition-all hover:border-emerald-500/20">
-                <div className="flex-1 space-y-2">
-                  <input type="text" value={p.name} onChange={e => updateProduct(i, 'name', e.target.value)} placeholder="Ürün adı" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                  <div className="flex gap-2">
-                    <input type="text" value={p.price} onChange={e => updateProduct(i, 'price', e.target.value)} placeholder="Fiyat" className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                    <input type="text" value={p.description} onChange={e => updateProduct(i, 'description', e.target.value)} placeholder="Açıklama" className="flex-[2] bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                  </div>
-                  <div className="flex gap-2">
-                    <input type="text" value={p.unit || ''} onChange={e => updateProduct(i, 'unit', e.target.value)} placeholder="Birim (adet/kg/gram/set/porsiyon)" className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                    <input type="text" value={(p.options || []).map(o => o.name).join(', ')} onChange={e => updateProduct(i, 'options', e.target.value.split(',').map(s => ({ name: s.trim() })).filter(o => o.name))} placeholder="Seçenekler (virgülle: Acı, Normal, Az)" className="flex-[2] bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={() => updateProduct(i, 'soldOut', !p.soldOut)} title="Stok durumu"
-                    className={'px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ' + (p.soldOut ? 'bg-red-500/15 text-red-400 border-red-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20')}>
-                    {p.soldOut ? 'Bitti' : 'Stokta'}
-                  </button>
-                  <button onClick={() => removeProduct(i)} className="p-2 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))}
-            {config.products.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Henüz ürün eklenmemiş</p>}
-          </div>
-
-          <div className="mt-5 pt-5 border-t border-[#1a2332]">
-            <p className="text-white text-sm font-semibold mb-1">Sipariş için alınacak bilgiler</p>
-            <p className="text-[10px] text-gray-500 mb-3">İşaretlediğin alanlar <b className="text-gray-300">zorunlu</b> olur; AI siparişi bu alanlar tamamlanmadan onaylamaz.</p>
-            <div className="flex flex-wrap gap-3">
-              {ORDER_FIELDS.map(f => {
-                const on = !!(config.orderSettings as any)?.[f.k]
-                return (
-                  <label key={f.k} className={'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all ' + (on ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-[#080b12]/60 border-[#1a2332] text-gray-400')}>
-                    <input type="checkbox" checked={on} onChange={() => toggleSetting('orderSettings', f.k)} className="accent-emerald-500 w-4 h-4" />
-                    {f.l}
-                  </label>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Randevu Ayarları */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/5 rounded-full blur-2xl" />
-        <div className="relative">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20"><Plus size={18} className="text-white" /></div>
-              <div>
-                <h2 className="text-white font-semibold">Randevu Ayarları</h2>
-                <p className="text-xs text-gray-500">Hizmetler ve randevuda alınacak bilgiler</p>
-              </div>
-            </div>
-            <button onClick={addService} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition-all"><Plus size={14} /> Hizmet Ekle</button>
-          </div>
-
-          <div className="space-y-3">
-            {(config.services || []).map((s, i) => (
-              <div key={i} className="flex gap-3 items-start bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-3 transition-all hover:border-sky-500/20">
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <input type="text" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} placeholder="Hizmet adı (ör. Saç Kesimi)" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                  <input type="text" value={s.duration} onChange={e => updateService(i, 'duration', e.target.value)} placeholder="Süre (ör. 30 dk)" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                  <input type="text" value={s.price} onChange={e => updateService(i, 'price', e.target.value)} placeholder="Ücret (ör. 300 TL)" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                </div>
-                <button onClick={() => removeService(i)} className="p-2 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
-              </div>
-            ))}
-            {(config.services || []).length === 0 && <p className="text-gray-500 text-sm text-center py-4">Henüz hizmet eklenmemiş</p>}
-          </div>
-
-          <div className="mt-5 pt-5 border-t border-[#1a2332]">
-            <p className="text-white text-sm font-semibold mb-1">Randevu için alınacak bilgiler</p>
-            <p className="text-[10px] text-gray-500 mb-3">İşaretlediğin alanlar <b className="text-gray-300">zorunlu</b> olur; AI randevuyu bu alanlar tamamlanmadan oluşturmaz.</p>
-            <div className="flex flex-wrap gap-3">
-              {APPT_FIELDS.map(f => {
-                const on = !!(config.appointmentSettings as any)?.[f.k]
-                return (
-                  <label key={f.k} className={'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all ' + (on ? 'bg-sky-500/10 border-sky-500/30 text-sky-300' : 'bg-[#080b12]/60 border-[#1a2332] text-gray-400')}>
-                    <input type="checkbox" checked={on} onChange={() => toggleSetting('appointmentSettings', f.k)} className="accent-sky-500 w-4 h-4" />
-                    {f.l}
-                  </label>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* SSS */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/5 rounded-full blur-2xl" />
-        <div className="relative">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20"><MessageCircle size={18} className="text-white" /></div>
-              <div>
-                <h2 className="text-white font-semibold">SSS</h2>
-                <p className="text-xs text-gray-500">Sık sorulan sorular ve cevapları</p>
-              </div>
-            </div>
-            <button onClick={addFaq} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-600/30 transition-all"><Plus size={14} /> Ekle</button>
-          </div>
-          <div className="space-y-3">
-            {config.faqs.map((f, i) => (
-              <div key={i} className="flex gap-3 items-start bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-3 transition-all hover:border-purple-500/20">
-                <div className="flex-1 space-y-2">
-                  <input type="text" value={f.question} onChange={e => updateFaq(i, 'question', e.target.value)} placeholder="Soru" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600" />
-                  <textarea value={f.answer} onChange={e => updateFaq(i, 'answer', e.target.value)} placeholder="Cevap" rows={2} className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 resize-none" />
-                </div>
-                <button onClick={() => removeFaq(i)} className="p-2 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
-              </div>
-            ))}
-            {config.faqs.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Henüz SSS eklenmemiş</p>}
-          </div>
-        </div>
-      </div>
-
-      {/* Bilgi Havuzu */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full blur-2xl" />
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20"><MessageCircle size={18} className="text-white" /></div>
-            <div>
-              <h2 className="text-white font-semibold">Bilgi Havuzu</h2>
-              <p className="text-xs text-gray-500">İşletmeniz, ürünleriniz, hizmetleriniz hakkında detaylı bilgileri buraya yapıştırın. AI asistanı bu bilgileri kullanarak cevap verecek.</p>
-            </div>
-          </div>
-          <textarea
-            value={config.knowledgeBase}
-            onChange={e => update('knowledgeBase', e.target.value)}
-            rows={16}
-            className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500/50 placeholder-gray-600 resize-y font-mono leading-relaxed transition-colors"
-            placeholder={'Örneğin işletmenizle ilgili her şeyi buraya yazın/kopyalayın:\n\n- Şirket tarihçesi\n- Tüm hizmet detayları\n- Fiyatlandırma bilgileri\n- Paket içerikleri\n- Referanslar\n- İletişim politikası\n- Sık yapılan hatalar ve çözümleri\n- vb.'}
-          />
-        </div>
-      </div>
-
-      {/* Kampanya Modülü */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-pink-500/5 rounded-full blur-2xl" />
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-500/20"><Zap size={18} className="text-white" /></div>
-            <div>
-              <h2 className="text-white font-semibold">Kampanya Modülü</h2>
-              <p className="text-xs text-gray-500">AI asistanın kampanyalara göre yanıt vermesi için kampanya oluşturun</p>
-            </div>
-          </div>
-
-          {webcampaigns.length > 0 && (
-            <div className="space-y-2 mb-4">
-              {webcampaigns.map((c: any) => (
-                <div key={c.id} className="bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-4 transition-all hover:border-pink-500/20">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white text-sm font-medium">{c.title}</h4>
-                      {c.description && <p className="text-xs text-gray-500 mt-0.5">{c.description}</p>}
-                      <div className="flex gap-2 mt-2">
-                        {c.discount && <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 rounded text-[10px]">%{c.discount}</span>}
-                        {c.code && <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px]">{c.code}</span>}
-                        <span className={'px-2 py-0.5 rounded text-[10px] ' + (c.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-400')}>{c.status === 'active' ? 'Aktif' : 'Pasif'}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 ml-3 flex-shrink-0">
-                      <button onClick={() => toggleCampaign(c.id, c.status)} className={'p-1.5 rounded-lg hover:bg-white/5 transition-all ' + (c.status === 'active' ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300')} title={c.status === 'active' ? 'Devre Disi Birak' : 'Aktiflestir'}>
-                        {c.status === 'active' ? '🔴' : '🟢'}
-                      </button>
-                      <button onClick={() => deleteCampaign(c.id)} className="p-1.5 rounded-lg hover:bg-white/5 text-gray-500 hover:text-red-400 transition-all" title="Sil">🗑️</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {showCampaignForm && (
-            <div className="bg-[#080b12]/60 border border-[#1a2332] rounded-xl p-4 space-y-3 mb-4">
-              <h4 className="text-white text-sm font-semibold">Yeni Kampanya</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input value={campaignTitle} onChange={e => setCampaignTitle(e.target.value)} placeholder="Kampanya adı" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-pink-500/50" />
-                <input value={campaignDiscount} onChange={e => setCampaignDiscount(e.target.value)} placeholder="İndirim %" className="bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-pink-500/50" />
-              </div>
-              <input value={campaignDesc} onChange={e => setCampaignDesc(e.target.value)} placeholder="Açıklama (AI'nin kampanyayı anlatması için)" className="w-full bg-[#080b12]/80 border border-[#1a2332] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-pink-500/50" />
-              <div className="flex gap-2">
-                <button onClick={saveWebCampaign} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-rose-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-pink-500/25 transition-all">Kaydet</button>
-                <button onClick={() => setShowCampaignForm(false)} className="px-4 py-2 border border-[#1a2332] text-gray-400 rounded-lg text-sm hover:text-white transition-all">İptal</button>
-              </div>
-            </div>
-          )}
-
-          <button onClick={() => setShowCampaignForm(true)} className="w-full py-3 border-2 border-dashed border-[#1a2332] text-gray-500 rounded-xl text-sm hover:text-white hover:border-pink-500/30 transition-all flex items-center justify-center gap-2">
-            <Plus size={16} /> Kampanya Ekle
+          <button onClick={() => setShowReset(true)} title="Sıfırla" className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:scale-105 active:scale-95 flex items-center justify-center transition-all flex-shrink-0">
+            <RotateCcw size={16} />
           </button>
+        </div>
+
+        {/* Messages */}
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-5 space-y-4">
+          {chat.map((m, i) => (
+            m.role === 'user' ? (
+              <div key={i} className="flex justify-end">
+                <div className="max-w-[82%] px-4 py-2.5 rounded-2xl rounded-tr-md bg-gradient-to-br from-blue-600 to-blue-500 text-white text-sm leading-relaxed whitespace-pre-wrap break-words shadow-lg shadow-blue-500/20">
+                  {m.content}
+                </div>
+              </div>
+            ) : (
+              <div key={i} className="flex gap-2.5 justify-start">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20 mt-0.5">
+                  <Bot size={15} className="text-white" />
+                </div>
+                <div className="max-w-[82%] px-4 py-2.5 rounded-2xl rounded-tl-md bg-[#151b26] border border-[#232f42] text-gray-100 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {m.content}
+                </div>
+              </div>
+            )
+          ))}
+
+          {busy && (
+            <div className="flex gap-2.5 justify-start">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                <Bot size={15} className="text-white" />
+              </div>
+              <div className="px-4 py-3 rounded-2xl rounded-tl-md bg-[#151b26] border border-[#232f42] flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          )}
+
+          {chat.length === 1 && !busy && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {QUICK.map(q => (
+                <button key={q} onClick={() => send(q)} className="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-300 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 active:scale-95 transition-all">
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="p-3 sm:p-4 border-t border-[#1a2332] bg-[#0d1117]/70">
+          <div className="flex items-end gap-2 rounded-2xl bg-[#080b12] border border-[#1a2332] focus-within:border-blue-500/50 p-1.5 pl-3 transition-colors">
+            <textarea
+              ref={taRef}
+              rows={1}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={onKey}
+              placeholder="İşletmenizle ilgili yazın veya bir soru sorun..."
+              className="flex-1 bg-transparent text-white text-sm resize-none focus:outline-none placeholder-gray-600 py-2 max-h-36 leading-relaxed"
+            />
+            <button
+              onClick={() => send()}
+              disabled={busy || !input.trim()}
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 transition-all disabled:opacity-40 disabled:hover:shadow-none flex-shrink-0"
+            >
+              {busy ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-600 mt-2 text-center flex items-center justify-center gap-1.5">
+            <Sparkles size={11} /> Enter ile gönder · Shift+Enter alt satır
+          </p>
         </div>
       </div>
 
       {showReset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => !resetBusy && setShowReset(false)}>
-          <div className="w-full max-w-sm rounded-2xl bg-[#0d1117] border border-red-500/30 p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => !resetBusy && setShowReset(false)}>
+          <div className="w-full max-w-sm rounded-3xl bg-[#0d1117] border border-red-500/30 p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-400" /></div>
-              <h3 className="text-white font-semibold">Emin misiniz?</h3>
+              <div className="w-11 h-11 rounded-2xl bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-400" /></div>
+              <h3 className="text-white font-semibold text-lg">Emin misiniz?</h3>
             </div>
-            <p className="text-sm text-gray-400 mb-5">Tüm bilgiler silinecek (işletme bilgileri, ürünler, hizmetler, SSS, promptlar ve bilgi havuzu). Yapay zeka baştan eğitilecek. Bu işlem geri alınamaz.</p>
+            <p className="text-sm text-gray-400 mb-6 leading-relaxed">Tüm bilgiler silinecek (işletme bilgileri, ürünler, hizmetler, SSS, promptlar ve bilgi havuzu). Yapay zeka baştan eğitilecek. Bu işlem geri alınamaz.</p>
             <div className="flex gap-2">
-              <button onClick={doReset} disabled={resetBusy} className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-red-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={doReset} disabled={resetBusy} className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-red-500/25 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                 {resetBusy ? <><Loader2 className="w-4 h-4 animate-spin" /> Sıfırlanıyor...</> : <><RotateCcw size={16} /> Evet, Sıfırla</>}
               </button>
-              <button onClick={() => setShowReset(false)} disabled={resetBusy} className="px-4 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm hover:text-white transition-all disabled:opacity-50">Vazgeç</button>
+              <button onClick={() => setShowReset(false)} disabled={resetBusy} className="px-4 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm hover:text-white hover:border-[#2a3a4a] transition-all disabled:opacity-50">Vazgeç</button>
             </div>
           </div>
         </div>
