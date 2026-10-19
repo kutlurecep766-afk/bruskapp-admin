@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, ShoppingCart, CalendarCheck, MessageCircle, AlertTriangle, Info, RefreshCw, Loader2, Sparkles, Search, Clock } from 'lucide-react'
+import { Bell, ShoppingCart, CalendarCheck, MessageCircle, AlertTriangle, Info, RefreshCw, Sparkles, Search, Clock, Flame } from 'lucide-react'
 
 interface FeedItem {
   id: string
@@ -27,6 +27,8 @@ const KIND_META: Record<string, { icon: any; chip: string; dot: string; label: s
   info: { icon: Info, chip: 'bg-slate-50 text-slate-600 border-slate-200', dot: 'bg-slate-400', label: 'Bilgi', grad: 'from-slate-500 to-slate-600' },
 }
 
+const KIND_ORDER = ['order', 'appointment', 'reservation', 'request', 'complaint', 'info']
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const m = Math.floor(diff / 60000)
@@ -42,8 +44,8 @@ export default function BildirimlerimPage() {
   const [feed, setFeed] = useState<Feed | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [tab, setTab] = useState<'' | 'priority' | 'secondary'>('')
   const [search, setSearch] = useState('')
+  const [priorityKinds, setPriorityKinds] = useState<string[]>(['order', 'appointment', 'reservation', 'request'])
 
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
@@ -55,6 +57,10 @@ export default function BildirimlerimPage() {
 
   useEffect(() => {
     load()
+    fetch('/api/webchat/config', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(cfg => { const pk = cfg?.feedSettings?.priorityKinds; if (Array.isArray(pk) && pk.length) setPriorityKinds(pk) })
+      .catch(() => {})
     const t = setInterval(() => load(true), 20000)
     return () => clearInterval(t)
   }, [load])
@@ -66,19 +72,64 @@ export default function BildirimlerimPage() {
   const stats = {
     total: all.length,
     priority: priority.length,
-    request: secondary.filter(x => x.kind === 'request').length,
-    complaint: secondary.filter(x => x.kind === 'complaint').length,
+    secondary: secondary.length,
+    complaint: all.filter(x => x.kind === 'complaint').length,
   }
 
-  const base = tab === 'priority' ? priority : tab === 'secondary' ? secondary : all
-  const filtered = base.filter(item => {
+  const matches = (item: FeedItem) => {
     if (!search) return true
     const s = search.toLowerCase()
     return (item.title || '').toLowerCase().includes(s) || (item.summary || '').toLowerCase().includes(s)
-  })
+  }
+  const priorityList = priority.filter(matches)
+  const secondaryList = secondary.filter(matches)
+
+  const currentPriorityLabels = KIND_ORDER.filter(k => priorityKinds.includes(k)).map(k => KIND_META[k]?.label || k)
 
   if (loading) return (
     <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
+  )
+
+  const Section = ({ title, subtitle, items }: { title: string; subtitle: string; items: FeedItem[] }) => (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2.5">
+        <span className={'w-1.5 h-5 rounded-full ' + (title === 'Öncelikli' ? 'bg-emerald-500' : 'bg-slate-400')} />
+        <h2 className="text-sm font-bold text-gray-900">{title}</h2>
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">{items.length}</span>
+        <span className="text-[11px] text-gray-400 hidden sm:inline">{subtitle}</span>
+      </div>
+      {items.length === 0 ? (
+        <div className="text-center py-8 bg-white border border-blue-100 rounded-2xl">
+          <Bell size={28} className="mx-auto text-blue-200 mb-2" />
+          <p className="text-gray-400 text-xs">{search ? 'Aramanıza uygun kayıt yok' : 'Bu bölümde kayıt bulunmuyor'}</p>
+        </div>
+      ) : (
+        items.map(item => {
+          const meta = KIND_META[item.kind] || KIND_META.info
+          const Icon = meta.icon
+          return (
+            <div key={item.id} className="rounded-2xl bg-white border border-blue-100 p-5 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={'w-11 h-11 rounded-full bg-gradient-to-br ' + meta.grad + ' flex items-center justify-center shadow-md shrink-0'}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-gray-900 font-semibold text-sm truncate">{item.title}</p>
+                      {!item.read && <span className={'w-1.5 h-1.5 rounded-full ' + meta.dot} />}
+                    </div>
+                    <p className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5"><Clock size={11} /> {timeAgo(item.createdAt)}</p>
+                  </div>
+                </div>
+                <span className={'px-3 py-1 rounded-full text-[11px] font-semibold border shrink-0 ' + meta.chip}>{meta.label}</span>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed break-words">{item.summary}</p>
+            </div>
+          )
+        })
+      )}
+    </div>
   )
 
   return (
@@ -102,23 +153,16 @@ export default function BildirimlerimPage() {
             <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} /> Yenile
           </button>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div className="relative mt-6 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          {[
-            { key: '' as const, label: 'Tümü', count: all.length },
-            { key: 'priority' as const, label: 'Öncelikli', count: priority.length },
-            { key: 'secondary' as const, label: 'Talep & Şikayet', count: secondary.length },
-          ].map(f => {
-            const active = tab === f.key
-            return (
-              <button key={f.key} onClick={() => setTab(f.key)}
-                className={'flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ' + (active ? 'bg-white text-blue-700 shadow-md' : 'bg-white/15 text-white backdrop-blur hover:bg-white/25')}>
-                {f.label}
-                <span className={'px-1.5 py-0.5 rounded-full text-[10px] ' + (active ? 'bg-blue-100 text-blue-700' : 'bg-white/20 text-white')}>{f.count}</span>
-              </button>
-            )
-          })}
+      {/* Priority config note */}
+      <div className="flex items-start gap-3 rounded-2xl bg-white border border-blue-100 px-4 py-3 shadow-sm">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow">
+          <Flame className="w-4 h-4 text-white" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-gray-900">Öncelikli bölümüne düşenler: {currentPriorityLabels.join(', ') || 'Yok'}</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Bu ayarı Chatbot sayfasındaki sohbetten değiştirebilirsiniz: "siparişler öncelikli olsun, şikayetler diğer bölüme düşsün" gibi.</p>
         </div>
       </div>
 
@@ -126,8 +170,8 @@ export default function BildirimlerimPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Toplam Bildirim', value: stats.total, grad: 'from-blue-600 to-blue-700', icon: Bell },
-          { label: 'Öncelikli', value: stats.priority, grad: 'from-emerald-500 to-teal-600', icon: CalendarCheck },
-          { label: 'Talep', value: stats.request, grad: 'from-indigo-500 to-purple-600', icon: MessageCircle },
+          { label: 'Öncelikli', value: stats.priority, grad: 'from-emerald-500 to-teal-600', icon: Flame },
+          { label: 'Diğer', value: stats.secondary, grad: 'from-slate-500 to-slate-600', icon: Info },
           { label: 'Şikayet', value: stats.complaint, grad: 'from-rose-500 to-red-600', icon: AlertTriangle },
         ].map(s => {
           const Icon = s.icon
@@ -153,41 +197,9 @@ export default function BildirimlerimPage() {
           className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-blue-100 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all" />
       </div>
 
-      {/* List */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-blue-100 rounded-2xl">
-          <Bell size={40} className="mx-auto text-blue-200 mb-3" />
-          <p className="text-gray-500 text-sm">Henüz bildirim bulunmuyor</p>
-          <p className="text-gray-400 text-xs mt-1">Yeni sipariş, randevu veya mesaj geldiğinde burada görünecek.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(item => {
-            const meta = KIND_META[item.kind] || KIND_META.info
-            const Icon = meta.icon
-            return (
-              <div key={item.id} className="rounded-2xl bg-white border border-blue-100 p-5 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={'w-11 h-11 rounded-full bg-gradient-to-br ' + meta.grad + ' flex items-center justify-center shadow-md shrink-0'}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-gray-900 font-semibold text-sm truncate">{item.title}</p>
-                        {!item.read && <span className={'w-1.5 h-1.5 rounded-full ' + meta.dot} />}
-                      </div>
-                      <p className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5"><Clock size={11} /> {timeAgo(item.createdAt)}</p>
-                    </div>
-                  </div>
-                  <span className={'px-3 py-1 rounded-full text-[11px] font-semibold border shrink-0 ' + meta.chip}>{meta.label}</span>
-                </div>
-                <p className="text-sm text-gray-600 leading-relaxed break-words">{item.summary}</p>
-              </div>
-            )
-          })}
-        </div>
-      )}
+      {/* Two rows: Öncelikli / Diğer */}
+      <Section title="Öncelikli" subtitle="Sipariş, randevu, rezervasyon ve talepler" items={priorityList} />
+      <Section title="Diğer" subtitle="Şikayetler ve diğer kayıtlar" items={secondaryList} />
 
       {feed?.aiFilled && (
         <p className="flex items-center gap-2 text-[11px] text-gray-400 justify-center">
