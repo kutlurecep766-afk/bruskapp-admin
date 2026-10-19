@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { MessageCircle, Plus, Trash2, Save, Zap, Loader2, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { MessageCircle, Plus, Trash2, Save, Zap, Loader2, CheckCircle2, Send, RotateCcw, Bot, AlertTriangle } from 'lucide-react'
 
 interface Product {
   name: string
@@ -98,6 +98,54 @@ export default function WebchatPage() {
     fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns)
   }
   const [saved, setSaved] = useState(false)
+
+  const [chat, setChat] = useState<{ role: string; content: string }[]>([
+    { role: 'assistant', content: 'Merhaba! Ben kurulum asistanınızım. İşletmenizi tanıtmaya başlayın (ad, ne sattığınız, ürün/hizmet ve fiyatlar, çalışma saatleri, adres...). Sorularımla tamamlayıp ayarları otomatik dolduracağım.' },
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const [chatBusy, setChatBusy] = useState(false)
+  const [showReset, setShowReset] = useState(false)
+  const [resetBusy, setResetBusy] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chat, chatBusy])
+
+  const sendChat = async () => {
+    const text = chatInput.trim()
+    if (!text || chatBusy) return
+    const msgs = [...chat, { role: 'user', content: text }]
+    setChat(msgs); setChatInput(''); setChatBusy(true)
+    try {
+      const res = await fetch('/api/webchat/train', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ messages: msgs }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setChat([...msgs, { role: 'assistant', content: d.reply || '...' }])
+        if (d.config) setConfig(d.config)
+      } else {
+        setChat([...msgs, { role: 'assistant', content: 'Bağlantı hatası. Lütfen tekrar deneyin.' }])
+      }
+    } catch {
+      setChat([...msgs, { role: 'assistant', content: 'Bağlantı hatası. Lütfen tekrar deneyin.' }])
+    } finally { setChatBusy(false) }
+  }
+
+  const doReset = async () => {
+    setResetBusy(true)
+    try {
+      const res = await fetch('/api/webchat/reset', { method: 'POST', credentials: 'include' })
+      if (res.ok) {
+        const d = await res.json()
+        setConfig(d)
+        setChat([{ role: 'assistant', content: 'Tüm bilgiler sıfırlandı. Baştan başlayalım — işletmenizi tanıtın.' }])
+        setShowReset(false)
+      }
+    } catch {} finally { setResetBusy(false) }
+  }
 
   useEffect(() => {
     fetch('/api/campaigns', { credentials: 'include' }).then(r => r.ok ? r.json() : []).then(setWebcampaigns).catch(() => {})
@@ -203,7 +251,7 @@ export default function WebchatPage() {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-8">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
-        <div className="relative flex items-start justify-between">
+        <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
               <MessageCircle className="w-7 h-7 text-white" />
@@ -213,9 +261,14 @@ export default function WebchatPage() {
               <p className="text-sm text-gray-500 mt-0.5">Web sitenizdeki yapay zeka asistanını tamamen size özel şekillendirin</p>
             </div>
           </div>
-          <button onClick={save} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/10">
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor...</> : <><Save size={16} /> Kaydet</>}
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => setShowReset(true)} className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-all">
+              <RotateCcw size={16} /> Sıfırla
+            </button>
+            <button onClick={save} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/10">
+              {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor...</> : <><Save size={16} /> Kaydet</>}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -227,6 +280,52 @@ export default function WebchatPage() {
           </div>
         </div>
       )}
+
+      {/* Sohbetle Eğit */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-5 sm:p-6 lg:p-8">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl" />
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><Bot size={18} className="text-white" /></div>
+            <div>
+              <h2 className="text-white font-semibold">Sohbetle Eğit</h2>
+              <p className="text-xs text-gray-500">Yapay zekaya işletmenizi konuşarak anlatın; ayarlar otomatik doldurulur</p>
+            </div>
+          </div>
+          <div className="rounded-xl bg-[#080b12]/70 border border-[#1a2332] p-3 sm:p-4">
+            <div className="h-72 overflow-y-auto space-y-3 pr-1">
+              {chat.map((m, i) => (
+                <div key={i} className={'flex gap-2 ' + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
+                  {m.role !== 'user' && (
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0"><Bot size={14} className="text-blue-400" /></div>
+                  )}
+                  <div className={'max-w-[82%] px-3.5 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words ' + (m.role === 'user' ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-[#111827] text-gray-200 border border-[#1a2332] rounded-bl-sm')}>{m.content}</div>
+                </div>
+              ))}
+              {chatBusy && (
+                <div className="flex gap-2 justify-start">
+                  <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0"><Bot size={14} className="text-blue-400" /></div>
+                  <div className="px-4 py-2.5 rounded-2xl bg-[#111827] border border-[#1a2332]"><Loader2 className="w-4 h-4 text-blue-400 animate-spin" /></div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+            <div className="flex gap-2 mt-3">
+              <textarea
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
+                rows={1}
+                placeholder="İşletmenizi anlatın... (Enter ile gönder)"
+                className="flex-1 bg-[#080b12]/80 border border-[#1a2332] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 placeholder-gray-600 resize-none"
+              />
+              <button onClick={sendChat} disabled={chatBusy || !chatInput.trim()} className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-40 flex items-center gap-2">
+                {chatBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send size={16} />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* İşletme Bilgileri */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1420] to-[#0d1117] border border-[#1a2332] p-6 lg:p-8">
@@ -504,6 +603,24 @@ export default function WebchatPage() {
           </button>
         </div>
       </div>
+
+      {showReset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => !resetBusy && setShowReset(false)}>
+          <div className="w-full max-w-sm rounded-2xl bg-[#0d1117] border border-red-500/30 p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-400" /></div>
+              <h3 className="text-white font-semibold">Emin misiniz?</h3>
+            </div>
+            <p className="text-sm text-gray-400 mb-5">Tüm bilgiler silinecek (işletme bilgileri, ürünler, hizmetler, SSS, promptlar ve bilgi havuzu). Yapay zeka baştan eğitilecek. Bu işlem geri alınamaz.</p>
+            <div className="flex gap-2">
+              <button onClick={doReset} disabled={resetBusy} className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-red-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {resetBusy ? <><Loader2 className="w-4 h-4 animate-spin" /> Sıfırlanıyor...</> : <><RotateCcw size={16} /> Evet, Sıfırla</>}
+              </button>
+              <button onClick={() => setShowReset(false)} disabled={resetBusy} className="px-4 py-2.5 border border-[#1a2332] text-gray-400 rounded-xl text-sm hover:text-white transition-all disabled:opacity-50">Vazgeç</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

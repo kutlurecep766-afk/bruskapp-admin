@@ -14,6 +14,7 @@ const ALL_MODULES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/', perm: 'dashboard' },
   { key: 'customers', label: 'Müşteriler', icon: Users, href: '/customers', perm: 'customers' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
+  { key: 'bildirimlerim', label: 'Bildirimlerim', icon: Bell, href: '/bildirimlerim', perm: 'bildirimlerim' },
   { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
   { key: 'appointments', label: 'Randevular', icon: CalendarCheck, href: '/appointments', perm: 'appointments' },
   { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
