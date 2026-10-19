@@ -15,9 +15,6 @@ const ALL_MODULES = [
   { key: 'customers', label: 'Müşteriler', icon: Users, href: '/customers', perm: 'customers' },
   { key: 'messages', label: 'Mesajlar', icon: MessageSquare, href: '/messages', perm: 'messages' },
   { key: 'bildirimlerim', label: 'Bildirimlerim', icon: Bell, href: '/bildirimlerim', perm: 'bildirimlerim' },
-  { key: 'orders', label: 'Siparişler', icon: ShoppingCart, href: '/orders', perm: 'orders' },
-  { key: 'appointments', label: 'Randevular', icon: CalendarCheck, href: '/appointments', perm: 'appointments' },
-  { key: 'reservations', label: 'Rezervasyonlar', icon: CalendarCheck, href: '/reservations', perm: 'reservations' },
   { key: 'analytics', label: 'Analitik', icon: BarChart3, href: '/analytics', perm: 'analytics' },
   { key: 'settings', label: 'Ayarlar', icon: Cog, href: '/settings', perm: 'settings' },
   { key: 'chatbot-integrations', label: 'Chatbot Entegrasyonları', icon: Link2, href: '/chatbot-integrations', perm: 'chatbot-integrations' },
@@ -69,8 +66,9 @@ export default function Sidebar({ collapsed, toggle }: { collapsed: boolean; tog
   const userPermissions = user?.permissions || []
   const initial = (user?.name || user?.email || '?')[0].toUpperCase()
 
-  const visibleItems = (isSuperAdmin || !user ? ALL_MODULES : ALL_MODULES.filter(m => userPermissions.includes(m.perm)))
-    .filter(m => !user || isSuperAdmin || features[m.key] !== false)
+  const ALWAYS_ALLOWED = ['bildirimlerim']
+  const visibleItems = (isSuperAdmin || !user ? ALL_MODULES : ALL_MODULES.filter(m => ALWAYS_ALLOWED.includes(m.key) || userPermissions.includes(m.perm)))
+    .filter(m => ALWAYS_ALLOWED.includes(m.key) || !user || isSuperAdmin || features[m.key] !== false)
 
   return (
     <>

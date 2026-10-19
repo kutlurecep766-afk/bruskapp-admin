@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, ShoppingCart, CalendarCheck, MessageCircle, AlertTriangle, Info, RefreshCw, Loader2, Sparkles } from 'lucide-react'
+import { Bell, ShoppingCart, CalendarCheck, MessageCircle, AlertTriangle, Info, RefreshCw, Loader2, Sparkles, Search, Clock } from 'lucide-react'
 
 interface FeedItem {
   id: string
@@ -18,13 +18,13 @@ interface Feed {
   aiFilled: boolean
 }
 
-const KIND_META: Record<string, { icon: any; color: string; bg: string; label: string }> = {
-  order: { icon: ShoppingCart, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', label: 'Sipariş' },
-  appointment: { icon: CalendarCheck, color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20', label: 'Randevu' },
-  reservation: { icon: CalendarCheck, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20', label: 'Rezervasyon' },
-  request: { icon: MessageCircle, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', label: 'Talep' },
-  complaint: { icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', label: 'Şikayet' },
-  info: { icon: Info, color: 'text-gray-400', bg: 'bg-gray-500/10 border-gray-500/20', label: 'Bilgi' },
+const KIND_META: Record<string, { icon: any; chip: string; dot: string; label: string; grad: string }> = {
+  order: { icon: ShoppingCart, chip: 'bg-emerald-50 text-emerald-600 border-emerald-200', dot: 'bg-emerald-500', label: 'Sipariş', grad: 'from-emerald-500 to-teal-600' },
+  appointment: { icon: CalendarCheck, chip: 'bg-sky-50 text-sky-600 border-sky-200', dot: 'bg-sky-500', label: 'Randevu', grad: 'from-sky-500 to-blue-600' },
+  reservation: { icon: CalendarCheck, chip: 'bg-indigo-50 text-indigo-600 border-indigo-200', dot: 'bg-indigo-500', label: 'Rezervasyon', grad: 'from-indigo-500 to-purple-600' },
+  request: { icon: MessageCircle, chip: 'bg-blue-50 text-blue-600 border-blue-200', dot: 'bg-blue-500', label: 'Talep', grad: 'from-blue-600 to-blue-700' },
+  complaint: { icon: AlertTriangle, chip: 'bg-red-50 text-red-600 border-red-200', dot: 'bg-red-500', label: 'Şikayet', grad: 'from-rose-500 to-red-600' },
+  info: { icon: Info, chip: 'bg-slate-50 text-slate-600 border-slate-200', dot: 'bg-slate-400', label: 'Bilgi', grad: 'from-slate-500 to-slate-600' },
 }
 
 function timeAgo(iso: string): string {
@@ -38,40 +38,12 @@ function timeAgo(iso: string): string {
   return d + ' gün önce'
 }
 
-function Card({ item }: { item: FeedItem }) {
-  const meta = KIND_META[item.kind] || KIND_META.info
-  const Icon = meta.icon
-  return (
-    <div className={'flex items-start gap-3 rounded-2xl border p-4 transition-all hover:border-blue-500/30 ' + (item.read ? 'bg-[#0d1117]/60 border-[#1a2332]' : 'bg-[#0f1420] border-[#1a2332]')}>
-      <div className={'w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ' + meta.bg}>
-        <Icon size={18} className={meta.color} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-white text-sm font-semibold">{item.title}</span>
-          <span className={'px-2 py-0.5 rounded-full text-[10px] border font-medium ' + meta.bg + ' ' + meta.color}>{meta.label}</span>
-          {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
-        </div>
-        <p className="text-sm text-gray-400 mt-1 break-words">{item.summary}</p>
-        <p className="text-[11px] text-gray-600 mt-1.5">{timeAgo(item.createdAt)}</p>
-      </div>
-    </div>
-  )
-}
-
-function EmptyBox({ text }: { text: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-[#1a2332] p-6 flex flex-col items-center justify-center text-center gap-2">
-      <Sparkles size={18} className="text-gray-600" />
-      <p className="text-xs text-gray-600">{text}</p>
-    </div>
-  )
-}
-
 export default function BildirimlerimPage() {
   const [feed, setFeed] = useState<Feed | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [tab, setTab] = useState<'' | 'priority' | 'secondary'>('')
+  const [search, setSearch] = useState('')
 
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
@@ -89,63 +61,138 @@ export default function BildirimlerimPage() {
 
   const priority = feed?.priority || []
   const secondary = feed?.secondary || []
+  const all = [...priority, ...secondary]
+
+  const stats = {
+    total: all.length,
+    priority: priority.length,
+    request: secondary.filter(x => x.kind === 'request').length,
+    complaint: secondary.filter(x => x.kind === 'complaint').length,
+  }
+
+  const base = tab === 'priority' ? priority : tab === 'secondary' ? secondary : all
+  const filtered = base.filter(item => {
+    if (!search) return true
+    const s = search.toLowerCase()
+    return (item.title || '').toLowerCase().includes(s) || (item.summary || '').toLowerCase().includes(s)
+  })
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
+  )
 
   return (
-    <div className="space-y-6 pb-12 max-w-4xl">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1420] via-[#0d1117] to-[#0a0e14] border border-[#1a2332] p-6 sm:p-8">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-5 pb-12">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-6 lg:p-8 shadow-lg shadow-blue-600/20">
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-blue-900/20 blur-3xl" />
+        <div className="relative flex items-start justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur flex items-center justify-center shadow-inner">
               <Bell className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Bildirimlerim</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Yapay zekanın sizin için özetlediği güncel bildirimler</p>
+              <h1 className="text-xl lg:text-2xl font-bold text-white tracking-tight">Bildirimlerim</h1>
+              <p className="text-sm text-blue-100 mt-0.5">Yapay zekanın sizin için özetlediği güncel bildirimler</p>
             </div>
           </div>
-          <button onClick={() => load(true)} disabled={refreshing} className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-[#1a2332] text-gray-300 rounded-xl text-sm font-medium hover:text-white hover:border-blue-500/30 transition-all disabled:opacity-50 self-start">
-            {refreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Yenile
+          <button onClick={() => load(true)} disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-blue-700 text-xs font-bold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-60">
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} /> Yenile
           </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="relative mt-6 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {[
+            { key: '' as const, label: 'Tümü', count: all.length },
+            { key: 'priority' as const, label: 'Öncelikli', count: priority.length },
+            { key: 'secondary' as const, label: 'Talep & Şikayet', count: secondary.length },
+          ].map(f => {
+            const active = tab === f.key
+            return (
+              <button key={f.key} onClick={() => setTab(f.key)}
+                className={'flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ' + (active ? 'bg-white text-blue-700 shadow-md' : 'bg-white/15 text-white backdrop-blur hover:bg-white/25')}>
+                {f.label}
+                <span className={'px-1.5 py-0.5 rounded-full text-[10px] ' + (active ? 'bg-blue-100 text-blue-700' : 'bg-white/20 text-white')}>{f.count}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: 'Toplam Bildirim', value: stats.total, grad: 'from-blue-600 to-blue-700', icon: Bell },
+          { label: 'Öncelikli', value: stats.priority, grad: 'from-emerald-500 to-teal-600', icon: CalendarCheck },
+          { label: 'Talep', value: stats.request, grad: 'from-indigo-500 to-purple-600', icon: MessageCircle },
+          { label: 'Şikayet', value: stats.complaint, grad: 'from-rose-500 to-red-600', icon: AlertTriangle },
+        ].map(s => {
+          const Icon = s.icon
+          return (
+            <div key={s.label} className="relative overflow-hidden rounded-2xl bg-white border border-blue-100 p-5 shadow-sm hover:shadow-lg hover:shadow-blue-600/10 hover:-translate-y-0.5 transition-all duration-300">
+              <div className="absolute -top-8 -right-8 w-20 h-20 rounded-full bg-blue-50" />
+              <div className="relative">
+                <div className={'w-9 h-9 rounded-full bg-gradient-to-br ' + s.grad + ' flex items-center justify-center mb-3 shadow-md'}>
+                  <Icon className="w-4 h-4 text-white" />
+                </div>
+                <p className="text-xl font-bold text-gray-900 tracking-tight">{s.value}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mt-1">{s.label}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Bildirimlerde ara..."
+          className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-blue-100 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all" />
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-blue-100 rounded-2xl">
+          <Bell size={40} className="mx-auto text-blue-200 mb-3" />
+          <p className="text-gray-500 text-sm">Henüz bildirim bulunmuyor</p>
+          <p className="text-gray-400 text-xs mt-1">Yeni sipariş, randevu veya mesaj geldiğinde burada görünecek.</p>
         </div>
       ) : (
-        <>
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-white font-semibold">Öncelikli</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">Sipariş / Randevu / Rezervasyon</span>
-            </div>
-            <div className="space-y-3">
-              {priority.length > 0
-                ? priority.map(item => <Card key={item.id} item={item} />)
-                : <EmptyBox text="Bekleyen sipariş veya randevu yok. Yeni bir kayıt geldiğinde yapay zeka burayı dolduracak." />}
-            </div>
-          </div>
+        <div className="space-y-3">
+          {filtered.map(item => {
+            const meta = KIND_META[item.kind] || KIND_META.info
+            const Icon = meta.icon
+            return (
+              <div key={item.id} className="rounded-2xl bg-white border border-blue-100 p-5 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={'w-11 h-11 rounded-full bg-gradient-to-br ' + meta.grad + ' flex items-center justify-center shadow-md shrink-0'}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-gray-900 font-semibold text-sm truncate">{item.title}</p>
+                        {!item.read && <span className={'w-1.5 h-1.5 rounded-full ' + meta.dot} />}
+                      </div>
+                      <p className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5"><Clock size={11} /> {timeAgo(item.createdAt)}</p>
+                    </div>
+                  </div>
+                  <span className={'px-3 py-1 rounded-full text-[11px] font-semibold border shrink-0 ' + meta.chip}>{meta.label}</span>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed break-words">{item.summary}</p>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-white font-semibold">Talepler & Şikayetler</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">Müşteri mesajları</span>
-            </div>
-            <div className="space-y-3">
-              {secondary.length > 0
-                ? secondary.map(item => <Card key={item.id} item={item} />)
-                : <EmptyBox text="Henüz talep veya şikayet yok. Müşterilerden mesaj geldikçe yapay zeka burayı dolduracak." />}
-            </div>
-          </div>
-
-          {feed?.aiFilled && (
-            <p className="flex items-center gap-2 text-[11px] text-gray-600 justify-center">
-              <Sparkles size={12} /> Özetler yapay zeka tarafından otomatik oluşturuldu
-            </p>
-          )}
-        </>
+      {feed?.aiFilled && (
+        <p className="flex items-center gap-2 text-[11px] text-gray-400 justify-center">
+          <Sparkles size={12} /> Özetler yapay zeka tarafından otomatik oluşturuldu
+        </p>
       )}
     </div>
   )
